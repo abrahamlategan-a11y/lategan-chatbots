@@ -5,49 +5,135 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Good Morning · Learning Hub</title>
 <style>
-:root{--green:#145540;--cream:#f8f5ea;--lime:#dff1b7;--lav:#d8c3f4;--ink:#10261d;--muted:#6d786f;--line:#d7dfd7;--shadow:0 18px 50px rgba(7,35,25,.17)}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--green);color:var(--ink)}button,input,textarea{font:inherit}body{min-height:100vh}
-.screen{min-height:100vh;padding:2.2vw;display:grid;grid-template-columns:1.03fr .97fr;grid-template-rows:auto 1fr auto;gap:1.5vw;background:radial-gradient(circle at 15% 12%,rgba(255,255,255,.08),transparent 24%),linear-gradient(145deg,#176247,#0f4c39)}
-.header{grid-column:1;color:#fff}.kicker{font-size:1.45vw;font-weight:800;opacity:.82;margin-bottom:.4vw}h1{font-size:5.1vw;line-height:.95;letter-spacing:-.055em;margin:0;font-weight:950}h1 span{color:var(--lav)}
-.date{display:inline-flex;gap:.7vw;align-items:center;background:var(--lime);padding:.8vw 1.3vw;border-radius:999px;margin-top:1.3vw;font-size:1.65vw;font-weight:900;color:#163d2d}
-.card{background:var(--cream);border-radius:1.5vw;box-shadow:var(--shadow)}.todo{grid-column:1;grid-row:2;padding:1.7vw 2vw}.todo h2,.expect h2{font-size:3vw;margin:0 0 1vw;letter-spacing:-.03em}
-.todo-list{display:grid;gap:.75vw}.todo-row{display:grid;grid-template-columns:2.2vw 1fr;gap:.8vw;align-items:center;padding:.62vw 0;border-bottom:1px solid rgba(20,85,64,.12);font-size:2.05vw;font-weight:800}.num{width:2.2vw;height:2.2vw;border-radius:50%;display:grid;place-items:center;background:var(--lav);font-size:1.05vw}
-.expect{grid-column:2;grid-row:1/3;padding:1.6vw 2vw}.expect h2{color:var(--green)}.exp{display:grid;grid-template-columns:2.8vw 1fr;gap:.9vw;padding:1vw 0;border-bottom:1px solid #dce3dc}.exp .ico{width:2.8vw;height:2.8vw;border-radius:50%;display:grid;place-items:center;background:#dff0bb;font-size:1.4vw}.exp:nth-child(even) .ico{background:#decdf3}.exp strong{font-size:1.8vw;display:block;margin-bottom:.15vw}.exp span{font-size:1.05vw;color:#43564b}
-.bottom{grid-column:1/3;display:grid;grid-template-columns:1.05fr 1.15fr .9fr .95fr;gap:1.2vw}.mini{border-radius:1.25vw;padding:1.15vw 1.35vw;min-height:9.6vw;background:var(--cream);box-shadow:var(--shadow)}.mini h3{font-size:1.65vw;margin:0 0 .65vw}.reminders{background:#e2d1f7}.reminder-text{white-space:pre-wrap;font-size:1.2vw;line-height:1.35;min-height:4.3vw}
-.wordle{background:linear-gradient(145deg,#2d9a61,#1c774c);color:#fff;text-decoration:none;display:flex;align-items:center;gap:1.2vw}.wordle-grid{display:grid;grid-template-columns:repeat(3,1.2vw);grid-template-rows:repeat(3,1.2vw);gap:.18vw;padding:.55vw;border:.28vw solid #10261d;border-radius:.6vw;background:#fff}.wordle-grid i{display:block;background:#eee}.wordle-grid i:nth-child(5){background:#e3bb35}.wordle-grid i:nth-child(6),.wordle-grid i:nth-child(7),.wordle-grid i:nth-child(8),.wordle-grid i:nth-child(9){background:#79b66f}.wordle strong{font-size:2.2vw}.wordle small{font-size:.95vw;letter-spacing:.15em;font-weight:800}
-.big-name{font-size:2.15vw;font-weight:950;letter-spacing:-.03em}.subtext{font-size:.9vw;color:#657369;margin-top:.45vw}.lunch{background:#dfcef5}
-.tools{position:fixed;top:14px;right:14px;z-index:20;display:flex;gap:8px}.toolbtn{border:1px solid rgba(255,255,255,.25);background:rgba(8,45,33,.82);color:#fff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:850;backdrop-filter:blur(8px);text-decoration:none}
-.editor{position:fixed;inset:0;background:rgba(7,34,25,.72);z-index:30;display:none;place-items:center;padding:20px}.editor.show{display:grid}.editcard{width:min(650px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.24)}.editcard h2{margin:0 0 14px}.editcard label{display:block;font-size:11px;font-weight:850;margin:12px 0 5px}.editcard textarea,.editcard input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px}.editcard textarea{min-height:110px}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-weight:850;cursor:pointer}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
-@media(max-width:900px){.screen{display:block;padding:18px}.header,.todo,.expect,.bottom{margin-bottom:15px}.bottom{display:grid;grid-template-columns:1fr 1fr}.kicker{font-size:14px}h1{font-size:46px}.date{font-size:16px}.todo h2,.expect h2{font-size:28px}.todo-row{font-size:20px;grid-template-columns:28px 1fr}.num{width:28px;height:28px;font-size:13px}.exp{grid-template-columns:40px 1fr}.exp .ico{width:40px;height:40px;font-size:18px}.exp strong{font-size:20px}.exp span{font-size:13px}.mini{min-height:140px;padding:16px}.mini h3{font-size:20px}.big-name{font-size:27px}.reminder-text{font-size:15px}.wordle strong{font-size:28px}.wordle-grid{grid-template-columns:repeat(3,18px);grid-template-rows:repeat(3,18px)}.wordle small,.subtext{font-size:12px}}
+:root{--green:#1f5b46;--paper:#f6f3ea;--ink:#17352a;--muted:#6b766f;--line:#d9dfda;--lav:#d7c7e8}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:var(--green);color:var(--ink)}button,input,textarea,select{font:inherit}body{min-height:100vh}
+.screen{min-height:100vh;padding:28px 34px;display:grid;grid-template-columns:1.02fr .98fr;grid-template-rows:auto 1fr auto;gap:22px;background:var(--green)}
+.header{color:white;align-self:end}.eyebrow{font-size:14px;letter-spacing:.08em;text-transform:uppercase;opacity:.72;font-weight:700}h1{font-size:72px;line-height:.98;letter-spacing:-.05em;margin:6px 0 16px;font-weight:800}.class{color:#cfc0e5}.date{display:inline-block;background:#dceab9;color:#193d30;border-radius:999px;padding:11px 18px;font-size:23px;font-weight:700}
+.panel{background:var(--paper);border-radius:18px}.todo{padding:24px 28px}.todo h2,.expect h2{margin:0 0 16px;font-size:34px;letter-spacing:-.03em}.todo-row{display:grid;grid-template-columns:34px 1fr;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:26px;font-weight:700}.todo-row:last-child{border-bottom:0}.num{width:31px;height:31px;border-radius:50%;background:var(--lav);display:grid;place-items:center;font-size:14px}.expect{grid-column:2;grid-row:1/3;padding:24px 28px}.exp{padding:14px 0;border-bottom:1px solid var(--line)}.exp:last-child{border-bottom:0}.exp strong{display:block;font-size:25px;margin-bottom:3px}.exp span{font-size:15px;color:#506056}
+.bottom{grid-column:1/3;display:grid;grid-template-columns:1.25fr 1.05fr .85fr 1.05fr;gap:16px}.mini{background:var(--paper);border-radius:16px;padding:18px 20px;min-height:132px}.editable{cursor:pointer;transition:box-shadow .15s ease,transform .15s ease,outline-color .15s ease;outline:2px solid transparent;outline-offset:2px}.editable:hover{outline-color:rgba(255,255,255,.55);box-shadow:0 8px 24px rgba(0,0,0,.10)}.editable:active{transform:scale(.995)}.mini h3{margin:0 0 10px;font-size:21px}.reminders{background:#e2d6ef}.reminder-text{white-space:pre-wrap;font-size:16px;line-height:1.35}.wordle{background:#2c7c53;color:white;text-decoration:none;display:flex;align-items:center;justify-content:space-between}.wordle strong{font-size:32px}.wordle small{font-size:12px;letter-spacing:.12em}.big-name{font-size:28px;font-weight:800}.sub{font-size:12px;color:var(--muted);margin-top:8px}
+.tools{position:fixed;right:14px;top:14px;z-index:10;display:flex;gap:8px}.tool{border:1px solid rgba(255,255,255,.35);background:#174535;color:#fff;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:700;text-decoration:none}.editor{position:fixed;inset:0;background:rgba(8,29,22,.68);display:none;place-items:center;z-index:20;padding:20px}.editor.show{display:grid}.editcard{background:white;border-radius:18px;width:min(760px,100%);max-height:92vh;overflow:auto;padding:24px}.editcard h2{margin:0 0 16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.field{margin-top:10px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:5px}.field input,.field textarea,.field select{width:100%;padding:10px;border:1px solid var(--line);border-radius:9px}.field textarea{min-height:110px}.people{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;max-height:220px;overflow:auto;border:1px solid var(--line);padding:10px;border-radius:10px}.person{display:flex;align-items:center;gap:7px;font-size:13px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 12px;font-weight:700}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+@media(max-width:900px){.screen{display:block;padding:18px}.header,.todo,.expect,.bottom{margin-bottom:14px}.bottom{display:grid;grid-template-columns:1fr 1fr}h1{font-size:48px}.date{font-size:16px}.todo h2,.expect h2{font-size:28px}.todo-row{font-size:20px}.expect{padding:20px}.exp strong{font-size:20px}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="tools"><button class="toolbtn" id="editBtn">✎ Edit morning</button><button class="toolbtn" id="fullBtn">⛶ Full screen</button><a class="toolbtn" href="../teacher/">← Hub</a></div>
+<div class="tools"><button class="tool" id="fullBtn">Full screen</button><a class="tool" href="../teacher/">Hub</a></div>
 <main class="screen">
-<header class="header"><div class="kicker">Welcome to our class</div><h1>Good Morning <span id="className">4L</span></h1><div class="date">📅 <span id="dateText"></span></div></header>
-<section class="card todo"><h2>✓ To Do</h2><div class="todo-list" id="todoList"></div></section>
-<section class="card expect"><h2>Our Class Expectations</h2><div id="expectations"></div></section>
-<section class="bottom">
-<div class="mini reminders"><h3>📌 Reminders</h3><div class="reminder-text" id="reminders">No reminders today.</div></div>
-<a class="mini wordle" id="wordleLink" target="_blank" rel="noopener"><div class="wordle-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><strong>Wordle</strong><br><small>CLICK TO PLAY →</small></div></a>
-<div class="mini"><h3>👥 Daily Helper</h3><div class="big-name" id="helperName">—</div><div class="subtext">Automatically rotates through the active class list.</div></div>
-<div class="mini lunch"><h3>🍴 Lunch Orders</h3><div class="big-name" id="lunchNames">—</div><div class="subtext">Teacher-controlled refresh.</div></div>
-</section>
+  <header class="header"><div class="eyebrow">Welcome to our class</div><h1>Good Morning <span class="class" id="className">4L</span></h1><div class="date" id="dateText"></div></header>
+  <section class="panel todo editable" id="todoPanel"><h2>To Do <span style="font-size:12px;font-weight:400;color:#78857d">click to edit</span></h2><div id="todoList"></div></section>
+  <section class="panel expect"><h2>Class Expectations</h2><div id="expectations"></div></section>
+  <section class="bottom">
+    <div class="mini reminders editable" id="remindersPanel"><h3>Reminders <span style="font-size:11px;font-weight:400;color:#6f6f78">click to edit</span></h3><div class="reminder-text" id="reminders">No reminders today.</div></div>
+    <a class="mini wordle" id="wordleLink" target="_blank" rel="noopener"><div><strong>Wordle</strong><br><small>OPEN TODAY'S WORDLE</small></div><div style="font-size:28px">↗</div></a>
+    <div class="mini editable" id="helperPanel"><h3>Daily Helper <span style="font-size:11px;font-weight:400;color:#78857d">click to change</span></h3><div class="big-name" id="helperName">—</div><div class="sub">Changes daily. Teacher can override.</div></div>
+    <div class="mini editable" id="lunchPanel"><h3>Lunch Orders <span style="font-size:11px;font-weight:400;color:#78857d">click to change</span></h3><div class="big-name" id="lunchNames">—</div><div class="sub">Stays the same for the school week.</div></div>
+  </section>
 </main>
-<div class="editor" id="editor"><div class="editcard"><h2>Edit today's morning screen</h2><label>To Do 1</label><input id="todo1"><label>To Do 2</label><input id="todo2"><label>To Do 3</label><input id="todo3"><label>Reminders</label><textarea id="reminderInput" placeholder="Add any reminders for today…"></textarea><div class="actions"><button class="btn" id="refreshLunch">↻ Refresh lunch orders</button><button class="btn" id="closeEdit">Cancel</button><button class="btn primary" id="saveEdit">Save</button></div></div></div>
+<div class="editor" id="editor"><div class="editcard">
+  <h2 id="editorTitle">Edit</h2>
+
+  <div id="todoEditSection" style="display:none">
+    <div class="field"><label>To Do 1</label><input id="todo1"></div>
+    <div class="field"><label>To Do 2</label><input id="todo2"></div>
+    <div class="field"><label>To Do 3</label><input id="todo3"></div>
+    <div class="field"><label>To Do 4</label><input id="todo4"></div>
+  </div>
+
+  <div id="remindersEditSection" style="display:none">
+    <div class="field"><label>Reminders</label><textarea id="reminderInput"></textarea></div>
+  </div>
+
+  <div id="helperEditSection" style="display:none">
+    <div class="field"><label>Daily Helper</label><select id="helperSelect"></select></div>
+  </div>
+
+  <div id="lunchEditSection" style="display:none">
+    <div class="field"><label>Lunch Orders — choose people for this week</label><div class="people" id="lunchPeople"></div></div>
+  </div>
+
+  <div class="actions"><button class="btn" id="closeEdit">Cancel</button><button class="btn primary" id="saveEdit">Save changes</button></div>
+</div></div>
+
 <script>
-const API="https://lategan-chatbot.abrahamlategan.workers.dev",teacherCode=localStorage.getItem("lategan_teacher_code")||"", $=id=>document.getElementById(id);let data=null;
-function localDateKey(){const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
+const API="https://lategan-chatbot.abrahamlategan.workers.dev";const teacherCode=localStorage.getItem("lategan_teacher_code")||"";const $=id=>document.getElementById(id);let data=null;
+function dateKey(){const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
 async function post(payload){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}),j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Something went wrong.");return j}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
-function render(){const d=data.daily;$("className").textContent=d.class_name||"Class";const date=new Date(d.date_key+"T12:00:00");$("dateText").textContent=date.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("todoList").innerHTML=(d.todo||[]).map((x,i)=>`<div class="todo-row"><span class="num">${i+1}</span><span>${esc(x)}</span></div>`).join("");$("reminders").textContent=d.reminders.trim()||"No reminders today.";$("helperName").textContent=d.helper?.name||"—";$("lunchNames").textContent=(d.lunch||[]).map(x=>x.name).join(" & ")||"—";$("wordleLink").href=d.wordle_url;$("expectations").innerHTML=(data.expectations||[]).map((x,i)=>`<div class="exp"><div class="ico">${["📋","🕒","🧠","💬","★"][i]||"•"}</div><div><strong>${esc(x.title)}</strong><span>${esc(x.detail)}</span></div></div>`).join("")}
-async function load(){if(!teacherCode){alert("Open this screen from your Teacher Learning Hub.");location.href="../teacher/";return}data=await post({action:"teacher_daily_state",teacher_code:teacherCode,date_key:localDateKey()});render()}
-$("editBtn").onclick=()=>{const t=data.daily.todo||[];$("todo1").value=t[0]||"";$("todo2").value=t[1]||"";$("todo3").value=t[2]||"";$("reminderInput").value=data.daily.reminders||"";$("editor").classList.add("show")};
-$("closeEdit").onclick=()=>$("editor").classList.remove("show");
-$("saveEdit").onclick=async()=>{const r=await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:localDateKey(),reminders:$("reminderInput").value,todo:[$("todo1").value,$("todo2").value,$("todo3").value]});data.daily=r.daily;$("editor").classList.remove("show");render()};
-$("refreshLunch").onclick=async()=>{if(!confirm("Choose two new lunch-order students for today?"))return;const r=await post({action:"teacher_lunch_refresh",teacher_code:teacherCode,date_key:localDateKey()});data.daily=r.daily;$("editor").classList.remove("show");render()};
-$("fullBtn").onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()};
-load();
+function render(){const d=data.daily,dt=new Date(d.date_key+"T12:00:00");$("className").textContent=d.class_name||"Class";$("dateText").textContent=dt.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("todoList").innerHTML=(d.todo||[]).filter(Boolean).map((x,i)=>`<div class="todo-row"><span class="num">${i+1}</span><span>${esc(x)}</span></div>`).join("");$("reminders").textContent=(d.reminders||"").trim()||"No reminders today.";$("helperName").textContent=d.helper?.name||"—";$("lunchNames").textContent=(d.lunch||[]).map(x=>x.name).join(" & ")||"—";$("wordleLink").href=d.wordle_url;$("expectations").innerHTML=(data.expectations||[]).map(x=>`<div class="exp"><strong>${esc(x.title)}</strong><span>${esc(x.detail)}</span></div>`).join("")}
+async function load(){if(!teacherCode){location.href="../teacher/";return}data=await post({action:"teacher_daily_state",teacher_code:teacherCode,date_key:dateKey()});render()}
+let editMode=null;
+
+function resetEditorSections(){
+  ["todoEditSection","remindersEditSection","helperEditSection","lunchEditSection"].forEach(id=>$(id).style.display="none");
+}
+
+function openEdit(mode){
+  editMode=mode;
+  resetEditorSections();
+  const d=data.daily,t=d.todo||[];
+
+  if(mode==="todo"){
+    $("editorTitle").textContent="Edit To Do";
+    for(let i=1;i<=4;i++)$("todo"+i).value=t[i-1]||"";
+    $("todoEditSection").style.display="block";
+  }
+
+  if(mode==="reminders"){
+    $("editorTitle").textContent="Edit Reminders";
+    $("reminderInput").value=d.reminders||"";
+    $("remindersEditSection").style.display="block";
+  }
+
+  if(mode==="helper"){
+    $("editorTitle").textContent="Choose Daily Helper";
+    $("helperSelect").innerHTML=(data.roster||[]).map(x=>`<option value="${x.id}" ${d.helper?.id===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
+    $("helperEditSection").style.display="block";
+  }
+
+  if(mode==="lunch"){
+    $("editorTitle").textContent="Choose Lunch Orders for This Week";
+    const selected=new Set((d.lunch||[]).map(x=>Number(x.id)));
+    $("lunchPeople").innerHTML=(data.roster||[]).map(x=>`<label class="person"><input type="checkbox" value="${x.id}" ${selected.has(Number(x.id))?"checked":""}><span>${esc(x.name)}</span></label>`).join("");
+    $("lunchEditSection").style.display="block";
+  }
+
+  $("editor").classList.add("show");
+}
+
+$("todoPanel").onclick=()=>openEdit("todo");
+$("remindersPanel").onclick=()=>openEdit("reminders");
+$("helperPanel").onclick=()=>openEdit("helper");
+$("lunchPanel").onclick=()=>openEdit("lunch");
+
+$("closeEdit").onclick=()=>{
+  $("editor").classList.remove("show");
+  editMode=null;
+};
+
+$("saveEdit").onclick=async()=>{
+  if(editMode==="todo"){
+    const todo=[1,2,3,4].map(i=>$("todo"+i).value);
+    await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:dateKey(),reminders:data.daily.reminders||"",todo});
+  }
+
+  if(editMode==="reminders"){
+    await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:dateKey(),reminders:$("reminderInput").value,todo:data.daily.todo||[]});
+  }
+
+  if(editMode==="helper"){
+    await post({action:"teacher_set_helper",teacher_code:teacherCode,date_key:dateKey(),student_id:Number($("helperSelect").value)});
+  }
+
+  if(editMode==="lunch"){
+    const lunchIds=[...document.querySelectorAll("#lunchPeople input:checked")].map(x=>Number(x.value));
+    await post({action:"teacher_set_lunch",teacher_code:teacherCode,date_key:dateKey(),student_ids:lunchIds});
+  }
+
+  $("editor").classList.remove("show");
+  editMode=null;
+  await load();
+};
+
+$("fullBtn").onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()};load();
 </script>
 </body>
 </html>
