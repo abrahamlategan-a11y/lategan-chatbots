@@ -92,9 +92,29 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 .login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;padding:20px;z-index:200}
 .login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}
 .login-card h2{font-size:28px;margin:0 0 7px}.login-card p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 18px}.login-error{font-size:12px;color:var(--red);margin-top:10px}
+
+.print-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.login-card-print{border:1.5px solid var(--line);border-radius:18px;padding:18px;display:grid;grid-template-columns:1fr 88px;gap:16px;align-items:center;background:#fff;break-inside:avoid}
+.login-card-print .school{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);font-weight:900;margin-bottom:7px}
+.login-card-print h3{margin:0 0 8px;font-size:21px}
+.login-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:20px;font-weight:900;letter-spacing:.05em;background:var(--green-soft);border-radius:10px;padding:8px 10px;display:inline-block}
+.login-card-print p{font-size:11px;line-height:1.45;color:var(--muted);margin:8px 0 0}
+.qr{width:88px;height:88px;display:grid;place-items:center}
+.qr img,.qr canvas{max-width:88px!important;max-height:88px!important}
+@media print{
+  body *{visibility:hidden!important}
+  #printModal,#printModal *{visibility:visible!important}
+  #printModal{position:absolute!important;inset:0!important;background:#fff!important;padding:0!important;display:block!important}
+  #printModal .modal-card{box-shadow:none!important;border:0!important;border-radius:0!important;width:100%!important;max-height:none!important;overflow:visible!important;padding:0!important}
+  #printModal .modal-head,#printModal .modal-actions{display:none!important}
+  #printCardsGrid{display:grid!important;grid-template-columns:repeat(2,1fr)!important;gap:10mm!important}
+  .login-card-print{border:1px solid #999!important;padding:8mm!important;min-height:58mm!important}
+}
+
 @media(max-width:1000px){.tilegrid,.botgrid{grid-template-columns:1fr 1fr}.chat-layout{grid-template-columns:1fr}}
 @media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:20px 16px}.tilegrid,.botgrid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}h1{font-size:32px}.snap-grid{grid-template-columns:1fr}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -161,8 +181,8 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 
     <section class="section" id="section-students">
       <div class="sectionhead">
-        <div><div class="eyebrow">Students</div><h2>Class roster</h2><p>Students use their code to access saved work across devices.</p></div>
-        <button class="btn primary" id="addStudentBtn">+ Add student</button>
+        <div><div class="eyebrow">Students</div><h2>Class roster</h2><p>Paste your class list, generate student codes and print login cards.</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="printCardsBtn">🖨 Print login cards</button><button class="btn primary" id="addStudentBtn">+ Add students</button></div>
       </div>
       <div class="panel">
         <div class="panelhead"><h3>Students</h3></div>
@@ -222,12 +242,49 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 </div>
 
 <div class="modal" id="studentModal">
-  <div class="modal-card" style="width:min(500px,100%)">
-    <div class="modal-head"><div><h2>Add student</h2><p>Add a student to your class roster.</p></div><button class="close" id="closeStudentModal">×</button></div>
-    <div class="field"><label>First name</label><input id="studentName"></div>
-    <div class="field" style="margin-top:12px"><label>Class</label><input id="studentClass"></div>
-    <div class="field" style="margin-top:12px"><label>Student code</label><input id="studentCodeNew" placeholder="Leave blank to generate"></div>
-    <div class="modal-actions"><button class="btn" id="cancelStudent">Cancel</button><button class="btn primary" id="saveStudent">Add student</button></div>
+  <div class="modal-card" style="width:min(560px,100%)">
+    <div class="modal-head">
+      <div>
+        <h2>Add students</h2>
+        <p>Paste first names below — one student per line. Codes will be created automatically.</p>
+      </div>
+      <button class="close" id="closeStudentModal">×</button>
+    </div>
+
+    <div class="field">
+      <label>Class</label>
+      <input id="studentClass">
+    </div>
+
+    <div class="field" style="margin-top:14px">
+      <label>Student first names</label>
+      <textarea id="bulkStudentNames" class="tall" placeholder="Lia&#10;Aubrey&#10;Mia&#10;Noah"></textarea>
+      <div class="help">One name per line. Blank lines will be ignored.</div>
+    </div>
+
+    <div id="bulkAddStatus" class="help" style="margin-top:12px"></div>
+
+    <div class="modal-actions">
+      <button class="btn" id="cancelStudent">Cancel</button>
+      <button class="btn primary" id="saveStudent">Add students</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="printModal">
+  <div class="modal-card" style="width:min(980px,100%)">
+    <div class="modal-head">
+      <div>
+        <h2>Student login cards</h2>
+        <p>Print and cut these out for students.</p>
+      </div>
+      <button class="close" id="closePrintModal">×</button>
+    </div>
+    <div id="printCardsGrid" class="print-grid"></div>
+    <div class="modal-actions">
+      <button class="btn" id="closePrintBtn">Close</button>
+      <button class="btn primary" id="doPrintBtn">🖨 Print cards</button>
+    </div>
   </div>
 </div>
 
@@ -335,15 +392,104 @@ $("saveBot").onclick=async()=>{
   try{await post(payload);closeBotModal();await loadBots()}catch(e){alert(e.message)}
 };
 
-$("addStudentBtn").onclick=()=>{$("studentName").value="";$("studentCodeNew").value="";$("studentClass").value=teacher?.class_name||"";$("studentModal").classList.add("show")};
-$("closeStudentModal").onclick=()=>$("studentModal").classList.remove("show");$("cancelStudent").onclick=()=>$("studentModal").classList.remove("show");
-$("saveStudent").onclick=async()=>{
-  try{
-    const d=await post({action:"teacher_add_student",teacher_code:teacherCode,display_name:$("studentName").value.trim(),class_name:$("studentClass").value.trim(),student_code:$("studentCodeNew").value.trim()});
-    $("studentModal").classList.remove("show");await loadStudents();
-    if(d.student_code)alert(`Student added. Code: ${d.student_code}`);
-  }catch(e){alert(e.message)}
+$("addStudentBtn").onclick=()=>{
+  $("bulkStudentNames").value="";
+  $("bulkAddStatus").textContent="";
+  $("studentClass").value=teacher?.class_name||"";
+  $("studentModal").classList.add("show");
 };
+$("closeStudentModal").onclick=()=>$("studentModal").classList.remove("show");
+$("cancelStudent").onclick=()=>$("studentModal").classList.remove("show");
+
+$("saveStudent").onclick=async()=>{
+  const names=$("bulkStudentNames").value
+    .split(/\r?\n/)
+    .map(n=>n.trim())
+    .filter(Boolean);
+
+  if(!names.length){
+    $("bulkAddStatus").textContent="Paste at least one student name.";
+    return;
+  }
+
+  const className=$("studentClass").value.trim();
+  $("saveStudent").disabled=true;
+
+  let added=0;
+  let problems=[];
+
+  for(let i=0;i<names.length;i++){
+    $("bulkAddStatus").textContent=`Adding ${i+1} of ${names.length}…`;
+    try{
+      await post({
+        action:"teacher_add_student",
+        teacher_code:teacherCode,
+        display_name:names[i],
+        class_name:className,
+        student_code:""
+      });
+      added++;
+    }catch(e){
+      problems.push(`${names[i]}: ${e.message}`);
+    }
+  }
+
+  $("saveStudent").disabled=false;
+  await loadStudents();
+
+  if(problems.length){
+    $("bulkAddStatus").textContent=`Added ${added}. ${problems.length} could not be added.`;
+    alert(problems.join("\n"));
+  }else{
+    $("studentModal").classList.remove("show");
+    openPrintCards();
+  }
+};
+
+const STUDENT_HUB_URL="https://abrahamlategan-a11y.github.io/lategan-chatbots/student/";
+
+function openPrintCards(){
+  const activeStudents=students.filter(s=>s.active!==0);
+  const grid=$("printCardsGrid");
+  grid.innerHTML="";
+
+  if(!activeStudents.length){
+    grid.innerHTML='<div class="empty">No active students to print.</div>';
+  }else{
+    activeStudents.forEach((s,i)=>{
+      const card=document.createElement("div");
+      card.className="login-card-print";
+      card.innerHTML=`
+        <div>
+          <div class="school">Learning Hub</div>
+          <h3>${esc(s.display_name||"Student")}</h3>
+          <div class="login-code">${esc(s.student_code)}</div>
+          <p><strong>1.</strong> Scan the QR code.<br><strong>2.</strong> Enter your student code.<br><strong>3.</strong> Keep this card somewhere safe.</p>
+        </div>
+        <div class="qr" id="qr-${i}"></div>`;
+      grid.appendChild(card);
+
+      setTimeout(()=>{
+        new QRCode(document.getElementById(`qr-${i}`),{
+          text:STUDENT_HUB_URL,
+          width:88,
+          height:88,
+          correctLevel:QRCode.CorrectLevel.M
+        });
+      },0);
+    });
+  }
+
+  $("printModal").classList.add("show");
+}
+
+$("printCardsBtn").onclick=async()=>{
+  await loadStudents();
+  openPrintCards();
+};
+$("closePrintModal").onclick=()=>$("printModal").classList.remove("show");
+$("closePrintBtn").onclick=()=>$("printModal").classList.remove("show");
+$("doPrintBtn").onclick=()=>window.print();
 
 async function loadChatStudents(){
   await loadStudents();
