@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Learning Coach</title>
+<style>
+:root{
+  --bg:#f4f6f3;--panel:#fff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
+  --green:#2f6655;--soft:#eaf2ee;--student:#eef2ef;--shadow:0 12px 34px rgba(29,48,39,.08);
+  --danger:#94483e;--dangerbg:#fff1ee
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,textarea{font:inherit}button{cursor:pointer}
+.shell{max-width:1060px;margin:0 auto;padding:26px 22px 24px;min-height:100%;display:flex;flex-direction:column}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:850}.logo{width:40px;height:40px;border-radius:12px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:900}
+.back{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:800;color:var(--ink);text-decoration:none}
+.hero{margin-bottom:18px}.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--green);font-weight:850;margin-bottom:7px}
+h1{font-size:34px;letter-spacing:-.035em;margin:0 0 7px}.sub{font-size:14px;color:var(--muted);line-height:1.5}
+.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);min-height:620px;display:flex;flex-direction:column;overflow:hidden}
+.toolbar{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:15px 17px;gap:12px}
+.session-title{font-size:13px;font-weight:850}.actions{display:flex;gap:8px}
+.small{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;font-size:11px;font-weight:800}
+.messages{flex:1;padding:22px;overflow:auto;display:flex;flex-direction:column;gap:16px}
+.msg{display:flex;gap:9px;max-width:82%}.msg.assistant{align-self:flex-start}.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.avatar{width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:900;flex:0 0 auto}
+.bubble{padding:12px 14px;border-radius:15px;font-size:14px;line-height:1.52}.assistant .bubble{border:1px solid var(--line);background:#fff}.user .bubble{background:var(--student)}
+.bubble p{margin:.2em 0 .65em}.bubble p:last-child{margin-bottom:.2em}.bubble ul{margin:.4em 0 .5em 1.2em;padding:0}
+.composer{border-top:1px solid var(--line);padding:14px 16px;background:#fff}.inputrow{display:flex;gap:9px}
+textarea{flex:1;resize:none;min-height:52px;max-height:130px;border:1px solid var(--line);border-radius:12px;padding:13px 14px;outline:none}
+.send{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 20px;font-weight:850}.send:disabled{opacity:.55}
+.note{text-align:center;font-size:10px;color:#959c98;margin-top:8px}
+.error{display:none;margin:0 16px 10px;border:1px solid #ecc4bb;background:var(--dangerbg);color:var(--danger);border-radius:11px;padding:10px 12px;font-size:12px}
+.overlay{position:fixed;inset:0;background:rgba(244,246,243,.94);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px;z-index:50}
+.card{width:min(510px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:27px}
+.card h2{margin:0 0 7px;font-size:27px}.card p{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.5}
+.list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}.session{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 13px}
+.session strong{display:block;font-size:13px;margin-bottom:4px}.session span{font-size:10px;color:var(--muted)}
+.primary{width:100%;border:0;background:var(--green);color:#fff;border-radius:11px;padding:12px;font-weight:850}.empty{padding:16px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:650px){.shell{padding:18px 10px}.msg{max-width:94%}.panel{min-height:calc(100vh - 160px)}h1{font-size:29px}.messages{padding:16px 12px}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="top">
+    <div class="brand"><div class="logo" id="topIcon">✦</div><div>Learning Hub</div></div>
+    <a class="back" href="../student/">← Chatbots</a>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow" id="botMeta">Learning coach</div>
+    <h1 id="botName">Loading coach…</h1>
+    <div class="sub" id="botDescription"></div>
+  </div>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="session-title" id="sessionTitle">Conversation</div>
+      <div class="actions">
+        <button class="small" id="myChatsBtn">My chats</button>
+        <button class="small" id="newChatBtn">New chat</button>
+      </div>
+    </div>
+
+    <div class="messages" id="messages"></div>
+    <div class="error" id="errorBox"></div>
+
+    <div class="composer">
+      <div class="inputrow">
+        <textarea id="messageInput" placeholder="Type here…"></textarea>
+        <button class="send" id="sendBtn">Send</button>
+      </div>
+      <div class="note">Your teacher can view this conversation. Your coach helps you think rather than doing the task for you.</div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="sessionOverlay">
+  <div class="card">
+    <div class="logo" id="overlayIcon" style="margin-bottom:18px">✦</div>
+    <h2 id="overlayTitle">Your chats</h2>
+    <p>Continue where you left off, or start a new conversation.</p>
+    <div class="list" id="sessionList"></div>
+    <button class="primary" id="startNewBtn">+ Start new conversation</button>
+  </div>
+</div>
+
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev";
+const params=new URLSearchParams(location.search);
+const BOT_SLUG=params.get("bot")||"";
+const studentCode=localStorage.getItem("lategan_student_code")||"";
+
+let bot=null,sessionId=null,sending=false;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+
+function renderMarkdown(text=""){
+  let s=esc(text).replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>");
+  const lines=s.split("\n");let out="",list=false;
+  for(const line of lines){
+    const bullet=line.match(/^\s*[-•]\s+(.*)$/);
+    if(bullet){
+      if(!list){out+="<ul>";list=true}
+      out+=`<li>${bullet[1]}</li>`;
+    }else{
+      if(list){out+="</ul>";list=false}
+      if(line.trim())out+=`<p>${line}</p>`;
+    }
+  }
+  if(list)out+="</ul>";
+  return out;
+}
+
+async function post(payload){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||"Something went wrong.");
+  return d;
+}
+
+function showError(message){$("errorBox").textContent=message;$("errorBox").style.display="block"}
+function clearError(){$("errorBox").style.display="none"}
+
+function addMessage(role,content){
+  const wrap=document.createElement("div");
+  wrap.className=`msg ${role==="assistant"?"assistant":"user"}`;
+  if(role==="assistant"){
+    const av=document.createElement("div");av.className="avatar";av.textContent=bot?.icon||"✦";wrap.appendChild(av);
+  }
+  const bubble=document.createElement("div");bubble.className="bubble";bubble.innerHTML=renderMarkdown(content);wrap.appendChild(bubble);
+  $("messages").appendChild(wrap);$("messages").scrollTop=$("messages").scrollHeight;
+}
+
+function showOpening(){
+  $("messages").innerHTML="";
+  addMessage("assistant",bot.opening_message||`Hi! I’m ${bot.name}. What are you working on?`);
+}
+
+async function initialise(){
+  if(!studentCode){
+    location.href="../student/";
+    return;
+  }
+  if(!BOT_SLUG){
+    location.href="../student/";
+    return;
+  }
+
+  try{
+    const d=await post({action:"student_list_bots",student_code:studentCode});
+    bot=(d.bots||[]).find(b=>b.slug===BOT_SLUG);
+    if(!bot){
+      document.body.innerHTML='<div style="font-family:system-ui;padding:40px"><h2>This coach is not available.</h2><p>It may have been unpublished by your teacher.</p><a href="../student/">Back to Student Hub</a></div>';
+      return;
+    }
+
+    document.title=bot.name+" · Learning Hub";
+    $("botName").textContent=bot.name;
+    $("botDescription").textContent=bot.description||"";
+    $("botMeta").textContent=[bot.subject,bot.year_level].filter(Boolean).join(" · ")||"Learning coach";
+    $("topIcon").textContent=bot.icon||"✦";
+    $("overlayIcon").textContent=bot.icon||"✦";
+    $("overlayTitle").textContent=bot.name+" chats";
+    await loadSessions();
+  }catch(e){
+    showError(e.message);
+  }
+}
+
+async function loadSessions(){
+  const d=await post({action:"list_sessions",student_code:studentCode,bot_id:BOT_SLUG});
+  const list=$("sessionList");list.innerHTML="";
+  if(!(d.sessions||[]).length){
+    list.innerHTML='<div class="empty">No saved chats yet.</div>';
+  }else{
+    d.sessions.forEach(s=>{
+      const b=document.createElement("button");b.className="session";
+      b.innerHTML=`<strong>${esc(s.title||"Conversation")}</strong><span>${esc(s.updated_at||s.started_at||"")}</span>`;
+      b.onclick=()=>openSession(s.id);list.appendChild(b);
+    });
+  }
+  $("sessionOverlay").style.display="grid";
+}
+
+async function createSession(){
+  try{
+    const d=await post({action:"create_session",student_code:studentCode,bot_id:BOT_SLUG});
+    sessionId=d.session_id;$("sessionTitle").textContent="New conversation";$("sessionOverlay").style.display="none";showOpening();$("messageInput").focus();
+  }catch(e){showError(e.message)}
+}
+
+async function openSession(id){
+  try{
+    const d=await post({action:"get_session",student_code:studentCode,session_id:id});
+    sessionId=id;$("sessionTitle").textContent=d.session.title||"Conversation";$("messages").innerHTML="";
+    if(!(d.messages||[]).length)showOpening();else d.messages.forEach(m=>addMessage(m.role,m.content));
+    $("sessionOverlay").style.display="none";$("messageInput").focus();
+  }catch(e){showError(e.message)}
+}
+
+async function sendMessage(){
+  if(sending)return;
+  const text=$("messageInput").value.trim();
+  if(!text)return;
+  if(!sessionId){showError("Start or open a conversation first.");return}
+
+  clearError();sending=true;$("sendBtn").disabled=true;$("messageInput").value="";addMessage("user",text);
+
+  const typing=document.createElement("div");typing.className="msg assistant";typing.id="typing";
+  typing.innerHTML=`<div class="avatar">${esc(bot?.icon||"✦")}</div><div class="bubble">Thinking…</div>`;
+  $("messages").appendChild(typing);
+
+  try{
+    const d=await post({action:"chat",student_code:studentCode,session_id:sessionId,bot_id:BOT_SLUG,message:text});
+    $("typing")?.remove();addMessage("assistant",d.reply);
+  }catch(e){
+    $("typing")?.remove();showError(e.message);
+  }finally{
+    sending=false;$("sendBtn").disabled=false;$("messageInput").focus();
+  }
+}
+
+$("startNewBtn").onclick=createSession;
+$("newChatBtn").onclick=createSession;
+$("myChatsBtn").onclick=loadSessions;
+$("sendBtn").onclick=sendMessage;
+$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendMessage()}});
+initialise();
+</script>
+</body>
+</html>
