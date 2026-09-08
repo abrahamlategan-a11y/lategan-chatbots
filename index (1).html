@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Travel Coach</title>
+  <style>
+    :root{
+      --bg:#f7f8f6;
+      --panel:#ffffff;
+      --ink:#17201b;
+      --muted:#6f7972;
+      --line:#e5e9e5;
+      --accent:#2f6b52;
+      --accent-dark:#255640;
+      --accent-soft:#edf5f0;
+      --student:#f1f4f2;
+      --shadow:0 8px 30px rgba(24,39,31,.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+    }
+    button,input{font:inherit}
+    .app{min-height:100%;display:grid;grid-template-columns:270px minmax(0,1fr)}
+    .sidebar{
+      background:#fbfcfa;
+      border-right:1px solid var(--line);
+      padding:24px 20px;
+      display:flex;
+      flex-direction:column;
+    }
+    .brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:760;letter-spacing:-.02em}
+    .brand-mark{width:32px;height:32px;border-radius:10px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800}
+    .project-card{margin-top:34px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 10px rgba(25,43,34,.025)}
+    .project-label{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8a958e;margin-bottom:9px}
+    .project-title{font-size:14px;font-weight:720;line-height:1.35;margin-bottom:14px}
+    .facts{display:grid;gap:9px}
+    .fact{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--muted)}
+    .fact strong{color:var(--ink);font-weight:650;text-align:right}
+    .principle{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;line-height:1.5;color:var(--muted)}
+    .sidebar-foot{margin-top:auto;font-size:11px;line-height:1.55;color:#929b95;padding:0 3px}
+
+    .main{min-width:0;display:flex;justify-content:center;padding:24px 28px 28px}
+    .workspace{width:min(980px,100%);min-height:calc(100vh - 52px);display:flex;flex-direction:column}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}
+    .crumbs{font-size:12px;color:var(--muted);margin-bottom:5px}
+    h1{font-size:26px;line-height:1.15;margin:0;font-weight:760;letter-spacing:-.035em}
+    .mode{display:flex;align-items:center;gap:7px;background:var(--accent-soft);border:1px solid #d9e8de;color:var(--accent-dark);padding:7px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+    .mode-dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+
+    .chat-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;flex:1;min-height:610px}
+    .chat-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:14px;background:#fff}
+    .coach-id{display:flex;align-items:center;gap:10px}
+    .avatar{width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:12px}
+    .coach-name{font-size:13px;font-weight:750}
+    .coach-sub{font-size:11px;color:var(--muted);margin-top:2px}
+    .rule{font-size:11px;color:var(--muted)}
+
+    .chat{padding:22px 24px 8px;overflow:auto;flex:1;scroll-behavior:smooth}
+    .message{display:flex;gap:10px;margin-bottom:18px;align-items:flex-start}
+    .message.student{justify-content:flex-end}
+    .message .mini-avatar{width:28px;height:28px;border-radius:50%;flex:0 0 28px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-size:10px;font-weight:800;margin-top:2px}
+    .bubble-wrap{max-width:72%}
+    .assistant .bubble-wrap{max-width:78%}
+    .bubble{font-size:14px;line-height:1.62;color:#2a332d}
+    .assistant .bubble{padding-top:1px}
+    .student .bubble{background:var(--student);border:1px solid #e8ece9;padding:11px 14px;border-radius:16px 16px 5px 16px;color:#1f2822}
+    .bubble p{margin:0 0 10px}
+    .bubble p:last-child{margin-bottom:0}
+    .bubble ul{margin:7px 0 10px;padding-left:20px}
+    .bubble li{margin:4px 0}
+    .bubble strong{font-weight:750;color:#17201b}
+    .thinking{color:#8c958f;font-size:13px;padding-top:5px}
+    .typing-dots span{display:inline-block;width:4px;height:4px;border-radius:50%;background:#8d9690;margin-right:3px;animation:pulse 1.2s infinite ease-in-out}
+    .typing-dots span:nth-child(2){animation-delay:.14s}.typing-dots span:nth-child(3){animation-delay:.28s}
+    @keyframes pulse{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+
+    .error{display:none;margin:0 20px 10px;background:#fff5f3;border:1px solid #f0d1ca;color:#933b2f;border-radius:10px;padding:10px 12px;font-size:12px}
+    .composer-shell{border-top:1px solid var(--line);padding:14px 16px 12px;background:#fff}
+    .composer{display:flex;gap:9px;align-items:center;border:1px solid #dfe5e0;background:#fbfcfb;border-radius:14px;padding:7px 7px 7px 13px;transition:border .15s,box-shadow .15s}
+    .composer:focus-within{border-color:#b7cbbf;box-shadow:0 0 0 3px rgba(47,107,82,.06)}
+    .composer input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font-size:14px;padding:7px 0}
+    .composer input::placeholder{color:#98a19b}
+    .send{width:38px;height:38px;border:0;border-radius:10px;background:var(--accent);color:white;display:grid;place-items:center;cursor:pointer;transition:.15s}
+    .send:hover{background:var(--accent-dark)}
+    .send:disabled{opacity:.45;cursor:not-allowed}
+    .send svg{width:16px;height:16px}
+    .helper{text-align:center;margin-top:8px;font-size:10px;color:#9aa29d}
+
+    @media(max-width:820px){
+      .app{grid-template-columns:1fr}
+      .sidebar{display:none}
+      .main{padding:14px}
+      .workspace{min-height:calc(100vh - 28px)}
+      h1{font-size:22px}
+      .mode{display:none}
+      .chat-card{min-height:78vh;border-radius:16px}
+      .chat{padding:18px 15px 6px}
+      .bubble-wrap,.assistant .bubble-wrap{max-width:88%}
+      .chat-head{padding:14px 15px}
+      .rule{display:none}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">LC</div><span>Lategan Chatbot</span></div>
+
+    <div class="project-card">
+      <div class="project-label">Current activity</div>
+      <div class="project-title">HASS Travel Project</div>
+      <div class="facts">
+        <div class="fact"><span>Duration</span><strong>2 weeks</strong></div>
+        <div class="fact"><span>Region</span><strong>Europe or Africa</strong></div>
+        <div class="fact"><span>Countries</span><strong>3</strong></div>
+        <div class="fact"><span>Budget</span><strong>$10,000 AUD</strong></div>
+      </div>
+      <div class="principle">The coach will help you think, compare and plan. You still make the decisions and complete the work.</div>
+    </div>
+
+    <div class="sidebar-foot">Built for guided learning. The coach gives support without completing the task for you.</div>
+  </aside>
+
+  <main class="main">
+    <section class="workspace">
+      <div class="topbar">
+        <div>
+          <div class="crumbs">HASS · Travel Project</div>
+          <h1>Plan your overseas journey</h1>
+        </div>
+        <div class="mode"><span class="mode-dot"></span> Coach mode</div>
+      </div>
+
+      <div class="chat-card">
+        <div class="chat-head">
+          <div class="coach-id">
+            <div class="avatar">TC</div>
+            <div>
+              <div class="coach-name">Travel Coach</div>
+              <div class="coach-sub">Guides your thinking without doing the task</div>
+            </div>
+          </div>
+          <div class="rule">You decide. I help.</div>
+        </div>
+
+        <main id="chat" class="chat" aria-live="polite">
+          <div class="message assistant">
+            <div class="mini-avatar">TC</div>
+            <div class="bubble-wrap">
+              <div class="bubble">
+                <p>Hi. I’ll help you work through the trip one decision at a time.</p>
+                <p>Start with the big choice: <strong>Europe or Africa?</strong> If you’re not sure yet, tell me what kinds of places or experiences interest you.</p>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <div id="error" class="error"></div>
+        <div class="composer-shell">
+          <form id="form" class="composer">
+            <input id="input" autocomplete="off" placeholder="Ask a question or tell me what you're thinking…" />
+            <button id="send" class="send" type="submit" aria-label="Send message">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </form>
+          <div class="helper">Travel Coach can guide your thinking, but it won’t complete the task for you.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const API_URL = "https://lategan-chatbot.abrahamlategan.workers.dev";
+
+  const chat = document.getElementById('chat');
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const send = document.getElementById('send');
+  const errorBox = document.getElementById('error');
+  const history = [];
+
+  function escapeHtml(str){
+    return str.replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+  }
+
+  function renderSimpleMarkdown(text){
+    const safe = escapeHtml(text).replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+    const lines = safe.split(/\r?\n/);
+    let html = '';
+    let inList = false;
+    let paragraph = [];
+
+    const flushParagraph = () => {
+      if(paragraph.length){ html += `<p>${paragraph.join('<br>')}</p>`; paragraph = []; }
+    };
+    const closeList = () => { if(inList){ html += '</ul>'; inList = false; } };
+
+    for(const raw of lines){
+      const line = raw.trim();
+      const m = line.match(/^[-•]\s+(.*)$/);
+      if(m){
+        flushParagraph();
+        if(!inList){ html += '<ul>'; inList = true; }
+        html += `<li>${m[1]}</li>`;
+      } else if(line === ''){
+        flushParagraph();
+        closeList();
+      } else {
+        closeList();
+        paragraph.push(line);
+      }
+    }
+    flushParagraph();
+    closeList();
+    return html || '<p></p>';
+  }
+
+  function addMessage(text, who){
+    const row = document.createElement('div');
+    row.className = 'message ' + (who === 'bot' ? 'assistant' : 'student');
+
+    if(who === 'bot'){
+      const avatar = document.createElement('div');
+      avatar.className = 'mini-avatar';
+      avatar.textContent = 'TC';
+      row.appendChild(avatar);
+    }
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    if(who === 'bot') bubble.innerHTML = renderSimpleMarkdown(text);
+    else bubble.textContent = text;
+    wrap.appendChild(bubble);
+    row.appendChild(wrap);
+    chat.appendChild(row);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if(!text) return;
+
+    errorBox.style.display='none';
+    addMessage(text,'student');
+    history.push({role:'user',content:text});
+    input.value='';
+    send.disabled=true;
+    input.disabled=true;
+
+    const thinking = document.createElement('div');
+    thinking.className='message assistant';
+    thinking.innerHTML='<div class="mini-avatar">TC</div><div class="bubble-wrap"><div class="thinking"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>';
+    chat.appendChild(thinking);
+    chat.scrollTop=chat.scrollHeight;
+
+    try{
+      const r = await fetch(API_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({messages:history})
+      });
+      const data = await r.json();
+      thinking.remove();
+      if(!r.ok) throw new Error(data.error || 'Something went wrong');
+      addMessage(data.reply,'bot');
+      history.push({role:'assistant',content:data.reply});
+    } catch(err){
+      thinking.remove();
+      errorBox.style.display='block';
+      errorBox.textContent='Could not reach Travel Coach: '+err.message;
+    } finally {
+      send.disabled=false;
+      input.disabled=false;
+      input.focus();
+    }
+  });
+</script>
+</body>
+</html>

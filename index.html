@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lategan Chatbots</title>
+<style>
+  :root{
+    --bg:#f5f6f2;
+    --card:#ffffff;
+    --ink:#1f2421;
+    --muted:#68716b;
+    --line:#dfe5df;
+    --green:#2f6554;
+    --green-soft:#eaf3ef;
+    --shadow:0 10px 30px rgba(26,39,32,.08);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .shell{max-width:1180px;margin:0 auto;padding:34px 26px 56px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:50px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px}
+  .logo{
+    width:42px;height:42px;border-radius:12px;background:var(--green);
+    color:white;display:grid;place-items:center;font-weight:800;letter-spacing:.02em;
+  }
+  .teacher{font-size:13px;color:var(--muted);border:1px solid var(--line);padding:9px 12px;border-radius:999px;background:#fff}
+  .hero{max-width:760px;margin-bottom:34px}
+  .eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--green);margin-bottom:10px}
+  h1{font-size:46px;line-height:1.05;margin:0 0 14px;letter-spacing:-.035em}
+  .hero p{font-size:18px;line-height:1.55;margin:0;color:var(--muted)}
+  .section-head{display:flex;justify-content:space-between;align-items:end;margin:38px 0 16px}
+  h2{font-size:20px;margin:0}
+  .section-head span{font-size:13px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+  .card{
+    display:flex;flex-direction:column;min-height:240px;padding:24px;border-radius:22px;
+    background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);
+    text-decoration:none;color:inherit;transition:.18s ease;
+  }
+  .card.live:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(26,39,32,.12)}
+  .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+  .icon{
+    width:46px;height:46px;border-radius:14px;background:var(--green-soft);
+    display:grid;place-items:center;font-size:22px;
+  }
+  .status{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:7px 9px;border-radius:999px}
+  .status.live{background:var(--green-soft);color:var(--green)}
+  .status.soon{background:#f0f1ef;color:#7a817c}
+  .card h3{font-size:21px;margin:0 0 8px}
+  .card p{margin:0;color:var(--muted);line-height:1.48;font-size:14px}
+  .launch{margin-top:auto;padding-top:24px;font-size:14px;font-weight:800;color:var(--green)}
+  .placeholder{opacity:.7;box-shadow:none}
+  .footer{margin-top:34px;color:var(--muted);font-size:12px}
+  @media (max-width:850px){.grid{grid-template-columns:1fr 1fr}h1{font-size:38px}}
+  @media (max-width:580px){.grid{grid-template-columns:1fr}.shell{padding:24px 18px}h1{font-size:34px}.topbar{margin-bottom:36px}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand"><div class="logo">LC</div><div>Lategan Chatbots</div></div>
+    <div class="teacher">Student learning tools</div>
+  </div>
+
+  <section class="hero">
+    <div class="eyebrow">Learning coaches</div>
+    <h1>Choose the coach for your task.</h1>
+    <p>Each coach is designed to guide your thinking, ask useful questions and help you make progress — without doing the learning for you.</p>
+  </section>
+
+  <div class="section-head">
+    <h2>Available now</h2>
+    <span>More coaches coming soon</span>
+  </div>
+
+  <div class="grid">
+    <a class="card live" href="./travel-coach/">
+      <div class="card-top"><div class="icon">✈️</div><div class="status live">Live</div></div>
+      <h3>Travel Coach</h3>
+      <p>Plan a 2-week overseas journey through Europe or Africa while managing destinations, research and a $10,000 AUD budget.</p>
+      <div class="launch">Open coach →</div>
+    </a>
+
+    <div class="card placeholder">
+      <div class="card-top"><div class="icon">🔬</div><div class="status soon">Coming soon</div></div>
+      <h3>Science Investigation Coach</h3>
+      <p>Helps students form questions, plan fair tests, interpret evidence and improve scientific explanations.</p>
+    </div>
+
+    <div class="card placeholder">
+      <div class="card-top"><div class="icon">➗</div><div class="status soon">Coming soon</div></div>
+      <h3>Maths Catch-Up Coach</h3>
+      <p>Works through gaps step by step, gives hints and checks understanding without simply supplying answers.</p>
+    </div>
+
+    <div class="card placeholder">
+      <div class="card-top"><div class="icon">✍️</div><div class="status soon">Coming soon</div></div>
+      <h3>Writing Coach</h3>
+      <p>Supports planning, structure, sentence craft and revision while keeping the student's own ideas and voice.</p>
+    </div>
+
+    <div class="card placeholder">
+      <div class="card-top"><div class="icon">🧭</div><div class="status soon">Coming soon</div></div>
+      <h3>HASS Inquiry Coach</h3>
+      <p>Guides research, source evaluation, comparison and evidence-based conclusions for inquiry tasks.</p>
+    </div>
+
+    <div class="card placeholder">
+      <div class="card-top"><div class="icon">💡</div><div class="status soon">Coming soon</div></div>
+      <h3>Problem Solving Coach</h3>
+      <p>Prompts students to unpack a problem, choose a strategy, test an idea and explain their reasoning.</p>
+    </div>
+  </div>
+
+  <div class="footer">Built for guided learning. Coaches support thinking rather than replacing it.</div>
+</div>
+</body>
+</html>
