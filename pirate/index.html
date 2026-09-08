@@ -199,7 +199,7 @@ function renderAction(){const a=$("actionArea"),g=state.game,p=state.player,t=p.
   if(lastFeedback){showModal(`<div class="eyebrow">Maths result</div><h2>${lastFeedback.correct?"✅ Correct!":"🏴‍☠️ Pirate Tax!"}</h2><p>${lastFeedback.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="dismissFeedback()">Continue</button>`);return}
   if(g.status==="choosing"&&p.can_choose_coord){const all=[1,2,3,4,5,6,7].flatMap(r=>[..."ABCDEFG"].map(c=>c+r)),left=all.filter(c=>!(g.revealed||[]).includes(c));showModal(`<div class="eyebrow">Your special action</div><h2>🎯 Choose the next square!</h2><p>Pick any square that has not been used yet. The teacher will reveal it next.</p><div class="targets">${left.map(c=>`<button class="target" onclick="chooseCoord('${c}')">${c}</button>`).join("")}</div>`);return}
   if(!t){hideModal();if(g.status==="running")a.innerHTML='<div class="wait">✅ You are finished for this round. Waiting for the class…</div>';else if(g.status==="choosing")a.innerHTML='<div class="wait">Waiting for the chooser…</div>';else if(["ready","ready_chosen"].includes(g.status))a.innerHTML='<div class="wait">Round complete. Waiting for your teacher to reveal the next tile…</div>';return}
-  if(t.type==="math"){const title=t.kind==="raid"?"☠️ DEFEND YOUR TREASURE!":t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";const desc=t.kind==="raid"?"Get the subtraction correct to defend your treasure.":"Do the maths yourself. The game will check it and update your score.";showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>${desc}</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="answerrow"><input id="ans" inputmode="numeric" autofocus><button class="btn primary" onclick="answer()">Check</button></div>`);return}
+  if(t.type==="math"){const title=t.kind==="raid"?"☠️ DEFEND YOUR TREASURE!":t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";const desc=t.kind==="raid"?"Get the subtraction correct to defend your treasure.":"Do the maths yourself. The game will check it and update your score.";showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>${desc}</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="answerrow"><input id="ans" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false" autofocus><button class="btn primary" onclick="answer()">Check</button></div>`);return}
   if(t.type==="target"){
     const info={rob:["🏴‍☠️ YOU FOUND ROB!","Choose a pirate to steal from."],sink:["🌊 SINK A PIRATE!","Choose whose unbanked treasure you want to sink."],present:["🎁 PRESENT!","Choose a pirate to receive 1,000 points."],swap:["🔁 SWAP SCORES!","Choose a pirate to swap unbanked scores with."]}[t.action];
     const opts=p.target_options||[];
@@ -216,8 +216,20 @@ function renderAction(){const a=$("actionArea"),g=state.game,p=state.player,t=p.
 
 async function load(){
   try{
-    if(teacherMode){state=await post({action:"pirate_teacher_active",teacher_code:teacherCode});renderTeacher()}
-    else if(token){state=await post({action:"pirate_player_state",join_token:token});renderPlayer()}
+    // On iPhone/iPad, don't rebuild the maths modal while the student is typing.
+    // Re-rendering the input every 1.2 seconds causes Safari to drop focus/keyboard.
+    if(!teacherMode && document.activeElement && document.activeElement.id==="ans"){
+      return;
+    }
+
+    if(teacherMode){
+      state=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+      renderTeacher();
+    }
+    else if(token){
+      state=await post({action:"pirate_player_state",join_token:token});
+      renderPlayer();
+    }
   }catch(e){console.error(e)}
 }
 
