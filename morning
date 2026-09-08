@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Good Morning · Learning Hub</title>
+<style>
+:root{--green:#145540;--cream:#f8f5ea;--lime:#dff1b7;--lav:#d8c3f4;--ink:#10261d;--muted:#6d786f;--line:#d7dfd7;--shadow:0 18px 50px rgba(7,35,25,.17)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--green);color:var(--ink)}button,input,textarea{font:inherit}body{min-height:100vh}
+.screen{min-height:100vh;padding:2.2vw;display:grid;grid-template-columns:1.03fr .97fr;grid-template-rows:auto 1fr auto;gap:1.5vw;background:radial-gradient(circle at 15% 12%,rgba(255,255,255,.08),transparent 24%),linear-gradient(145deg,#176247,#0f4c39)}
+.header{grid-column:1;color:#fff}.kicker{font-size:1.45vw;font-weight:800;opacity:.82;margin-bottom:.4vw}h1{font-size:5.1vw;line-height:.95;letter-spacing:-.055em;margin:0;font-weight:950}h1 span{color:var(--lav)}
+.date{display:inline-flex;gap:.7vw;align-items:center;background:var(--lime);padding:.8vw 1.3vw;border-radius:999px;margin-top:1.3vw;font-size:1.65vw;font-weight:900;color:#163d2d}
+.card{background:var(--cream);border-radius:1.5vw;box-shadow:var(--shadow)}.todo{grid-column:1;grid-row:2;padding:1.7vw 2vw}.todo h2,.expect h2{font-size:3vw;margin:0 0 1vw;letter-spacing:-.03em}
+.todo-list{display:grid;gap:.75vw}.todo-row{display:grid;grid-template-columns:2.2vw 1fr;gap:.8vw;align-items:center;padding:.62vw 0;border-bottom:1px solid rgba(20,85,64,.12);font-size:2.05vw;font-weight:800}.num{width:2.2vw;height:2.2vw;border-radius:50%;display:grid;place-items:center;background:var(--lav);font-size:1.05vw}
+.expect{grid-column:2;grid-row:1/3;padding:1.6vw 2vw}.expect h2{color:var(--green)}.exp{display:grid;grid-template-columns:2.8vw 1fr;gap:.9vw;padding:1vw 0;border-bottom:1px solid #dce3dc}.exp .ico{width:2.8vw;height:2.8vw;border-radius:50%;display:grid;place-items:center;background:#dff0bb;font-size:1.4vw}.exp:nth-child(even) .ico{background:#decdf3}.exp strong{font-size:1.8vw;display:block;margin-bottom:.15vw}.exp span{font-size:1.05vw;color:#43564b}
+.bottom{grid-column:1/3;display:grid;grid-template-columns:1.05fr 1.15fr .9fr .95fr;gap:1.2vw}.mini{border-radius:1.25vw;padding:1.15vw 1.35vw;min-height:9.6vw;background:var(--cream);box-shadow:var(--shadow)}.mini h3{font-size:1.65vw;margin:0 0 .65vw}.reminders{background:#e2d1f7}.reminder-text{white-space:pre-wrap;font-size:1.2vw;line-height:1.35;min-height:4.3vw}
+.wordle{background:linear-gradient(145deg,#2d9a61,#1c774c);color:#fff;text-decoration:none;display:flex;align-items:center;gap:1.2vw}.wordle-grid{display:grid;grid-template-columns:repeat(3,1.2vw);grid-template-rows:repeat(3,1.2vw);gap:.18vw;padding:.55vw;border:.28vw solid #10261d;border-radius:.6vw;background:#fff}.wordle-grid i{display:block;background:#eee}.wordle-grid i:nth-child(5){background:#e3bb35}.wordle-grid i:nth-child(6),.wordle-grid i:nth-child(7),.wordle-grid i:nth-child(8),.wordle-grid i:nth-child(9){background:#79b66f}.wordle strong{font-size:2.2vw}.wordle small{font-size:.95vw;letter-spacing:.15em;font-weight:800}
+.big-name{font-size:2.15vw;font-weight:950;letter-spacing:-.03em}.subtext{font-size:.9vw;color:#657369;margin-top:.45vw}.lunch{background:#dfcef5}
+.tools{position:fixed;top:14px;right:14px;z-index:20;display:flex;gap:8px}.toolbtn{border:1px solid rgba(255,255,255,.25);background:rgba(8,45,33,.82);color:#fff;border-radius:10px;padding:8px 11px;font-size:12px;font-weight:850;backdrop-filter:blur(8px);text-decoration:none}
+.editor{position:fixed;inset:0;background:rgba(7,34,25,.72);z-index:30;display:none;place-items:center;padding:20px}.editor.show{display:grid}.editcard{width:min(650px,100%);background:#fff;border-radius:22px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.24)}.editcard h2{margin:0 0 14px}.editcard label{display:block;font-size:11px;font-weight:850;margin:12px 0 5px}.editcard textarea,.editcard input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px}.editcard textarea{min-height:110px}.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font-weight:850;cursor:pointer}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+@media(max-width:900px){.screen{display:block;padding:18px}.header,.todo,.expect,.bottom{margin-bottom:15px}.bottom{display:grid;grid-template-columns:1fr 1fr}.kicker{font-size:14px}h1{font-size:46px}.date{font-size:16px}.todo h2,.expect h2{font-size:28px}.todo-row{font-size:20px;grid-template-columns:28px 1fr}.num{width:28px;height:28px;font-size:13px}.exp{grid-template-columns:40px 1fr}.exp .ico{width:40px;height:40px;font-size:18px}.exp strong{font-size:20px}.exp span{font-size:13px}.mini{min-height:140px;padding:16px}.mini h3{font-size:20px}.big-name{font-size:27px}.reminder-text{font-size:15px}.wordle strong{font-size:28px}.wordle-grid{grid-template-columns:repeat(3,18px);grid-template-rows:repeat(3,18px)}.wordle small,.subtext{font-size:12px}}
+</style>
+</head>
+<body>
+<div class="tools"><button class="toolbtn" id="editBtn">✎ Edit morning</button><button class="toolbtn" id="fullBtn">⛶ Full screen</button><a class="toolbtn" href="../teacher/">← Hub</a></div>
+<main class="screen">
+<header class="header"><div class="kicker">Welcome to our class</div><h1>Good Morning <span id="className">4L</span></h1><div class="date">📅 <span id="dateText"></span></div></header>
+<section class="card todo"><h2>✓ To Do</h2><div class="todo-list" id="todoList"></div></section>
+<section class="card expect"><h2>Our Class Expectations</h2><div id="expectations"></div></section>
+<section class="bottom">
+<div class="mini reminders"><h3>📌 Reminders</h3><div class="reminder-text" id="reminders">No reminders today.</div></div>
+<a class="mini wordle" id="wordleLink" target="_blank" rel="noopener"><div class="wordle-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div><strong>Wordle</strong><br><small>CLICK TO PLAY →</small></div></a>
+<div class="mini"><h3>👥 Daily Helper</h3><div class="big-name" id="helperName">—</div><div class="subtext">Automatically rotates through the active class list.</div></div>
+<div class="mini lunch"><h3>🍴 Lunch Orders</h3><div class="big-name" id="lunchNames">—</div><div class="subtext">Teacher-controlled refresh.</div></div>
+</section>
+</main>
+<div class="editor" id="editor"><div class="editcard"><h2>Edit today's morning screen</h2><label>To Do 1</label><input id="todo1"><label>To Do 2</label><input id="todo2"><label>To Do 3</label><input id="todo3"><label>Reminders</label><textarea id="reminderInput" placeholder="Add any reminders for today…"></textarea><div class="actions"><button class="btn" id="refreshLunch">↻ Refresh lunch orders</button><button class="btn" id="closeEdit">Cancel</button><button class="btn primary" id="saveEdit">Save</button></div></div></div>
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev",teacherCode=localStorage.getItem("lategan_teacher_code")||"", $=id=>document.getElementById(id);let data=null;
+function localDateKey(){const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`}
+async function post(payload){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}),j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Something went wrong.");return j}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function render(){const d=data.daily;$("className").textContent=d.class_name||"Class";const date=new Date(d.date_key+"T12:00:00");$("dateText").textContent=date.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});$("todoList").innerHTML=(d.todo||[]).map((x,i)=>`<div class="todo-row"><span class="num">${i+1}</span><span>${esc(x)}</span></div>`).join("");$("reminders").textContent=d.reminders.trim()||"No reminders today.";$("helperName").textContent=d.helper?.name||"—";$("lunchNames").textContent=(d.lunch||[]).map(x=>x.name).join(" & ")||"—";$("wordleLink").href=d.wordle_url;$("expectations").innerHTML=(data.expectations||[]).map((x,i)=>`<div class="exp"><div class="ico">${["📋","🕒","🧠","💬","★"][i]||"•"}</div><div><strong>${esc(x.title)}</strong><span>${esc(x.detail)}</span></div></div>`).join("")}
+async function load(){if(!teacherCode){alert("Open this screen from your Teacher Learning Hub.");location.href="../teacher/";return}data=await post({action:"teacher_daily_state",teacher_code:teacherCode,date_key:localDateKey()});render()}
+$("editBtn").onclick=()=>{const t=data.daily.todo||[];$("todo1").value=t[0]||"";$("todo2").value=t[1]||"";$("todo3").value=t[2]||"";$("reminderInput").value=data.daily.reminders||"";$("editor").classList.add("show")};
+$("closeEdit").onclick=()=>$("editor").classList.remove("show");
+$("saveEdit").onclick=async()=>{const r=await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:localDateKey(),reminders:$("reminderInput").value,todo:[$("todo1").value,$("todo2").value,$("todo3").value]});data.daily=r.daily;$("editor").classList.remove("show");render()};
+$("refreshLunch").onclick=async()=>{if(!confirm("Choose two new lunch-order students for today?"))return;const r=await post({action:"teacher_lunch_refresh",teacher_code:teacherCode,date_key:localDateKey()});data.daily=r.daily;$("editor").classList.remove("show");render()};
+$("fullBtn").onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()};
+load();
+</script>
+</body>
+</html>
