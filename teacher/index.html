@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Teacher Hub</title>
+<style>
+:root{
+  --bg:#f4f6f3;--panel:#fff;--ink:#1f2622;--muted:#6b746f;--line:#dfe5df;
+  --green:#2f6655;--soft:#edf4f1;--danger:#a0463b;--shadow:0 12px 34px rgba(30,47,38,.08)
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select{font:inherit}button{cursor:pointer}
+.shell{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:#fff;border-right:1px solid var(--line);padding:24px 18px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:11px;font-weight:850;margin-bottom:30px}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:900}
+.nav{display:flex;flex-direction:column;gap:7px}
+.nav button{border:0;background:none;text-align:left;padding:11px 12px;border-radius:10px;color:var(--muted);font-weight:700}
+.nav button.active{background:var(--soft);color:var(--green)}
+.teacher-card{margin-top:auto;border-top:1px solid var(--line);padding-top:16px}
+.teacher-name{font-weight:800;font-size:14px}.teacher-class{font-size:12px;color:var(--muted);margin-top:3px}
+.signout{border:0;background:none;color:var(--green);padding:8px 0 0;font-weight:700;font-size:12px}
+.main{padding:30px 34px}
+.top{display:flex;justify-content:space-between;align-items:end;margin-bottom:22px}
+.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--green);font-weight:850;margin-bottom:7px}
+h1{margin:0;font-size:34px;letter-spacing:-.03em}
+.sub{color:var(--muted);font-size:14px;margin-top:7px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:var(--shadow)}
+.stat .n{font-size:28px;font-weight:850}.stat .l{font-size:12px;color:var(--muted);margin-top:3px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.panel-head{padding:17px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.panel-head h2{font-size:17px;margin:0}
+.actions{display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-weight:750;font-size:13px}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);font-size:13px}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a938e;background:#fafbfa}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800}
+.status{display:inline-block;padding:5px 8px;border-radius:999px;font-size:11px;font-weight:800;background:var(--soft);color:var(--green)}
+.rowbtn{border:0;background:none;color:var(--green);font-weight:750;padding:4px 0}
+.empty{padding:28px;text-align:center;color:var(--muted);font-size:13px}
+.view{display:none}.view.active{display:block}
+.modal{position:fixed;inset:0;background:rgba(244,246,243,.9);backdrop-filter:blur(4px);display:none;place-items:center;padding:20px;z-index:50}
+.modal.show{display:grid}
+.card{width:min(480px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:24px}
+.card h3{margin:0 0 6px;font-size:22px}.card p{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.45}
+.field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;padding:20px;z-index:100}
+.login-card{width:min(440px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}
+.login-card h2{margin:0 0 8px;font-size:28px}.login-card p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 18px}
+.error{color:var(--danger);font-size:12px;margin-top:10px}
+.session-list{padding:12px 18px}
+.session{border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px}
+.session strong{display:block;font-size:13px}.session span{font-size:11px;color:var(--muted)}
+.transcript{padding:18px;max-height:520px;overflow:auto}
+.msg{padding:10px 12px;border-radius:12px;margin-bottom:9px;font-size:13px;line-height:1.45}
+.msg.user{background:#f0f3f1}.msg.assistant{background:#fff;border:1px solid var(--line)}
+@media(max-width:900px){.shell{grid-template-columns:1fr}.side{display:none}.main{padding:20px}.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<div class="login" id="loginScreen">
+  <div class="login-card">
+    <div class="logo" style="margin-bottom:18px">TH</div>
+    <h2>Teacher Hub</h2>
+    <p>Sign in with your teacher access code. This area contains student rosters and chat transcripts.</p>
+    <div class="field"><label>Teacher code</label><input id="teacherCode" placeholder="Enter teacher code"></div>
+    <button class="btn primary" style="width:100%" id="loginBtn">Sign in</button>
+    <div class="error" id="loginError"></div>
+  </div>
+</div>
+
+<div class="shell">
+  <aside class="side">
+    <div class="brand"><div class="logo">LH</div><div>Learning Hub</div></div>
+    <div class="nav">
+      <button class="active" data-view="dashboard">Dashboard</button>
+      <button data-view="students">Students</button>
+      <button data-view="chats">Chats</button>
+      <button disabled style="opacity:.45">Analytics · soon</button>
+      <button disabled style="opacity:.45">Class tools · soon</button>
+    </div>
+    <div class="teacher-card">
+      <div class="teacher-name" id="teacherName">Teacher</div>
+      <div class="teacher-class" id="teacherClass">—</div>
+      <button class="signout" id="signOut">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="view active" id="view-dashboard">
+      <div class="top">
+        <div><div class="eyebrow">Teacher dashboard</div><h1>Your class at a glance.</h1><div class="sub">Roster, student chats and activity from the Learning Hub.</div></div>
+      </div>
+      <div class="grid">
+        <div class="stat"><div class="n" id="statStudents">0</div><div class="l">Students</div></div>
+        <div class="stat"><div class="n" id="statChats">0</div><div class="l">Chat sessions</div></div>
+        <div class="stat"><div class="n" id="statMessages">0</div><div class="l">Messages</div></div>
+        <div class="stat"><div class="n" id="statActive">0</div><div class="l">Active today</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Recent student activity</h2></div>
+        <div id="recentActivity" class="empty">No activity yet.</div>
+      </div>
+    </section>
+
+    <section class="view" id="view-students">
+      <div class="top"><div><div class="eyebrow">Roster</div><h1>Students</h1><div class="sub">Create and manage the student codes used across the hub.</div></div></div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Class roster</h2>
+          <div class="actions"><button class="btn primary" id="addStudentBtn">+ Add student</button></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Class</th><th>Student code</th><th>Status</th><th></th></tr></thead>
+            <tbody id="studentRows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="studentEmpty">No students yet.</div>
+      </div>
+    </section>
+
+    <section class="view" id="view-chats">
+      <div class="top"><div><div class="eyebrow">Student conversations</div><h1>Chats</h1><div class="sub">Open a student to view their saved coaching conversations.</div></div></div>
+      <div class="panel">
+        <div class="panel-head"><h2>Students</h2></div>
+        <div id="chatStudentList" class="session-list"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="studentModal">
+  <div class="card">
+    <h3>Add student</h3>
+    <p>Create a student code. Students only need this code to access their saved work.</p>
+    <div class="field"><label>First name</label><input id="newName" placeholder="e.g. Olivia"></div>
+    <div class="field"><label>Class</label><input id="newClass" placeholder="e.g. 4L"></div>
+    <div class="field"><label>Student code</label><input id="newCode" placeholder="e.g. 4L-01"></div>
+    <div class="modal-actions"><button class="btn" id="cancelStudent">Cancel</button><button class="btn primary" id="saveStudent">Add student</button></div>
+  </div>
+</div>
+
+<div class="modal" id="chatModal">
+  <div class="card" style="width:min(720px,100%)">
+    <h3 id="chatModalTitle">Student chats</h3>
+    <div id="chatModalBody"></div>
+    <div class="modal-actions"><button class="btn" id="closeChatModal">Close</button></div>
+  </div>
+</div>
+
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev";
+let teacherCode="", teacher=null, students=[];
+const $=id=>document.getElementById(id);
+
+async function post(payload){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||"Something went wrong.");
+  return d;
+}
+function showView(name){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  document.querySelectorAll(".nav button[data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+  $("view-"+name).classList.add("active");
+  if(name==="students") loadStudents();
+  if(name==="chats") loadChatStudents();
+}
+document.querySelectorAll(".nav button[data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
+
+async function login(){
+  $("loginError").textContent="";
+  const code=$("teacherCode").value.trim();
+  if(!code) return;
+  try{
+    const d=await post({action:"teacher_login",teacher_code:code});
+    teacherCode=code;teacher=d.teacher;
+    localStorage.setItem("lategan_teacher_code",code);
+    $("teacherName").textContent=teacher.display_name||"Teacher";
+    $("teacherClass").textContent=teacher.class_name||"";
+    $("loginScreen").style.display="none";
+    await loadDashboard();
+  }catch(e){$("loginError").textContent=e.message}
+}
+$("loginBtn").onclick=login;
+$("teacherCode").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+$("signOut").onclick=()=>{localStorage.removeItem("lategan_teacher_code");location.reload()};
+
+async function loadDashboard(){
+  try{
+    const d=await post({action:"teacher_dashboard",teacher_code:teacherCode});
+    $("statStudents").textContent=d.stats.students||0;
+    $("statChats").textContent=d.stats.sessions||0;
+    $("statMessages").textContent=d.stats.messages||0;
+    $("statActive").textContent=d.stats.active_today||0;
+    const box=$("recentActivity");
+    if(!d.recent?.length){box.className="empty";box.textContent="No activity yet.";return}
+    box.className="session-list";
+    box.innerHTML=d.recent.map(x=>`<div class="session"><strong>${esc(x.display_name||"Student")} · ${esc(x.bot_id||"coach")}</strong><span>${esc(x.title||"Conversation")} · ${esc(x.updated_at||"")}</span></div>`).join("");
+  }catch(e){}
+}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+async function loadStudents(){
+  try{
+    const d=await post({action:"teacher_list_students",teacher_code:teacherCode});
+    students=d.students||[];
+    const body=$("studentRows");body.innerHTML="";
+    $("studentEmpty").style.display=students.length?"none":"block";
+    students.forEach(s=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td><strong>${esc(s.display_name||"")}</strong></td><td>${esc(s.class_name||"")}</td><td class="code">${esc(s.student_code)}</td><td><span class="status">${s.active===0?"Inactive":"Active"}</span></td><td><button class="rowbtn" data-id="${s.id}">${s.active===0?"Activate":"Deactivate"}</button></td>`;
+      tr.querySelector("button").onclick=()=>toggleStudent(s);
+      body.appendChild(tr);
+    });
+  }catch(e){alert(e.message)}
+}
+$("addStudentBtn").onclick=()=>{$("newName").value="";$("newClass").value=teacher?.class_name||"";$("newCode").value="";$("studentModal").classList.add("show")};
+$("cancelStudent").onclick=()=>$("studentModal").classList.remove("show");
+$("saveStudent").onclick=async()=>{
+  try{
+    await post({action:"teacher_add_student",teacher_code:teacherCode,display_name:$("newName").value.trim(),class_name:$("newClass").value.trim(),student_code:$("newCode").value.trim()});
+    $("studentModal").classList.remove("show");await loadStudents();await loadDashboard();
+  }catch(e){alert(e.message)}
+};
+async function toggleStudent(s){
+  try{
+    await post({action:"teacher_set_student_active",teacher_code:teacherCode,student_id:s.id,active:s.active===0?1:0});
+    await loadStudents();
+  }catch(e){alert(e.message)}
+}
+async function loadChatStudents(){
+  await loadStudents();
+  const box=$("chatStudentList");
+  if(!students.length){box.innerHTML='<div class="empty">No students yet.</div>';return}
+  box.innerHTML="";
+  students.forEach(s=>{
+    const b=document.createElement("button");b.className="session-card";
+    b.innerHTML=`<strong>${esc(s.display_name||s.student_code)}</strong><span>${esc(s.class_name||"")} · ${esc(s.student_code)}</span>`;
+    b.onclick=()=>openStudentChats(s);box.appendChild(b);
+  });
+}
+async function openStudentChats(s){
+  try{
+    const d=await post({action:"teacher_student_sessions",teacher_code:teacherCode,student_id:s.id});
+    $("chatModalTitle").textContent=(s.display_name||s.student_code)+" — chats";
+    const body=$("chatModalBody");
+    if(!d.sessions?.length){body.innerHTML='<div class="empty">No chats yet.</div>'}
+    else{
+      body.innerHTML='<div class="session-list">'+d.sessions.map(x=>`<button class="session-card" onclick="openTranscript(${x.id})"><strong>${esc(x.title||"Conversation")}</strong><span>${esc(x.bot_id||"")} · ${esc(x.updated_at||"")}</span></button>`).join("")+'</div>';
+    }
+    $("chatModal").classList.add("show");
+  }catch(e){alert(e.message)}
+}
+async function openTranscript(id){
+  try{
+    const d=await post({action:"teacher_get_session",teacher_code:teacherCode,session_id:id});
+    $("chatModalBody").innerHTML='<div class="transcript">'+(d.messages||[]).map(m=>`<div class="msg ${m.role==="user"?"user":"assistant"}"><strong>${m.role==="user"?"Student":"Coach"}</strong><br>${esc(m.content)}</div>`).join("")+'</div>';
+  }catch(e){alert(e.message)}
+}
+$("closeChatModal").onclick=()=>$("chatModal").classList.remove("show");
+
+(async()=>{
+  const saved=localStorage.getItem("lategan_teacher_code");
+  if(saved){$("teacherCode").value=saved;await login()}
+})();
+</script>
+</body>
+</html>
