@@ -17,6 +17,67 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.stat{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:11px}.lab{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:850}.val{font-size:21px;font-weight:900;margin-top:4px}.feed{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}.feeditem{border-left:3px solid var(--green);background:var(--soft);border-radius:8px;padding:9px 10px;font-size:12px}.actionbox{border:2px solid var(--green);border-radius:16px;padding:16px;margin-bottom:14px}.actionbox h3{margin:0 0 7px}.actionbox p{margin:0 0 12px;color:var(--muted);font-size:13px}.answerrow{display:flex;gap:8px}.answerrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:18px;font-weight:850;color:#17211c;background:#ffffff;caret-color:#17211c}.targets{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.target{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-weight:800;text-align:left}
 .joincard{width:min(480px,100%);margin:50px auto;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:26px}.joincard h2{font-size:28px;margin:0 0 7px}.joincard p{color:var(--muted);font-size:13px;line-height:1.45}.field{margin-top:13px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px}.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:18px}.waiting{text-align:center;padding:38px}.waiting .big{font-size:52px}.waiting h2{margin:8px 0}.wait{padding:24px;text-align:center;color:var(--muted);font-size:13px}.publictag{display:inline-block;background:#fff0e9;color:#984738;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900}.pod{display:flex;justify-content:space-between;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:7px;font-weight:850}
 .cell.used{opacity:.48;position:relative;background:#efe6c7;border-color:#d5be72}.cell.used:after{content:"×";position:absolute;inset:0;display:grid;place-items:center;font-size:54px;line-height:1;color:#7f372f;font-weight:950;text-shadow:0 1px #fff}.cell.active{outline:4px solid #d39a23;box-shadow:0 0 0 5px rgba(211,154,35,.16);transform:scale(1.02);z-index:2}.modalback{position:fixed;inset:0;background:rgba(11,26,21,.58);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modalback.show{display:flex}.eventmodal{width:min(620px,100%);background:#fff;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.28);padding:24px;border:1px solid var(--line);animation:pop .18s ease-out}.eventmodal .eyebrow{font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.eventmodal h2{font-size:30px;margin:7px 0 8px}.eventmodal p{font-size:15px;line-height:1.5;color:#53605a}.eventmodal .answerrow input{font-size:24px}.eventmodal .targets{margin-top:10px}.eventmodal .target{padding:13px}.tray{display:flex;flex-wrap:wrap;gap:7px;padding:10px;border:1px dashed #b9c9c1;border-radius:14px;background:#fbfcfb;min-height:62px}.tray-tile{padding:8px 9px;border:1px solid #cbd8d1;background:#fff;border-radius:9px;font-size:11px;font-weight:900;cursor:grab}.tray-tile.selected{outline:3px solid #b27b22}.countdown-banner{background:#fff1cf;border:1px solid #e2c36e;border-radius:14px;padding:12px 14px;font-weight:900;text-align:center;margin-bottom:12px}@keyframes pop{from{transform:scale(.93);opacity:.3}to{transform:scale(1);opacity:1}}
+
+/* v6: action animation from active grid square + strategic choose-next mode */
+.boardwrap{position:relative}
+.choose-banner{
+  display:none;
+  position:sticky;
+  top:8px;
+  z-index:12;
+  margin:0 auto 10px;
+  width:min(520px,calc(100% - 18px));
+  background:rgba(24,63,53,.96);
+  color:#fff;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:14px;
+  padding:11px 14px;
+  text-align:center;
+  font-size:13px;
+  font-weight:900;
+  box-shadow:0 10px 28px rgba(17,43,35,.22);
+  pointer-events:none;
+}
+.choose-banner.show{display:block}
+.cell.chooseable{
+  cursor:pointer!important;
+  outline:2px solid rgba(47,102,85,.32);
+  outline-offset:-2px;
+  transition:transform .12s ease,box-shadow .12s ease,outline-color .12s ease;
+}
+.cell.chooseable:hover,
+.cell.chooseable:active{
+  transform:scale(1.045);
+  outline-color:#2f6655;
+  box-shadow:0 7px 18px rgba(47,102,85,.2);
+  z-index:4;
+}
+.cell.chooseable::before{
+  content:"Tap";
+  position:absolute;
+  left:50%;
+  bottom:4px;
+  transform:translateX(-50%);
+  font-size:8px;
+  font-weight:950;
+  color:#2f6655;
+  background:rgba(255,255,255,.8);
+  border-radius:999px;
+  padding:2px 5px;
+}
+.eventmodal.from-grid{
+  transform-origin:center center;
+}
+.cell.action-source{
+  animation:sourcePulse .55s ease-out 1;
+  z-index:8;
+}
+@keyframes sourcePulse{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.12);box-shadow:0 0 0 8px rgba(220,159,35,.28)}
+  100%{transform:scale(1.025)}
+}
+
 @media(max-width:900px){.grid2,.lobby{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -96,7 +157,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
           <div id="studentNotice" class="setupbox"></div>
           <div id="actionArea"></div><div id="trayWrap" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 7px"><strong style="font-size:12px">Tile tray</strong><span id="placedCount" style="font-size:11px;color:var(--muted);font-weight:850">0 / 49 placed</span></div><div class="tray" id="tileTray"></div></div>
         </div>
-        <div class="boardwrap"><div class="board" id="playerBoard"></div></div>
+        <div class="boardwrap"><div id="chooseBanner" class="choose-banner">🎯 Choose the next square — tap any unused square on your grid.</div><div class="board" id="playerBoard"></div></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:18px">
         <div class="panel"><div class="ph"><h3>Public events</h3></div><div class="pb"><div class="feed" id="studentFeed"></div></div></div>
@@ -138,7 +199,7 @@ $("joinBtn").onclick=async()=>{
   }catch(e){$("joinError").textContent=e.message}
 };
 
-function makeBoard(el,revealed,current,board,setup){
+function makeBoard(el,revealed,current,board,setup,chooseMode=false){
   el.innerHTML='<div></div>'+[..."ABCDEFG"].map(x=>`<div class="hdr">${x}</div>`).join("");
   for(let r=1;r<=7;r++){
     el.insertAdjacentHTML("beforeend",`<div class="hdr">${r}</div>`);
@@ -154,7 +215,13 @@ function makeBoard(el,revealed,current,board,setup){
         d.ondragover=e=>e.preventDefault();
         d.ondrop=async e=>{e.preventDefault();if(!dragInfo)return;const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
         d.onclick=async()=>{if(!dragInfo){if(tile){dragInfo={from_type:"slot",from_index:i};d.classList.add("selected")}return}const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
-      }else if(board)d.innerHTML=`<span style="font-size:11px;text-align:center">${tile?.label||"?"}</span>`;
+      }else if(board){
+        d.innerHTML=`<span style="font-size:11px;text-align:center">${tile?.label||"?"}</span>`;
+        if(chooseMode && !rev){
+          d.classList.add("chooseable");
+          d.onclick=()=>chooseCoord(coord);
+        }
+      }
       else d.textContent=coord;
       el.appendChild(d);
     }
@@ -190,14 +257,71 @@ function renderPlayer(){
   $("lockBoard").disabled=(p.placed_count||0)!==49;
   const studentRevealed=[...(g.revealed||[])];
   if(g.status==="running"&&!p.task&&g.current_coord&&!studentRevealed.includes(g.current_coord))studentRevealed.push(g.current_coord);
-  makeBoard($("playerBoard"),studentRevealed,g.status==="running"&&p.task?g.current_coord:null,p.board,setup);
-  if(setup)renderTray();feed($("studentFeed"),g.public_feed);renderAction();
+  const chooseMode=g.status==="choosing"&&p.can_choose_coord;
+  $("chooseBanner").classList.toggle("show",chooseMode);
+  makeBoard(
+    $("playerBoard"),
+    studentRevealed,
+    g.status==="running"&&p.task?g.current_coord:null,
+    p.board,
+    setup,
+    chooseMode
+  );
+  if(setup)renderTray();
+  feed($("studentFeed"),g.public_feed);
+  renderAction();
   if(g.status==="finished"){$("finishPanel").style.display="block";$("podium").innerHTML=(state.ranking||[]).slice(0,10).map((x,i)=>`<div class="pod"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.display_name}</span><span>${money(x.total)}</span></div>`).join("")}else $("finishPanel").style.display="none";timer();
 }
-function showModal(content){$("eventModalCard").innerHTML=content;$("eventModal").classList.add("show")}function hideModal(){$("eventModal").classList.remove("show")}
+function showModal(content,animateFromGrid=true){
+  const back=$("eventModal"),card=$("eventModalCard");
+  card.innerHTML=content;
+  back.classList.add("show");
+
+  if(!animateFromGrid)return;
+
+  const source=document.querySelector("#playerBoard .cell.active");
+  if(!source)return;
+
+  source.classList.remove("action-source");
+  void source.offsetWidth;
+  source.classList.add("action-source");
+
+  requestAnimationFrame(()=>{
+    const sr=source.getBoundingClientRect();
+    const cr=card.getBoundingClientRect();
+    const sx=sr.left+sr.width/2;
+    const sy=sr.top+sr.height/2;
+    const cx=cr.left+cr.width/2;
+    const cy=cr.top+cr.height/2;
+    const scale=Math.max(.16,Math.min(.38,sr.width/Math.max(cr.width,1)));
+
+    card.classList.add("from-grid");
+    card.animate(
+      [
+        {
+          transform:`translate(${sx-cx}px,${sy-cy}px) scale(${scale})`,
+          opacity:.15
+        },
+        {
+          transform:"translate(0,0) scale(1)",
+          opacity:1
+        }
+      ],
+      {
+        duration:320,
+        easing:"cubic-bezier(.2,.8,.2,1)"
+      }
+    );
+  });
+}
+function hideModal(){$("eventModal").classList.remove("show")}
 function renderAction(){const a=$("actionArea"),g=state.game,p=state.player,t=p.task;a.innerHTML="";
-  if(lastFeedback){showModal(`<div class="eyebrow">Maths result</div><h2>${lastFeedback.correct?"✅ Correct!":"🏴‍☠️ Pirate Tax!"}</h2><p>${lastFeedback.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="dismissFeedback()">Continue</button>`);return}
-  if(g.status==="choosing"&&p.can_choose_coord){const all=[1,2,3,4,5,6,7].flatMap(r=>[..."ABCDEFG"].map(c=>c+r)),left=all.filter(c=>!(g.revealed||[]).includes(c));showModal(`<div class="eyebrow">Your special action</div><h2>🎯 Choose the next square!</h2><p>Pick any square that has not been used yet. The teacher will reveal it next.</p><div class="targets">${left.map(c=>`<button class="target" onclick="chooseCoord('${c}')">${c}</button>`).join("")}</div>`);return}
+  if(lastFeedback){showModal(`<div class="eyebrow">Maths result</div><h2>${lastFeedback.correct?"✅ Correct!":"🏴‍☠️ Pirate Tax!"}</h2><p>${lastFeedback.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="dismissFeedback()">Continue</button>`,false);return}
+  if(g.status==="choosing"&&p.can_choose_coord){
+    hideModal();
+    a.innerHTML='<div class="actionbox"><h3>🎯 Choose the next square</h3><p>Your grid is still active. Look at what remains and tap the unused square you want the teacher to reveal next.</p></div>';
+    return
+  }
   if(!t){hideModal();if(g.status==="running")a.innerHTML='<div class="wait">✅ You are finished for this round. Waiting for the class…</div>';else if(g.status==="choosing")a.innerHTML='<div class="wait">Waiting for the chooser…</div>';else if(["ready","ready_chosen"].includes(g.status))a.innerHTML='<div class="wait">Round complete. Waiting for your teacher to reveal the next tile…</div>';return}
   if(t.type==="math"){const title=t.kind==="raid"?"☠️ DEFEND YOUR TREASURE!":t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";const desc=t.kind==="raid"?"Get the subtraction correct to defend your treasure.":"Do the maths yourself. The game will check it and update your score.";showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>${desc}</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="answerrow"><input id="ans" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false" autofocus><button class="btn primary" onclick="answer()">Check</button></div>`);return}
   if(t.type==="target"){
