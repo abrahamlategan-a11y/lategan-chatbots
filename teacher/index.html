@@ -31,12 +31,10 @@ button,input,textarea,select{font:inherit}button{cursor:pointer}
 .eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--green);font-weight:850;margin-bottom:7px}
 h1{font-size:38px;letter-spacing:-.035em;margin:0 0 7px;line-height:1.05}
 .sub{color:var(--muted);font-size:15px;line-height:1.5;max-width:720px}
-.top-actions{display:flex;gap:9px}
 .btn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;font-size:13px;font-weight:780;color:var(--ink)}
 .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
-.btn.ghost{background:transparent}
 .tilegrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.tile{background:#fff;border:1px solid var(--line);border-radius:20px;padding:21px;box-shadow:var(--shadow);min-height:192px;display:flex;flex-direction:column;transition:.18s ease}
+.tile{background:#fff;border:1px solid var(--line);border-radius:20px;padding:21px;box-shadow:var(--shadow);min-height:192px;display:flex;flex-direction:column}
 .tile.clickable{cursor:pointer}.tile.clickable:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(29,48,39,.11)}
 .tile-icon{width:46px;height:46px;border-radius:14px;background:var(--green-soft);display:grid;place-items:center;font-size:22px;margin-bottom:20px}
 .tile h3{margin:0 0 7px;font-size:18px}.tile p{margin:0;color:var(--muted);font-size:13px;line-height:1.48}
@@ -47,40 +45,55 @@ h1{font-size:38px;letter-spacing:-.035em;margin:0 0 7px;line-height:1.05}
 .botgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
 .botcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:220px}
 .botcard.create{border:1.5px dashed #b7c4bd;background:#fbfcfb;align-items:center;justify-content:center;text-align:center;cursor:pointer}
-.botcard.create:hover{background:#f7faf8}
-.bot-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .bot-icon{width:42px;height:42px;border-radius:13px;background:var(--green-soft);display:grid;place-items:center;font-size:20px}
-.badge{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.08em;padding:6px 8px;border-radius:999px}
-.badge.live{background:var(--green-soft);color:var(--green)}.badge.draft{background:#f0f1ef;color:#7c837f}
-.botcard h3{margin:0 0 6px;font-size:17px}.meta{font-size:11px;color:#8a928e;margin-bottom:9px}.botcard p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+.botcard h3{margin:0 0 6px;font-size:17px}.botcard p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
 .bot-actions{display:flex;gap:7px;margin-top:auto;padding-top:18px;flex-wrap:wrap}
 .small{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:800}
 .small.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.badge{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.08em;padding:6px 8px;border-radius:999px}
+.badge.live{background:var(--green-soft);color:var(--green)}.badge.draft{background:#f0f1ef;color:#7c837f}
 .panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
 .panelhead{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
 .panelhead h3{margin:0;font-size:16px}
 table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);font-size:13px}
 th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;background:#fafbfa}
 .code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:800}.status{display:inline-block;padding:5px 8px;border-radius:999px;background:var(--green-soft);color:var(--green);font-size:10px;font-weight:850}
+.chat-layout{display:grid;grid-template-columns:300px 1fr;gap:16px}
+.student-list,.session-list{display:flex;flex-direction:column;gap:8px;padding:14px}
+.list-btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px;text-align:left}
+.list-btn strong{display:block;font-size:13px}.list-btn span{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.list-btn.active{border-color:#abc3b8;background:#f7fbf9}
+.chat-detail{padding:18px}
+.snapshot{border:1px solid var(--line);background:#fbfcfb;border-radius:16px;padding:16px;margin-bottom:16px}
+.snapshot-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.snapshot h3{margin:0;font-size:16px}
+.snap-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.snap-item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px}
+.snap-item .lab{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#8a928e;font-weight:850;margin-bottom:5px}
+.snap-item .val{font-size:12px;line-height:1.45}
+.transcript{border-top:1px solid var(--line);padding-top:14px}
+.transcript h3{font-size:15px;margin:0 0 10px}
+.msg{padding:10px 12px;border-radius:12px;margin-bottom:9px;font-size:13px;line-height:1.48}
+.msg.user{background:#eef2ef}.msg.assistant{background:#fff;border:1px solid var(--line)}
+.msg strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#7d8580;margin-bottom:5px}
+.empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
 .modal{position:fixed;inset:0;background:rgba(241,244,241,.92);backdrop-filter:blur(5px);display:none;place-items:center;padding:24px;z-index:100}
 .modal.show{display:grid}
 .modal-card{width:min(760px,100%);max-height:92vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 22px 60px rgba(29,48,39,.16);padding:26px}
 .modal-head{display:flex;justify-content:space-between;gap:16px;margin-bottom:22px}.modal-head h2{margin:0;font-size:26px}.modal-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .close{border:0;background:#f3f5f3;border-radius:10px;width:36px;height:36px;font-size:18px}
 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field.full{grid-column:1/-1}
-.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px;color:#46504a}.field input,.field textarea,.field select{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px;outline:none;background:#fff}
-.field textarea{min-height:96px;resize:vertical}.field textarea.tall{min-height:145px}
-.help{font-size:10px;color:#929995;margin-top:5px;line-height:1.4}
+.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px;color:#46504a}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px;outline:none}
+.field textarea{min-height:96px;resize:vertical}.field textarea.tall{min-height:145px}.help{font-size:10px;color:#929995;margin-top:5px;line-height:1.4}
 .toggle-row{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 13px}
 .switch{position:relative;width:44px;height:24px;background:#d7ddd9;border-radius:999px;cursor:pointer}.switch.on{background:var(--green)}
 .switch:after{content:"";position:absolute;width:18px;height:18px;top:3px;left:3px;background:#fff;border-radius:50%;transition:.18s}.switch.on:after{left:23px}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}
-.empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
 .login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;padding:20px;z-index:200}
 .login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}
 .login-card h2{font-size:28px;margin:0 0 7px}.login-card p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 18px}.login-error{font-size:12px;color:var(--red);margin-top:10px}
-@media(max-width:1000px){.tilegrid,.botgrid{grid-template-columns:1fr 1fr}}
-@media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:20px 16px}.tilegrid,.botgrid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}h1{font-size:32px}}
+@media(max-width:1000px){.tilegrid,.botgrid{grid-template-columns:1fr 1fr}.chat-layout{grid-template-columns:1fr}}
+@media(max-width:760px){.app{grid-template-columns:1fr}.sidebar{display:none}.main{padding:20px 16px}.tilegrid,.botgrid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}h1{font-size:32px}.snap-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -120,7 +133,6 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
   </aside>
 
   <main class="main">
-
     <section class="section active" id="section-home">
       <div class="topbar">
         <div>
@@ -129,49 +141,13 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
           <div class="sub">Everything for your class in one place. Build chatbots, manage students and set up the tools your class sees.</div>
         </div>
       </div>
-
       <div class="tilegrid">
-        <div class="tile clickable" data-go="chatbots">
-          <div class="tile-icon">✦</div>
-          <h3>Chatbots</h3>
-          <p>Create, edit and publish learning coaches for your students.</p>
-          <div class="tile-foot"><span id="homeBotCount">0</span> bots · Open →</div>
-        </div>
-
-        <div class="tile clickable" data-go="students">
-          <div class="tile-icon">◎</div>
-          <h3>Students</h3>
-          <p>Manage your roster, student codes and access.</p>
-          <div class="tile-foot"><span id="homeStudentCount">0</span> students · Open →</div>
-        </div>
-
-        <div class="tile clickable" data-go="chats">
-          <div class="tile-icon">☰</div>
-          <h3>Chats & analytics</h3>
-          <p>Read transcripts and see how students are using each coach.</p>
-          <div class="tile-foot">Open →</div>
-        </div>
-
-        <div class="tile">
-          <div class="tile-icon">☀</div>
-          <h3>Good Morning</h3>
-          <p>Date, daily helper, notices and your class morning screen.</p>
-          <div class="tile-foot" style="color:#8c948f">Coming soon</div>
-        </div>
-
-        <div class="tile">
-          <div class="tile-icon">🧹</div>
-          <h3>Class setup</h3>
-          <p>Daily helpers, cleaning groups, routines and class details.</p>
-          <div class="tile-foot" style="color:#8c948f">Coming soon</div>
-        </div>
-
-        <div class="tile">
-          <div class="tile-icon">⏱</div>
-          <h3>Tools</h3>
-          <p>Timer, random student selector, group maker and quick classroom tools.</p>
-          <div class="tile-foot" style="color:#8c948f">Coming soon</div>
-        </div>
+        <div class="tile clickable" data-go="chatbots"><div class="tile-icon">✦</div><h3>Chatbots</h3><p>Create, edit and publish learning coaches for your students.</p><div class="tile-foot"><span id="homeBotCount">0</span> bots · Open →</div></div>
+        <div class="tile clickable" data-go="students"><div class="tile-icon">◎</div><h3>Students</h3><p>Manage your roster, student codes and access.</p><div class="tile-foot"><span id="homeStudentCount">0</span> students · Open →</div></div>
+        <div class="tile clickable" data-go="chats"><div class="tile-icon">☰</div><h3>Chats & analytics</h3><p>Read transcripts and see how students are using each coach.</p><div class="tile-foot">Open →</div></div>
+        <div class="tile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Date, daily helper, notices and your class morning screen.</p><div class="tile-foot" style="color:#8c948f">Coming soon</div></div>
+        <div class="tile"><div class="tile-icon">🧹</div><h3>Class setup</h3><p>Daily helpers, cleaning groups, routines and class details.</p><div class="tile-foot" style="color:#8c948f">Coming soon</div></div>
+        <div class="tile"><div class="tile-icon">⏱</div><h3>Tools</h3><p>Timer, random student selector, group maker and quick classroom tools.</p><div class="tile-foot" style="color:#8c948f">Coming soon</div></div>
       </div>
     </section>
 
@@ -180,13 +156,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         <div><div class="eyebrow">Chatbots</div><h2>Your learning coaches</h2><p>Create a bot, set its instructions, then publish it to students.</p></div>
         <button class="btn primary" id="createBotTop">+ Create chatbot</button>
       </div>
-      <div class="botgrid" id="botGrid">
-        <div class="botcard create" id="createBotTile">
-          <div class="bot-icon">＋</div>
-          <h3>Create chatbot</h3>
-          <p>Build a new guided learning coach without touching code.</p>
-        </div>
-      </div>
+      <div class="botgrid" id="botGrid"></div>
     </section>
 
     <section class="section" id="section-students">
@@ -197,10 +167,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
       <div class="panel">
         <div class="panelhead"><h3>Students</h3></div>
         <div style="overflow:auto">
-          <table>
-            <thead><tr><th>Name</th><th>Class</th><th>Code</th><th>Status</th></tr></thead>
-            <tbody id="studentRows"></tbody>
-          </table>
+          <table><thead><tr><th>Name</th><th>Class</th><th>Code</th><th>Status</th></tr></thead><tbody id="studentRows"></tbody></table>
         </div>
         <div class="empty" id="studentEmpty">No students yet.</div>
       </div>
@@ -208,15 +175,21 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 
     <section class="section" id="section-chats">
       <div class="sectionhead">
-        <div><div class="eyebrow">Chats & analytics</div><h2>Student activity</h2><p>Transcripts and detailed analytics will live here.</p></div>
+        <div><div class="eyebrow">Chats & analytics</div><h2>Student conversations</h2><p>Select a student, then open a session to see the AI snapshot and full transcript.</p></div>
       </div>
-      <div class="tilegrid">
-        <div class="tile"><div class="tile-icon">💬</div><h3>Transcripts</h3><p>Open student chats by student or chatbot.</p><div class="tile-foot">Available in current dashboard</div></div>
-        <div class="tile"><div class="tile-icon">↗</div><h3>Learning insights</h3><p>Where students got stuck, what support they needed and next teaching steps.</p><div class="tile-foot" style="color:#8c948f">Coming next</div></div>
-        <div class="tile"><div class="tile-icon">◷</div><h3>Usage</h3><p>Who used each coach, number of sessions and recent activity.</p><div class="tile-foot" style="color:#8c948f">Coming next</div></div>
+
+      <div class="chat-layout">
+        <div class="panel">
+          <div class="panelhead"><h3>Students</h3></div>
+          <div class="student-list" id="chatStudentList"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panelhead"><h3 id="chatPanelTitle">Choose a student</h3></div>
+          <div id="chatPanelBody" class="empty">Select a student to see their conversations.</div>
+        </div>
       </div>
     </section>
-
   </main>
 </div>
 
@@ -226,25 +199,17 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
       <div><h2 id="botModalTitle">Create chatbot</h2><p>Tell Chatty what the task is and how you want it to behave.</p></div>
       <button class="close" id="closeBotModal">×</button>
     </div>
-
     <div class="formgrid">
-      <div class="field"><label>Chatbot name</label><input id="botName" placeholder="e.g. Science Investigation Coach"></div>
-      <div class="field"><label>Subject</label><input id="botSubject" placeholder="e.g. Science"></div>
-      <div class="field"><label>Year level</label><input id="botYear" placeholder="e.g. Year 4"></div>
-      <div class="field"><label>Icon</label><input id="botIcon" placeholder="e.g. 🔬"></div>
-
-      <div class="field full"><label>Student-facing description</label><textarea id="botDescription" placeholder="A short explanation students will see on the tile."></textarea></div>
-
-      <div class="field full"><label>What are students doing?</label><textarea id="botTask" class="tall" placeholder="Paste the task brief or explain the learning task here."></textarea><div class="help">This gives the coach context about the activity.</div></div>
-
-      <div class="field full"><label>How should Chatty help?</label><textarea id="botHelp" class="tall" placeholder="e.g. Guide one step at a time. Ask one question at a time. Help students research but don't make decisions for them."></textarea></div>
-
-      <div class="field full"><label>What must Chatty NOT do?</label><textarea id="botDont" class="tall" placeholder="e.g. Don't write the final response. Don't give the whole itinerary. Don't answer unrelated questions."></textarea></div>
-
-      <div class="field full"><label>Suggested task steps</label><textarea id="botSteps" placeholder="e.g. 1. Choose continent&#10;2. Select first country&#10;3. Research attractions..."></textarea></div>
-
-      <div class="field full"><label>Opening message</label><textarea id="botOpening" placeholder="What the coach should say when a student starts a new chat."></textarea></div>
-
+      <div class="field"><label>Chatbot name</label><input id="botName"></div>
+      <div class="field"><label>Subject</label><input id="botSubject"></div>
+      <div class="field"><label>Year level</label><input id="botYear"></div>
+      <div class="field"><label>Icon</label><input id="botIcon"></div>
+      <div class="field full"><label>Student-facing description</label><textarea id="botDescription"></textarea></div>
+      <div class="field full"><label>What are students doing?</label><textarea id="botTask" class="tall"></textarea></div>
+      <div class="field full"><label>How should Chatty help?</label><textarea id="botHelp" class="tall"></textarea></div>
+      <div class="field full"><label>What must Chatty NOT do?</label><textarea id="botDont" class="tall"></textarea></div>
+      <div class="field full"><label>Suggested task steps</label><textarea id="botSteps"></textarea></div>
+      <div class="field full"><label>Opening message</label><textarea id="botOpening"></textarea></div>
       <div class="field full">
         <div class="toggle-row">
           <div><strong style="font-size:13px">Published to students</strong><div class="help" style="margin-top:2px">Students can only see bots that are published.</div></div>
@@ -252,46 +217,46 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         </div>
       </div>
     </div>
-
-    <div class="modal-actions">
-      <button class="btn" id="cancelBot">Cancel</button>
-      <button class="btn primary" id="saveBot">Save chatbot</button>
-    </div>
+    <div class="modal-actions"><button class="btn" id="cancelBot">Cancel</button><button class="btn primary" id="saveBot">Save chatbot</button></div>
   </div>
 </div>
 
 <div class="modal" id="studentModal">
   <div class="modal-card" style="width:min(500px,100%)">
-    <div class="modal-head">
-      <div><h2>Add student</h2><p>Add a student to your class roster.</p></div>
-      <button class="close" id="closeStudentModal">×</button>
-    </div>
-    <div class="field"><label>First name</label><input id="studentName" placeholder="e.g. Olivia"></div>
-    <div class="field" style="margin-top:12px"><label>Class</label><input id="studentClass" placeholder="e.g. 4L"></div>
-    <div class="field" style="margin-top:12px"><label>Student code</label><input id="studentCodeNew" placeholder="e.g. 4L-01"></div>
+    <div class="modal-head"><div><h2>Add student</h2><p>Add a student to your class roster.</p></div><button class="close" id="closeStudentModal">×</button></div>
+    <div class="field"><label>First name</label><input id="studentName"></div>
+    <div class="field" style="margin-top:12px"><label>Class</label><input id="studentClass"></div>
+    <div class="field" style="margin-top:12px"><label>Student code</label><input id="studentCodeNew" placeholder="Leave blank to generate"></div>
     <div class="modal-actions"><button class="btn" id="cancelStudent">Cancel</button><button class="btn primary" id="saveStudent">Add student</button></div>
   </div>
 </div>
 
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
-let teacherCode="", teacher=null, bots=[], students=[], editingBotId=null, published=false;
+let teacherCode="",teacher=null,bots=[],students=[],editingBotId=null,published=false,currentStudent=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
 async function post(payload){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error||"Something went wrong.");
+  if(!r.ok)throw new Error(d.error||"Something went wrong.");
   return d;
+}
+
+function md(text=""){
+  return esc(text)
+    .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+    .replace(/\n/g,"<br>");
 }
 
 function setSection(name){
   document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".nav button[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===name));
   $("section-"+name).classList.add("active");
-  if(name==="chatbots") loadBots();
-  if(name==="students") loadStudents();
+  if(name==="chatbots")loadBots();
+  if(name==="students")loadStudents();
+  if(name==="chats")loadChatStudents();
 }
 document.querySelectorAll(".nav button[data-section]").forEach(b=>b.onclick=()=>setSection(b.dataset.section));
 document.querySelectorAll("[data-go]").forEach(t=>t.onclick=()=>setSection(t.dataset.go));
@@ -302,7 +267,7 @@ async function login(){
   if(!code)return;
   try{
     const d=await post({action:"teacher_login",teacher_code:code});
-    teacherCode=code; teacher=d.teacher;
+    teacherCode=code;teacher=d.teacher;
     localStorage.setItem("lategan_teacher_code",code);
     $("teacherName").textContent=teacher.display_name||"Teacher";
     $("teacherClass").textContent=teacher.class_name||"";
@@ -335,104 +300,119 @@ async function loadBots(){
   try{
     const d=await post({action:"teacher_list_bots",teacher_code:teacherCode});
     bots=d.bots||[];
-  }catch(e){
-    bots=[];
-  }
-  renderBots();
-}
-function renderBots(){
+  }catch(e){bots=[]}
   $("homeBotCount").textContent=bots.length;
-  const grid=$("botGrid");
-  grid.innerHTML="";
+  const grid=$("botGrid");grid.innerHTML="";
   const create=document.createElement("div");
   create.className="botcard create";
   create.innerHTML='<div class="bot-icon">＋</div><h3>Create chatbot</h3><p>Build a new guided learning coach without touching code.</p>';
   create.onclick=()=>openBotModal();
   grid.appendChild(create);
+
   bots.forEach(bot=>{
     const card=document.createElement("div");
     card.className="botcard";
-    card.innerHTML=`
-      <div class="bot-top"><div class="bot-icon">${esc(bot.icon||"✦")}</div><span class="badge ${bot.published?"live":"draft"}">${bot.published?"Published":"Draft"}</span></div>
-      <h3>${esc(bot.name)}</h3>
-      <div class="meta">${esc(bot.subject||"")} ${bot.year_level?"· "+esc(bot.year_level):""}</div>
-      <p>${esc(bot.description||"No description yet.")}</p>
-      <div class="bot-actions">
-        <button class="small edit">Edit</button>
-        <button class="small primary toggle">${bot.published?"Unpublish":"Publish"}</button>
-      </div>`;
+    card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="bot-icon">${esc(bot.icon||"✦")}</div><span class="badge ${bot.published?"live":"draft"}">${bot.published?"Published":"Draft"}</span></div><h3>${esc(bot.name)}</h3><p>${esc(bot.description||"No description yet.")}</p><div class="bot-actions"><button class="small edit">Edit</button><button class="small primary toggle">${bot.published?"Unpublish":"Publish"}</button></div>`;
     card.querySelector(".edit").onclick=()=>openBotModal(bot);
-    card.querySelector(".toggle").onclick=()=>togglePublish(bot);
+    card.querySelector(".toggle").onclick=async()=>{await post({action:"teacher_update_bot",teacher_code:teacherCode,bot_id:bot.id,published:bot.published?0:1});await loadBots()};
     grid.appendChild(card);
   });
 }
 
 function openBotModal(bot=null){
-  editingBotId=bot?.id||null;
-  published=!!bot?.published;
+  editingBotId=bot?.id||null;published=!!bot?.published;
   $("botModalTitle").textContent=bot?"Edit chatbot":"Create chatbot";
-  $("botName").value=bot?.name||"";
-  $("botSubject").value=bot?.subject||"";
-  $("botYear").value=bot?.year_level||"Year 4";
-  $("botIcon").value=bot?.icon||"✦";
-  $("botDescription").value=bot?.description||"";
-  $("botTask").value=bot?.task_brief||"";
-  $("botHelp").value=bot?.help_instructions||"";
-  $("botDont").value=bot?.dont_instructions||"";
-  $("botSteps").value=bot?.task_steps||"";
-  $("botOpening").value=bot?.opening_message||"";
-  $("publishSwitch").classList.toggle("on",published);
-  $("botModal").classList.add("show");
+  $("botName").value=bot?.name||"";$("botSubject").value=bot?.subject||"";$("botYear").value=bot?.year_level||"Year 4";$("botIcon").value=bot?.icon||"✦";
+  $("botDescription").value=bot?.description||"";$("botTask").value=bot?.task_brief||"";$("botHelp").value=bot?.help_instructions||"";$("botDont").value=bot?.dont_instructions||"";$("botSteps").value=bot?.task_steps||"";$("botOpening").value=bot?.opening_message||"";
+  $("publishSwitch").classList.toggle("on",published);$("botModal").classList.add("show");
 }
 function closeBotModal(){$("botModal").classList.remove("show")}
-$("createBotTop").onclick=()=>openBotModal();
-$("closeBotModal").onclick=closeBotModal;
-$("cancelBot").onclick=closeBotModal;
+$("createBotTop").onclick=()=>openBotModal();$("closeBotModal").onclick=closeBotModal;$("cancelBot").onclick=closeBotModal;
 $("publishSwitch").onclick=()=>{published=!published;$("publishSwitch").classList.toggle("on",published)};
-
 $("saveBot").onclick=async()=>{
-  const payload={
-    action:editingBotId?"teacher_update_bot":"teacher_create_bot",
-    teacher_code:teacherCode,
-    bot_id:editingBotId,
-    name:$("botName").value.trim(),
-    subject:$("botSubject").value.trim(),
-    year_level:$("botYear").value.trim(),
-    icon:$("botIcon").value.trim(),
-    description:$("botDescription").value.trim(),
-    task_brief:$("botTask").value.trim(),
-    help_instructions:$("botHelp").value.trim(),
-    dont_instructions:$("botDont").value.trim(),
-    task_steps:$("botSteps").value.trim(),
-    opening_message:$("botOpening").value.trim(),
-    published:published?1:0
-  };
+  const payload={action:editingBotId?"teacher_update_bot":"teacher_create_bot",teacher_code:teacherCode,bot_id:editingBotId,name:$("botName").value.trim(),subject:$("botSubject").value.trim(),year_level:$("botYear").value.trim(),icon:$("botIcon").value.trim(),description:$("botDescription").value.trim(),task_brief:$("botTask").value.trim(),help_instructions:$("botHelp").value.trim(),dont_instructions:$("botDont").value.trim(),task_steps:$("botSteps").value.trim(),opening_message:$("botOpening").value.trim(),published:published?1:0};
   if(!payload.name){alert("Give the chatbot a name.");return}
-  try{
-    await post(payload);
-    closeBotModal();
-    await loadBots();
-  }catch(e){
-    alert("The chatbot creator UI is ready, but the backend bot actions have not been added yet. We'll connect those next.");
-  }
+  try{await post(payload);closeBotModal();await loadBots()}catch(e){alert(e.message)}
 };
-
-async function togglePublish(bot){
-  try{
-    await post({action:"teacher_update_bot",teacher_code:teacherCode,bot_id:bot.id,published:bot.published?0:1});
-    await loadBots();
-  }catch(e){alert("Publishing will work after we add the bot database actions to the Worker.")}
-}
 
 $("addStudentBtn").onclick=()=>{$("studentName").value="";$("studentCodeNew").value="";$("studentClass").value=teacher?.class_name||"";$("studentModal").classList.add("show")};
-$("closeStudentModal").onclick=()=>$("studentModal").classList.remove("show");
-$("cancelStudent").onclick=()=>$("studentModal").classList.remove("show");
+$("closeStudentModal").onclick=()=>$("studentModal").classList.remove("show");$("cancelStudent").onclick=()=>$("studentModal").classList.remove("show");
 $("saveStudent").onclick=async()=>{
   try{
-    await post({action:"teacher_add_student",teacher_code:teacherCode,display_name:$("studentName").value.trim(),class_name:$("studentClass").value.trim(),student_code:$("studentCodeNew").value.trim()});
+    const d=await post({action:"teacher_add_student",teacher_code:teacherCode,display_name:$("studentName").value.trim(),class_name:$("studentClass").value.trim(),student_code:$("studentCodeNew").value.trim()});
     $("studentModal").classList.remove("show");await loadStudents();
+    if(d.student_code)alert(`Student added. Code: ${d.student_code}`);
   }catch(e){alert(e.message)}
 };
+
+async function loadChatStudents(){
+  await loadStudents();
+  const box=$("chatStudentList");box.innerHTML="";
+  if(!students.length){box.innerHTML='<div class="empty">No students yet.</div>';return}
+  students.forEach(s=>{
+    const b=document.createElement("button");b.className="list-btn";
+    b.innerHTML=`<strong>${esc(s.display_name||s.student_code)}</strong><span>${esc(s.class_name||"")} · ${esc(s.student_code)}</span>`;
+    b.onclick=()=>openStudentSessions(s,b);
+    box.appendChild(b);
+  });
+}
+
+async function openStudentSessions(s,button){
+  currentStudent=s;
+  document.querySelectorAll("#chatStudentList .list-btn").forEach(x=>x.classList.remove("active"));
+  button.classList.add("active");
+  $("chatPanelTitle").textContent=`${s.display_name||s.student_code} · conversations`;
+  $("chatPanelBody").className="";
+  $("chatPanelBody").innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await post({action:"teacher_student_sessions",teacher_code:teacherCode,student_id:s.id});
+    if(!(d.sessions||[]).length){$("chatPanelBody").innerHTML='<div class="empty">No chats yet.</div>';return}
+    $("chatPanelBody").innerHTML='<div class="session-list">'+d.sessions.map(x=>`<button class="list-btn" onclick="openSessionDetail(${x.id})"><strong>${esc(x.title||"Conversation")}</strong><span>${esc(x.bot_id||"coach")} · ${esc(x.updated_at||"")}</span></button>`).join("")+'</div>';
+  }catch(e){$("chatPanelBody").innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+async function openSessionDetail(sessionId){
+  $("chatPanelBody").innerHTML='<div class="empty">Loading conversation…</div>';
+  try{
+    const [t,a]=await Promise.all([
+      post({action:"teacher_get_session",teacher_code:teacherCode,session_id:sessionId}),
+      post({action:"teacher_session_summary",teacher_code:teacherCode,session_id:sessionId})
+    ]);
+
+    const snap=a.analytics||{};
+    const messages=t.messages||[];
+
+    $("chatPanelTitle").textContent=`${t.session.display_name||"Student"} · ${t.session.title||"Conversation"}`;
+    $("chatPanelBody").innerHTML=`
+      <div class="chat-detail">
+        <div class="snapshot">
+          <div class="snapshot-head">
+            <h3>AI Snapshot</h3>
+            <button class="small" onclick="refreshSummary(${sessionId})">Refresh summary</button>
+          </div>
+          <div class="snap-grid">
+            <div class="snap-item"><div class="lab">What they did</div><div class="val">${md(snap.summary||"No summary yet.")}</div></div>
+            <div class="snap-item"><div class="lab">Progress / independence</div><div class="val">${md(snap.strengths||"—")}</div></div>
+            <div class="snap-item"><div class="lab">Support / off-task behaviour</div><div class="val">${md(snap.support_needed||"—")}</div></div>
+            <div class="snap-item"><div class="lab">Teacher next step</div><div class="val">${md(snap.next_step||"—")}</div></div>
+          </div>
+        </div>
+        <div class="transcript">
+          <h3>Full transcript</h3>
+          ${messages.map(m=>`<div class="msg ${m.role==="user"?"user":"assistant"}"><strong>${m.role==="user"?"Student":"Coach"}</strong>${md(m.content)}</div>`).join("")}
+        </div>
+      </div>`;
+  }catch(e){
+    $("chatPanelBody").innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+async function refreshSummary(sessionId){
+  try{
+    await post({action:"teacher_session_summary",teacher_code:teacherCode,session_id:sessionId,refresh:1});
+    await openSessionDetail(sessionId);
+  }catch(e){alert(e.message)}
+}
 
 (async()=>{const saved=localStorage.getItem("lategan_teacher_code");if(saved){$("teacherCode").value=saved;await login()}})();
 </script>
