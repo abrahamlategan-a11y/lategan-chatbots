@@ -19,34 +19,33 @@
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,Helvetica,sans-serif;background:var(--green);color:var(--ink)}
 button,input,textarea,select{font:inherit}
-body{min-height:100vh}
 
 .page{
   height:100vh;
   overflow:hidden;
-  padding:16px 20px 14px;
+  padding:12px 18px 12px;
   display:grid;
-  grid-template-rows:172px minmax(0,1fr) 142px;
-  gap:12px;
+  grid-template-rows:112px minmax(0,1fr) 118px;
+  gap:10px;
   background:linear-gradient(135deg,var(--green) 0%,#0f6048 48%,var(--green2) 100%);
 }
 
 .header{
   color:#fff;
   position:relative;
-  padding:2px 4px;
+  padding:0 4px;
 }
 .kicker{
-  font-size:13px;
+  font-size:12px;
   font-weight:800;
   letter-spacing:.14em;
   text-transform:uppercase;
   opacity:.86;
 }
 h1{
-  margin:5px 0 11px;
-  font-size:clamp(46px,4.4vw,68px);
-  line-height:.95;
+  margin:2px 0 7px;
+  font-size:clamp(44px,4vw,62px);
+  line-height:.94;
   font-weight:900;
   letter-spacing:-.055em;
 }
@@ -54,21 +53,21 @@ h1{
 .datepill{
   display:inline-flex;
   align-items:center;
-  gap:9px;
+  gap:8px;
   background:var(--lime);
   color:#173f32;
   border-radius:999px;
-  padding:8px 15px;
-  font-size:clamp(15px,1.4vw,21px);
+  padding:7px 14px;
+  font-size:clamp(14px,1.25vw,19px);
   font-weight:800;
 }
 .header-note{
   position:absolute;
-  left:42%;
-  bottom:4px;
+  left:43%;
+  bottom:3px;
   font-family:"Comic Sans MS","Segoe Print",cursive;
-  font-size:14px;
-  line-height:1.05;
+  font-size:12px;
+  line-height:1.02;
   color:#d9eca7;
   transform:rotate(-3deg);
 }
@@ -76,8 +75,8 @@ h1{
 .main{
   min-height:0;
   display:grid;
-  grid-template-columns:1fr 1.04fr;
-  gap:16px;
+  grid-template-columns:.98fr 1.02fr;
+  gap:14px;
 }
 
 .card{
@@ -89,62 +88,70 @@ h1{
 }
 
 .todo{
-  padding:18px 20px;
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
 }
 .todo h2{
-  margin:0 0 11px;
+  margin:0 0 10px;
   font-family:"Comic Sans MS","Segoe Print",Arial,sans-serif;
-  font-size:clamp(32px,3.2vw,48px);
+  font-size:clamp(31px,3vw,45px);
   line-height:1;
   letter-spacing:-.035em;
 }
 .hint{
   font-family:Arial,Helvetica,sans-serif;
-  font-size:10px;
+  font-size:9px;
   font-weight:400;
   color:#78847e;
-  margin-left:7px;
+  margin-left:6px;
   vertical-align:middle;
 }
 .todo-list{
+  flex:1;
+  min-height:0;
   display:grid;
-  gap:8px;
+  grid-template-rows:repeat(4,1fr);
+  gap:7px;
 }
 .todo-row{
   min-height:0;
-  height:calc((100% - 24px)/4);
   display:grid;
-  grid-template-columns:48px 50px 1fr 24px;
+  grid-template-columns:44px 46px 1fr 22px;
   align-items:center;
-  padding:9px 14px 9px 8px;
-  border-radius:17px;
-  font-size:clamp(18px,1.75vw,27px);
+  padding:6px 12px 6px 8px;
+  border-radius:16px;
+  font-size:clamp(17px,1.65vw,25px);
   font-weight:800;
 }
 .todo-row:nth-child(odd){background:var(--lav)}
 .todo-row:nth-child(even){background:var(--sage)}
 .todo-num{
-  width:38px;height:38px;border-radius:50%;
+  width:34px;height:34px;border-radius:50%;
   display:grid;place-items:center;
   background:#d5c1ef;
-  font-size:17px;font-weight:900;
+  font-size:15px;font-weight:900;
 }
 .todo-row:nth-child(even) .todo-num{background:#cce7a6}
-.todo-icon{font-size:30px;text-align:center}
-.todo-arrow{font-size:30px}
+.todo-icon{font-size:26px;text-align:center}
+.todo-arrow{font-size:27px}
 
 .expect-card{
-  background:var(--cream);
+  min-height:0;
   border-radius:20px;
   box-shadow:var(--shadow);
+  background:var(--cream);
+  display:flex;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
-  min-height:0;
+  padding:0;
 }
 .expect-card img{
+  display:block;
   width:100%;
   height:100%;
-  display:block;
-  object-fit:cover;
+  object-fit:contain;
   object-position:center center;
 }
 
@@ -152,70 +159,70 @@ h1{
   min-height:0;
   display:grid;
   grid-template-columns:1.12fr 1.02fr .94fr 1.05fr .92fr;
-  gap:12px;
+  gap:10px;
 }
 .mini{
   min-height:0;
   height:100%;
   overflow:hidden;
-  border-radius:17px;
-  padding:14px 16px;
+  border-radius:16px;
+  padding:11px 13px;
   box-shadow:var(--shadow);
   background:var(--cream);
 }
 .mini h3{
-  margin:0 0 7px;
-  font-size:clamp(16px,1.45vw,22px);
-  line-height:1.05;
+  margin:0 0 5px;
+  font-size:clamp(15px,1.35vw,20px);
+  line-height:1.03;
 }
 .reminders{background:#e4d6f1}
 .reminder-line{
-  display:flex;gap:8px;align-items:flex-start;
-  font-size:clamp(12px,1vw,15px);
-  line-height:1.28;
-  margin:4px 0;
+  display:flex;gap:7px;align-items:flex-start;
+  font-size:clamp(11px,.95vw,14px);
+  line-height:1.22;
+  margin:3px 0;
 }
-.bullet{width:8px;height:8px;border-radius:50%;background:#6547b9;flex:none;margin-top:4px}
+.bullet{width:7px;height:7px;border-radius:50%;background:#6547b9;flex:none;margin-top:4px}
 .wordle{
   background:linear-gradient(150deg,#2a8c5d,#24784f);
   color:#fff;text-decoration:none;
   display:flex;align-items:center;justify-content:space-between;
 }
-.wordle strong{display:block;font-size:clamp(22px,2vw,30px);margin-bottom:4px}
-.wordle span{font-size:11px;letter-spacing:.06em}
-.wordle-arrow{font-size:28px}
+.wordle strong{display:block;font-size:clamp(21px,1.85vw,28px);margin-bottom:3px}
+.wordle span{font-size:10px;letter-spacing:.06em}
+.wordle-arrow{font-size:25px}
 .namepill{
   background:#eadff5;
-  border-radius:13px;
-  padding:7px 10px;
+  border-radius:12px;
+  padding:6px 9px;
   text-align:center;
-  font-size:clamp(20px,1.8vw,27px);
+  font-size:clamp(18px,1.65vw,25px);
   font-weight:900;
   line-height:1;
 }
 .lunch .namepill{background:#e2efcf}
-.sub{font-size:10.5px;color:var(--muted);line-height:1.2;margin-top:6px}
+.sub{font-size:9.5px;color:var(--muted);line-height:1.15;margin-top:5px}
 .studenthub{
   background:#e8dcf3;
   display:grid;
-  grid-template-columns:72px 1fr;
-  gap:10px;
+  grid-template-columns:60px 1fr;
+  gap:9px;
   align-items:center;
   color:inherit;
   text-decoration:none;
 }
-.studenthub img{width:70px;height:70px;background:#fff;padding:4px;border-radius:9px}
-.studenthub strong{display:block;font-size:clamp(17px,1.45vw,22px);line-height:1.02;margin-bottom:5px}
-.studenthub span{display:block;font-size:10px;line-height:1.2;color:#5c5b61}
+.studenthub img{width:58px;height:58px;background:#fff;padding:4px;border-radius:8px}
+.studenthub strong{display:block;font-size:clamp(16px,1.35vw,20px);line-height:1.02;margin-bottom:4px}
+.studenthub span{display:block;font-size:9px;line-height:1.15;color:#5c5b61}
 
 .editable{cursor:pointer;outline:2px solid transparent;outline-offset:2px;transition:outline-color .14s ease}
 .editable:hover{outline-color:rgba(255,255,255,.52)}
 
 .tools{
   position:fixed;
-  top:12px;right:12px;
+  top:10px;right:10px;
   z-index:20;
-  display:flex;gap:7px;
+  display:flex;gap:6px;
 }
 .tool{
   border:1px solid rgba(255,255,255,.28);
@@ -258,24 +265,27 @@ h1{
 .btn{border:1px solid #d6ded9;background:#fff;border-radius:9px;padding:9px 12px;font-weight:800}
 .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
 
-@media(max-height:820px){
-  .page{grid-template-rows:148px minmax(0,1fr) 126px;padding-top:12px}
-  h1{font-size:52px}
+@media(max-height:760px){
+  .page{grid-template-rows:96px minmax(0,1fr) 105px;padding-top:9px}
   .header-note{display:none}
-  .todo{padding:15px 18px}
-  .todo-row{grid-template-columns:42px 44px 1fr 20px;padding-top:6px;padding-bottom:6px}
-  .todo-num{width:34px;height:34px}
-  .todo-icon{font-size:26px}
-  .mini{padding:11px 13px}
-  .studenthub{grid-template-columns:62px 1fr}
-  .studenthub img{width:60px;height:60px}
+  h1{font-size:46px}
+  .todo{padding:13px 15px}
+  .todo h2{font-size:34px}
+  .todo-row{grid-template-columns:40px 42px 1fr 18px;padding:4px 10px 4px 7px}
+  .todo-num{width:31px;height:31px}
+  .todo-icon{font-size:23px}
+  .mini{padding:9px 11px}
+  .studenthub{grid-template-columns:52px 1fr}
+  .studenthub img{width:50px;height:50px}
 }
+
 @media(max-width:1050px){
-  .page{overflow:auto;height:auto;min-height:100vh;grid-template-rows:auto auto auto}
   html,body{overflow:auto}
+  .page{height:auto;min-height:100vh;overflow:auto;grid-template-rows:auto auto auto}
   .main{grid-template-columns:1fr}
+  .expect-card{min-height:auto}
+  .expect-card img{width:100%;height:auto;object-fit:contain}
   .bottom{grid-template-columns:repeat(3,1fr)}
-  .expect-card img{height:auto;object-fit:contain}
 }
 </style>
 </head>
@@ -378,15 +388,18 @@ function dateKey(){
   const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${day}`;
 }
+
 async function post(payload){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(j.error||"Something went wrong.");
   return j;
 }
+
 function esc(s){
   return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
+
 function iconFor(text){
   const s=String(text||"").toLowerCase();
   if(s.includes("bag"))return "🎒";
@@ -395,9 +408,11 @@ function iconFor(text){
   if(s.includes("read")||s.includes("math"))return "📚";
   return "✓";
 }
+
 function render(){
   const d=data.daily;
   const dt=new Date(d.date_key+"T12:00:00");
+
   $("className").textContent=d.class_name||"Class";
   $("dateText").textContent=dt.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 
@@ -419,16 +434,20 @@ function render(){
   $("lunchNames").textContent=(d.lunch||[]).map(x=>x.name).join(" & ")||"—";
   $("wordleLink").href=d.wordle_url||"https://www.nytimes.com/games/wordle/index.html";
 }
+
 async function load(){
   if(!teacherCode){location.href="../teacher/";return}
   data=await post({action:"teacher_daily_state",teacher_code:teacherCode,date_key:dateKey()});
   render();
 }
+
 function resetSections(){
   ["todoEditSection","remindersEditSection","helperEditSection","lunchEditSection"].forEach(id=>$(id).style.display="none");
 }
+
 function openEdit(mode){
-  editMode=mode; resetSections();
+  editMode=mode;
+  resetSections();
   const d=data.daily, t=d.todo||[];
 
   if(mode==="todo"){
@@ -436,16 +455,19 @@ function openEdit(mode){
     for(let i=1;i<=4;i++)$("todo"+i).value=t[i-1]||"";
     $("todoEditSection").style.display="block";
   }
+
   if(mode==="reminders"){
     $("editorTitle").textContent="Edit Reminders";
     $("reminderInput").value=d.reminders||"";
     $("remindersEditSection").style.display="block";
   }
+
   if(mode==="helper"){
     $("editorTitle").textContent="Choose Daily Helper";
     $("helperSelect").innerHTML=(data.roster||[]).map(x=>`<option value="${x.id}" ${d.helper?.id===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
     $("helperEditSection").style.display="block";
   }
+
   if(mode==="lunch"){
     $("editorTitle").textContent="Choose Lunch Orders for This Week";
     const selected=new Set((d.lunch||[]).map(x=>Number(x.id)));
@@ -456,6 +478,7 @@ function openEdit(mode){
       </label>`).join("");
     $("lunchEditSection").style.display="block";
   }
+
   $("editor").classList.add("show");
 }
 
@@ -463,23 +486,31 @@ $("todoPanel").onclick=()=>openEdit("todo");
 $("remindersPanel").onclick=()=>openEdit("reminders");
 $("helperPanel").onclick=()=>openEdit("helper");
 $("lunchPanel").onclick=()=>openEdit("lunch");
-$("closeEdit").onclick=()=>{$("editor").classList.remove("show");editMode=null;};
+
+$("closeEdit").onclick=()=>{
+  $("editor").classList.remove("show");
+  editMode=null;
+};
 
 $("saveEdit").onclick=async()=>{
   if(editMode==="todo"){
     const todo=[1,2,3,4].map(i=>$("todo"+i).value);
     await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:dateKey(),reminders:data.daily.reminders||"",todo});
   }
+
   if(editMode==="reminders"){
     await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:dateKey(),reminders:$("reminderInput").value,todo:data.daily.todo||[]});
   }
+
   if(editMode==="helper"){
     await post({action:"teacher_set_helper",teacher_code:teacherCode,date_key:dateKey(),student_id:Number($("helperSelect").value)});
   }
+
   if(editMode==="lunch"){
     const ids=[...document.querySelectorAll("#lunchPeople input:checked")].map(x=>Number(x.value));
     await post({action:"teacher_set_lunch",teacher_code:teacherCode,date_key:dateKey(),student_ids:ids});
   }
+
   $("editor").classList.remove("show");
   editMode=null;
   await load();
