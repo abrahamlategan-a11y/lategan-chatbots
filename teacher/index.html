@@ -135,16 +135,18 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
     <div class="navlabel">Main</div>
     <div class="nav">
       <button class="active" data-section="home"><span class="ico">⌂</span>Home</button>
-      <button data-section="chatbots"><span class="ico">✦</span>Chatbots</button>
+      <button data-section="chatbots"><span class="ico">✦</span>My Chatbots</button>
+      <button data-section="shared"><span class="ico">⇄</span>Shared Library</button>
       <button data-section="students"><span class="ico">◎</span>Students</button>
       <button data-section="chats"><span class="ico">☰</span>Chats & analytics</button>
       <button data-section="games"><span class="ico">🎮</span>Class Games</button>
+      <button id="instructionsNav"><span class="ico">☷</span>Instructions Board</button>
     </div>
-    <div class="navlabel">Coming later</div>
+    <div class="navlabel">Class</div>
     <div class="nav">
       <button id="morningNav"><span class="ico">☀</span>Good Morning</button>
-      <button disabled style="opacity:.45"><span class="ico">⚙</span>Class setup</button>
-      <button disabled style="opacity:.45"><span class="ico">⌁</span>Tools</button>
+      <button data-section="settings"><span class="ico">⚙</span>Class settings</button>
+      <button id="adminNav" style="display:none"><span class="ico">◆</span>Admin</button>
     </div>
     <div class="account">
       <strong id="teacherName">Teacher</strong>
@@ -163,13 +165,14 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         </div>
       </div>
       <div class="tilegrid">
-        <div class="tile clickable" data-go="chatbots"><div class="tile-icon">✦</div><h3>Chatbots</h3><p>Create, edit and publish learning coaches for your students.</p><div class="tile-foot"><span id="homeBotCount">0</span> bots · Open →</div></div>
+        <div class="tile clickable" data-go="chatbots"><div class="tile-icon">✦</div><h3>My Chatbots</h3><p>Create and manage learning coaches you own.</p><div class="tile-foot"><span id="homeBotCount">0</span> bots · Open →</div></div>
+        <div class="tile clickable" data-go="shared"><div class="tile-icon">⇄</div><h3>Shared Library</h3><p>Assign shared learning coaches to your class without making copies.</p><div class="tile-foot">Browse →</div></div>
         <div class="tile clickable" data-go="students"><div class="tile-icon">◎</div><h3>Students</h3><p>Manage your roster, student codes and access.</p><div class="tile-foot"><span id="homeStudentCount">0</span> students · Open →</div></div>
         <div class="tile clickable" data-go="chats"><div class="tile-icon">☰</div><h3>Chats & analytics</h3><p>Read transcripts and see how students are using each coach.</p><div class="tile-foot">Open →</div></div>
         <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
-        <div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders and Wordle.</p><div class="tile-foot">Open screen →</div></div>
-        <div class="tile"><div class="tile-icon">🧹</div><h3>Class setup</h3><p>Daily helpers, cleaning groups, routines and class details.</p><div class="tile-foot" style="color:#8c948f">Coming soon</div></div>
-        <div class="tile"><div class="tile-icon">⏱</div><h3>Tools</h3><p>Timer, random student selector, group maker and quick classroom tools.</p><div class="tile-foot" style="color:#8c948f">Coming soon</div></div>
+        <div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
+        <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
+        <div class="tile clickable" data-go="settings"><div class="tile-icon">⚙</div><h3>Class settings</h3><p>Set your weather location and customise Florence's message.</p><div class="tile-foot">Open settings →</div></div>
       </div>
     </section>
 
@@ -179,6 +182,13 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         <button class="btn primary" id="createBotTop">+ Create chatbot</button>
       </div>
       <div class="botgrid" id="botGrid"></div>
+    </section>
+
+    <section class="section" id="section-shared">
+      <div class="sectionhead">
+        <div><div class="eyebrow">Shared Library</div><h2>Shared learning coaches</h2><p>Assign a shared chatbot to your class. It stays linked to the original, so improvements flow through automatically.</p></div>
+      </div>
+      <div class="botgrid" id="sharedBotGrid"></div>
     </section>
 
     <section class="section" id="section-students">
@@ -209,6 +219,24 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         <div class="panel">
           <div class="panelhead"><h3 id="chatPanelTitle">Choose a student</h3></div>
           <div id="chatPanelBody" class="empty">Select a student to see their conversations.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="section-settings">
+      <div class="sectionhead">
+        <div><div class="eyebrow">Class settings</div><h2>Morning screen</h2><p>These settings belong to your class and are used automatically on your morning screen.</p></div>
+      </div>
+      <div class="panel" style="max-width:760px">
+        <div class="panelhead"><h3>Class display settings</h3></div>
+        <div style="padding:18px">
+          <div class="formgrid">
+            <div class="field"><label>Weather location name</label><input id="settingsWeatherName" placeholder="Swanbourne"></div>
+            <div class="field"><label>Latitude</label><input id="settingsLat" type="number" step="0.0001"></div>
+            <div class="field"><label>Longitude</label><input id="settingsLon" type="number" step="0.0001"></div>
+            <div class="field full"><label>Florence speech bubble</label><input id="settingsBubble" placeholder="Let's make it a great day, 4L!"><div class="help">Use your class name or write your own short message.</div></div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn primary" id="saveClassSettings">Save settings</button></div>
         </div>
       </div>
     </section>
@@ -253,6 +281,12 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         <div class="toggle-row">
           <div><strong style="font-size:13px">Published to students</strong><div class="help" style="margin-top:2px">Students can only see bots that are published.</div></div>
           <div class="switch" id="publishSwitch"></div>
+        </div>
+      </div>      
+      <div class="field full">
+        <div class="toggle-row">
+          <div><strong style="font-size:13px">Share with other teachers</strong><div class="help" style="margin-top:2px">Other teachers can assign this bot to their class without making a copy.</div></div>
+          <div class="switch" id="sharedSwitch"></div>
         </div>
       </div>
     </div>
@@ -309,7 +343,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
-let teacherCode="",teacher=null,bots=[],students=[],editingBotId=null,published=false,currentStudent=null;
+let teacherCode="",teacher=null,bots=[],students=[],editingBotId=null,published=false,shared=false,currentStudent=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
@@ -331,8 +365,10 @@ function setSection(name){
   document.querySelectorAll(".nav button[data-section]").forEach(b=>b.classList.toggle("active",b.dataset.section===name));
   $("section-"+name).classList.add("active");
   if(name==="chatbots")loadBots();
+  if(name==="shared")loadSharedBots();
   if(name==="students")loadStudents();
   if(name==="chats")loadChatStudents();
+  if(name==="settings")loadClassSettings();
 }
 document.querySelectorAll(".nav button[data-section]").forEach(b=>b.onclick=()=>setSection(b.dataset.section));
 document.querySelectorAll("[data-go]").forEach(t=>t.onclick=()=>setSection(t.dataset.go));
@@ -349,6 +385,7 @@ async function login(){
     $("teacherClass").textContent=teacher.class_name||"";
     $("welcomeHeading").textContent=`Good morning, ${teacher.display_name||"Teacher"}.`;
     $("studentClass").value=teacher.class_name||"";
+    $("adminNav").style.display=Number(teacher.is_admin)===1?"flex":"none";
     $("loginScreen").style.display="none";
     await Promise.all([loadBots(),loadStudents()]);
   }catch(e){$("loginError").textContent=e.message}
@@ -398,7 +435,7 @@ async function loadBots(){
   bots.forEach(bot=>{
     const card=document.createElement("div");
     card.className="botcard";
-    card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="bot-icon">${esc(bot.icon||"✦")}</div><span class="badge ${bot.published?"live":"draft"}">${bot.published?"Published":"Draft"}</span></div><h3>${esc(bot.name)}</h3><p>${esc(bot.description||"No description yet.")}</p><div class="bot-actions"><button class="small edit">Edit</button><button class="small primary toggle">${bot.published?"Unpublish":"Publish"}</button></div>`;
+    card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="bot-icon">${esc(bot.icon||"✦")}</div><div style="display:flex;gap:5px"><span class="badge ${bot.published?"live":"draft"}">${bot.published?"Published":"Draft"}</span>${bot.shared?'<span class="badge live">Shared</span>':""}</div></div><h3>${esc(bot.name)}</h3><p>${esc(bot.description||"No description yet.")}</p><div class="bot-actions"><button class="small edit">Edit</button><button class="small primary toggle">${bot.published?"Unpublish":"Publish"}</button></div>`;
     card.querySelector(".edit").onclick=()=>openBotModal(bot);
     card.querySelector(".toggle").onclick=async()=>{await post({action:"teacher_update_bot",teacher_code:teacherCode,bot_id:bot.id,published:bot.published?0:1});await loadBots()};
     grid.appendChild(card);
@@ -406,19 +443,25 @@ async function loadBots(){
 }
 
 function openBotModal(bot=null){
-  editingBotId=bot?.id||null;published=!!bot?.published;
+  editingBotId=bot?.id||null;published=!!bot?.published;shared=!!bot?.shared;
   $("botModalTitle").textContent=bot?"Edit chatbot":"Create chatbot";
   $("botName").value=bot?.name||"";$("botSubject").value=bot?.subject||"";$("botYear").value=bot?.year_level||"Year 4";$("botIcon").value=bot?.icon||"✦";
   $("botDescription").value=bot?.description||"";$("botTask").value=bot?.task_brief||"";$("botHelp").value=bot?.help_instructions||"";$("botDont").value=bot?.dont_instructions||"";$("botSteps").value=bot?.task_steps||"";$("botOpening").value=bot?.opening_message||"";
-  $("publishSwitch").classList.toggle("on",published);$("botModal").classList.add("show");
+  $("publishSwitch").classList.toggle("on",published);$("sharedSwitch").classList.toggle("on",shared);$("botModal").classList.add("show");
 }
 function closeBotModal(){$("botModal").classList.remove("show")}
 $("createBotTop").onclick=()=>openBotModal();$("closeBotModal").onclick=closeBotModal;$("cancelBot").onclick=closeBotModal;
 $("publishSwitch").onclick=()=>{published=!published;$("publishSwitch").classList.toggle("on",published)};
+$("sharedSwitch").onclick=()=>{shared=!shared;$("sharedSwitch").classList.toggle("on",shared)};
 $("saveBot").onclick=async()=>{
-  const payload={action:editingBotId?"teacher_update_bot":"teacher_create_bot",teacher_code:teacherCode,bot_id:editingBotId,name:$("botName").value.trim(),subject:$("botSubject").value.trim(),year_level:$("botYear").value.trim(),icon:$("botIcon").value.trim(),description:$("botDescription").value.trim(),task_brief:$("botTask").value.trim(),help_instructions:$("botHelp").value.trim(),dont_instructions:$("botDont").value.trim(),task_steps:$("botSteps").value.trim(),opening_message:$("botOpening").value.trim(),published:published?1:0};
+  const payload={action:editingBotId?"teacher_update_bot":"teacher_create_bot",teacher_code:teacherCode,bot_id:editingBotId,name:$("botName").value.trim(),subject:$("botSubject").value.trim(),year_level:$("botYear").value.trim(),icon:$("botIcon").value.trim(),description:$("botDescription").value.trim(),task_brief:$("botTask").value.trim(),help_instructions:$("botHelp").value.trim(),dont_instructions:$("botDont").value.trim(),task_steps:$("botSteps").value.trim(),opening_message:$("botOpening").value.trim(),published:published?1:0,shared:shared?1:0};
   if(!payload.name){alert("Give the chatbot a name.");return}
-  try{await post(payload);closeBotModal();await loadBots()}catch(e){alert(e.message)}
+  try{
+    const result=await post(payload);
+    const id=editingBotId||result.bot_id;
+    await post({action:"teacher_set_bot_shared",teacher_code:teacherCode,bot_id:id,shared:shared?1:0});
+    closeBotModal();await loadBots();
+  }catch(e){alert(e.message)}
 };
 
 $("addStudentBtn").onclick=()=>{
@@ -590,6 +633,47 @@ async function refreshSummary(sessionId){
 }
 
 (async()=>{const saved=localStorage.getItem("lategan_teacher_code");if(saved){$("teacherCode").value=saved;await login()}})();
+
+async function loadSharedBots(){
+  const grid=$("sharedBotGrid");
+  grid.innerHTML='<div class="empty">Loading shared chatbots…</div>';
+  try{
+    const d=await post({action:"teacher_shared_library",teacher_code:teacherCode});
+    const list=d.bots||[];
+    grid.innerHTML="";
+    if(!list.length){grid.innerHTML='<div class="empty">No shared chatbots yet. Share one of your own bots to start the library.</div>';return}
+    list.forEach(bot=>{
+      const card=document.createElement("div");card.className="botcard";
+      card.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div class="bot-icon">${esc(bot.icon||"✦")}</div><span class="badge live">${bot.assigned?"Assigned":"Shared"}</span></div><h3>${esc(bot.name)}</h3><p>${esc(bot.description||"")}</p><div class="help" style="margin-top:8px">By ${esc(bot.owner_name||"Teacher")} · ${esc(bot.owner_class||"")}</div><div class="bot-actions"><button class="small primary assign">${bot.assigned?"Remove from my class":"Assign to my class"}</button></div>`;
+      card.querySelector(".assign").onclick=async()=>{
+        await post({action:bot.assigned?"teacher_unassign_bot":"teacher_assign_bot",teacher_code:teacherCode,bot_id:bot.id});
+        await loadSharedBots();
+      };
+      grid.appendChild(card);
+    });
+  }catch(e){grid.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+async function loadClassSettings(){
+  try{
+    const d=await post({action:"teacher_class_settings",teacher_code:teacherCode}),s=d.settings||{};
+    $("settingsWeatherName").value=s.weather_name||"";
+    $("settingsLat").value=s.weather_lat??"";
+    $("settingsLon").value=s.weather_lon??"";
+    $("settingsBubble").value=s.mascot_bubble||`Let's make it a great day, ${teacher?.class_name||"class"}!`;
+  }catch(e){alert(e.message)}
+}
+$("saveClassSettings").onclick=async()=>{
+  try{
+    await post({action:"teacher_save_class_settings",teacher_code:teacherCode,weather_name:$("settingsWeatherName").value,weather_lat:Number($("settingsLat").value),weather_lon:Number($("settingsLon").value),mascot_bubble:$("settingsBubble").value});
+    alert("Class settings saved.");
+  }catch(e){alert(e.message)}
+};
+
+$("instructionsNav").onclick=()=>{location.href="../instructions/?role=teacher"};
+$("instructionsTile").onclick=()=>{location.href="../instructions/?role=teacher"};
+$("adminNav").onclick=()=>{location.href="../admin/"};
+
 $("morningNav")?.addEventListener("click",()=>{location.href="../morning/?role=teacher"});
 $("morningTile")?.addEventListener("click",()=>{location.href="../morning/?role=teacher"});
 </script>
