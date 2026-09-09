@@ -508,6 +508,11 @@ h1{
 .weatherbox .edit-dot{right:8px;bottom:8px}
 .expect-card .edit-dot{right:2.5%;top:24.5%;z-index:7}
 
+
+#helperName,#lunchNames{cursor:pointer}
+#helperName:hover,#lunchNames:hover{outline:2px solid rgba(23,61,49,.18);outline-offset:2px}
+.florence-message{cursor:pointer}
+.quick-link{position:relative;z-index:2}
 </style>
 </head>
 <body>
@@ -566,7 +571,7 @@ h1{
       </div>
     </div>
 
-    <div class="quick-links count-1 click-edit" id="quickLinks" title="Click to edit morning links"></div>
+    <div class="quick-links count-1" id="quickLinks" style="position:relative"><button type="button" id="quickLinksEdit" class="edit-dot" style="right:6px;top:6px;z-index:8" title="Edit morning links">✎</button></div>
 
     <div class="mini editable inline-picker" id="helperPanel">
       <h3>👥 Daily Helper</h3>
@@ -781,8 +786,7 @@ async function saveMorningEditor(){
     quick_links:quickLinks
   });
 
-  $("morningEditorSave").textContent="Save";
-  $("morningEditor").classList.remove("show");
+  closeMorningEditor();
   await load();
 }
 
@@ -913,7 +917,8 @@ function closeInlinePickers(){
 }
 function openHelperPicker(){
   const panel=$("helperPicker");
-  const current=Number(data?.daily?.helper?.id||0);
+  if(!panel)return;
+  const current=Number(data?.helper?.id||0);
   panel.innerHTML=(data?.roster||[]).map(s=>`
     <label class="inline-person">
       <input type="radio" name="inlineHelper" value="${s.id}" ${Number(s.id)===current?"checked":""}>
@@ -933,11 +938,12 @@ function openHelperPicker(){
     };
   });
   $("lunchPicker")?.classList.remove("show");
-  panel.classList.toggle("show");
+  panel.classList.add("show");
 }
 function openLunchPicker(){
   const panel=$("lunchPicker");
-  const selected=new Set((data?.daily?.lunch||[]).map(x=>Number(x.id)));
+  if(!panel)return;
+  const selected=new Set((data?.lunch||[]).map(x=>Number(x.id)));
   panel.innerHTML=(data?.roster||[]).map(s=>`
     <label class="inline-person">
       <input type="checkbox" value="${s.id}" ${selected.has(Number(s.id))?"checked":""}>
@@ -956,26 +962,32 @@ function openLunchPicker(){
     await load();
   };
   $("helperPicker")?.classList.remove("show");
-  panel.classList.toggle("show");
+  panel.classList.add("show");
 }
+$("helperPicker")?.addEventListener("click",e=>e.stopPropagation());
+$("lunchPicker")?.addEventListener("click",e=>e.stopPropagation());
 document.addEventListener("click",e=>{
   if(!e.target.closest(".inline-picker"))closeInlinePickers();
 });
 
 $("todoPanel").onclick=()=>openEdit("todo");
 $("remindersPanel").onclick=()=>openEdit("reminders");
-$("helperPanel").onclick=(e)=>{e.stopPropagation();openHelperPicker()};
-$("lunchPanel").onclick=(e)=>{e.stopPropagation();openLunchPicker()};
-$("florenceCard").onclick=(e)=>{e.stopPropagation();openMorningEditor("florence")};
+$("helperName").onclick=(e)=>{e.stopPropagation();openHelperPicker()};
+$("lunchNames").onclick=(e)=>{e.stopPropagation();openLunchPicker()};
+$("florenceMessage").onclick=(e)=>{e.stopPropagation();openMorningEditor("florence")};
+$("florenceCard").querySelector(".edit-dot")?.addEventListener("click",e=>{e.stopPropagation();openMorningEditor("florence")});
 $("weatherBox").onclick=(e)=>{e.stopPropagation();openMorningEditor("weather")};
-$("quickLinks").onclick=(e)=>{
-  if(e.target.closest("a"))return;
-  e.stopPropagation();
-  openMorningEditor("links");
-};
-$("morningEditorCancel").onclick=()=>{$("morningEditor").classList.remove("show")};
+$("quickLinksEdit").onclick=(e)=>{e.stopPropagation();openMorningEditor("links")};
+function closeMorningEditor(){
+  $("morningEditor").classList.remove("show");
+  morningEditorMode=null;
+  $("morningEditorSave").textContent="Save";
+}
+$("morningEditorCancel").onclick=closeMorningEditor;
+$("morningEditorX").onclick=closeMorningEditor;
 $("morningEditorSave").onclick=saveMorningEditor;
-$("morningEditor").onclick=e=>{if(e.target===$("morningEditor"))$("morningEditor").classList.remove("show")};
+$("morningEditor").onclick=e=>{if(e.target===$("morningEditor"))closeMorningEditor()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("morningEditor").classList.contains("show"))closeMorningEditor()});
 
 
 $("closeEdit").onclick=()=>{
@@ -1051,13 +1063,14 @@ load();
 </script>
 
 <div class="inline-editor-backdrop" id="morningEditor">
-  <div class="inline-editor-card">
+  <div class="inline-editor-card" style="position:relative">
+    <button type="button" id="morningEditorX" aria-label="Close" style="position:absolute;right:14px;top:12px;border:0;background:#eef3ef;width:34px;height:34px;border-radius:50%;font-size:20px;font-weight:900;color:#173d31;cursor:pointer">×</button>
     <h2 id="morningEditorTitle">Edit</h2>
     <p id="morningEditorIntro"></p>
     <div id="morningEditorBody"></div>
     <div class="inline-editor-actions">
-      <button id="morningEditorCancel">Cancel</button>
-      <button class="save" id="morningEditorSave">Save</button>
+      <button type="button" id="morningEditorCancel">Cancel</button>
+      <button type="button" class="save" id="morningEditorSave">Save</button>
     </div>
   </div>
 </div>
