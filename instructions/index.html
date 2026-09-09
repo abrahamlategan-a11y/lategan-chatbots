@@ -194,10 +194,11 @@ async function loadPresets(){
           canvas_enabled:p.layout_mode==="instructions"?0:1,
           layout_mode:p.layout_mode||"split"
         });
+        const snapshot=canvasSnapshot();
         board.board=d.board;
         $("savedBoards").classList.remove("show");
         render();
-        setTimeout(resizeCanvas,50);
+        setTimeout(()=>restoreCanvas(snapshot),70);
       };
       el.querySelector(".delete").onclick=async()=>{
         if(!confirm(`Delete "${p.name}"?`))return;
@@ -241,9 +242,10 @@ $("savePresetNow").onclick=async()=>{
 
 $("editBtn").onclick=()=>{$("titleInput").value=board.board.title||"";$("stepsInput").value=(board.board.steps||[]).join("\n");$("timerInput").value=board.board.timer_minutes||0;const mode=board.board.layout_mode||"split";const radio=document.querySelector(`input[name="layoutMode"][value="${mode}"]`);if(radio)radio.checked=true;$("editor").classList.add("show")};
 $("cancelEdit").onclick=()=>$("editor").classList.remove("show");
-$("saveEdit").onclick=async()=>{const selected=document.querySelector('input[name="layoutMode"]:checked');const mode=selected?selected.value:"split";const d=await post({action:"teacher_save_instructions",teacher_code:teacherCode,title:$("titleInput").value,steps:$("stepsInput").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),timer_minutes:Number($("timerInput").value)||0,canvas_enabled:mode==="instructions"?0:1,layout_mode:mode});board.board=d.board;$("editor").classList.remove("show");render();setTimeout(resizeCanvas,50)};
+$("saveEdit").onclick=async()=>{const snapshot=canvasSnapshot();const selected=document.querySelector('input[name="layoutMode"]:checked');const mode=selected?selected.value:"split";const d=await post({action:"teacher_save_instructions",teacher_code:teacherCode,title:$("titleInput").value,steps:$("stepsInput").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),timer_minutes:Number($("timerInput").value)||0,canvas_enabled:mode==="instructions"?0:1,layout_mode:mode});board.board=d.board;$("editor").classList.remove("show");render();setTimeout(()=>restoreCanvas(snapshot),70)};
 
 async function setLayoutMode(mode){
+  const snapshot=canvasSnapshot();
   const d=await post({
     action:"teacher_save_instructions",
     teacher_code:teacherCode,
@@ -255,7 +257,7 @@ async function setLayoutMode(mode){
   });
   board.board=d.board;
   render();
-  setTimeout(resizeCanvas,50);
+  setTimeout(()=>restoreCanvas(snapshot),70);
 }
 
 $("instructionsExpand").onclick=()=>{
@@ -273,7 +275,38 @@ $("fullBtn").onclick=async()=>{if(!document.fullscreenElement)await document.doc
 
 // Whiteboard canvas with stylus/touch/mouse support
 const canvas=$("canvas"),ctx=canvas.getContext("2d");let drawing=false,lastX=0,lastY=0,mode="pen",penColour="#17352b",penSize=3;
-function resizeCanvas(){const rect=canvas.getBoundingClientRect(),ratio=window.devicePixelRatio||1,old=ctx.getImageData(0,0,canvas.width||1,canvas.height||1);canvas.width=Math.max(1,Math.floor(rect.width*ratio));canvas.height=Math.max(1,Math.floor(rect.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.lineCap="round";ctx.lineJoin="round"}
+function resizeCanvas(){
+  const rect=canvas.getBoundingClientRect(),ratio=window.devicePixelRatio||1;
+  if(rect.width<2||rect.height<2)return;
+  let snapshot=null;
+  if(canvas.width>1&&canvas.height>1){
+    snapshot=document.createElement("canvas");
+    snapshot.width=canvas.width;snapshot.height=canvas.height;
+    snapshot.getContext("2d").drawImage(canvas,0,0);
+  }
+  canvas.width=Math.max(1,Math.floor(rect.width*ratio));
+  canvas.height=Math.max(1,Math.floor(rect.height*ratio));
+  ctx.setTransform(ratio,0,0,ratio,0,0);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  if(snapshot){
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);
+    ctx.drawImage(snapshot,0,0,snapshot.width,snapshot.height,0,0,canvas.width,canvas.height);
+    ctx.restore();ctx.setTransform(ratio,0,0,ratio,0,0);
+  }
+}
+function canvasSnapshot(){try{return canvas.toDataURL("image/png")}catch{return null}}
+function restoreCanvas(dataUrl){
+  resizeCanvas();
+  if(!dataUrl)return;
+  const img=new Image();
+  img.onload=()=>{
+    const ratio=window.devicePixelRatio||1;
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);
+    ctx.drawImage(img,0,0,img.width,img.height,0,0,canvas.width,canvas.height);
+    ctx.restore();ctx.setTransform(ratio,0,0,ratio,0,0);
+  };
+  img.src=dataUrl;
+}
 function point(e){const r=canvas.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
 canvas.addEventListener("pointerdown",e=>{drawing=true;canvas.setPointerCapture(e.pointerId);[lastX,lastY]=point(e)});
 canvas.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=point(e),pressure=e.pressure||.5;ctx.globalCompositeOperation=mode==="erase"?"destination-out":"source-over";ctx.strokeStyle=penColour;ctx.lineWidth=mode==="erase"?28:Math.max(1.5,penSize*(0.7+pressure*0.6));ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y});
