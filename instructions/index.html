@@ -61,6 +61,8 @@ canvas{width:100%;height:100%;display:block;touch-action:none;background:white}
   <div class="top">
     <div class="titlewrap"><div class="badge">☰</div><div><h1 id="classTitle">Instructions</h1><small id="classMeta">Class instructions board</small></div></div>
     <div class="tools">
+      <button class="tool" id="savePresetBtn">Save</button>
+      <button class="tool" id="loadPresetBtn">Saved boards</button>
       <button class="tool" id="editBtn">Edit instructions</button>
       <button class="tool" id="fullBtn">Full screen</button>
       <a class="tool" href="../teacher/">⌂ Teacher Hub</a>
@@ -99,6 +101,23 @@ canvas{width:100%;height:100%;display:block;touch-action:none;background:white}
       </div>
       <canvas id="canvas"></canvas>
     </section>
+  </div>
+</div>
+
+
+<div class="editor" id="savedBoards">
+  <div class="card">
+    <h2>Saved boards</h2>
+    <div class="field">
+      <label>Save current board as</label>
+      <div style="display:flex;gap:8px">
+        <input id="presetName" placeholder="e.g. Monday Maths Warm-up">
+        <button class="btn primary" id="savePresetNow">Save</button>
+      </div>
+      <div class="help">Saving with the same name updates that saved board.</div>
+    </div>
+    <div class="preset-list" id="presetList"></div>
+    <div class="actions"><button class="btn" id="closeSavedBoards">Close</button></div>
   </div>
 </div>
 
@@ -148,6 +167,77 @@ function updateTimer(){const m=Math.floor(remaining/60),s=remaining%60;$("time")
 function tick(){if(!running)return;if(remaining<=0){running=false;clearInterval(timerHandle);$("startPause").textContent="Start";return}remaining--;updateTimer()}
 $("startPause").onclick=()=>{if(!totalSeconds)return;running=!running;$("startPause").textContent=running?"Pause":"Start";clearInterval(timerHandle);if(running)timerHandle=setInterval(tick,1000)};
 $("resetTimer").onclick=()=>{running=false;clearInterval(timerHandle);remaining=totalSeconds;updateTimer();$("startPause").textContent="Start"};
+
+
+async function loadPresets(){
+  const list=$("presetList");
+  list.innerHTML='<div class="help">Loading…</div>';
+  try{
+    const d=await post({action:"teacher_list_instruction_presets",teacher_code:teacherCode});
+    const presets=d.presets||[];
+    list.innerHTML="";
+    if(!presets.length){
+      list.innerHTML='<div class="help">No saved boards yet.</div>';
+      return;
+    }
+    presets.forEach(p=>{
+      const el=document.createElement("div");
+      el.className="preset-item";
+      el.innerHTML=`<div><strong>${esc(p.name)}</strong><small>${esc(p.title||"Instructions")} · ${p.steps.length} steps${p.timer_minutes?` · ${p.timer_minutes} min`:""}</small></div><div class="preset-actions"><button class="load">Load</button><button class="delete">Delete</button></div>`;
+      el.querySelector(".load").onclick=async()=>{
+        const d=await post({
+          action:"teacher_save_instructions",
+          teacher_code:teacherCode,
+          title:p.title,
+          steps:p.steps,
+          timer_minutes:p.timer_minutes,
+          canvas_enabled:p.layout_mode==="instructions"?0:1,
+          layout_mode:p.layout_mode||"split"
+        });
+        board.board=d.board;
+        $("savedBoards").classList.remove("show");
+        render();
+        setTimeout(resizeCanvas,50);
+      };
+      el.querySelector(".delete").onclick=async()=>{
+        if(!confirm(`Delete "${p.name}"?`))return;
+        await post({action:"teacher_delete_instruction_preset",teacher_code:teacherCode,preset_id:p.id});
+        loadPresets();
+      };
+      list.appendChild(el);
+    });
+  }catch(e){
+    list.innerHTML=`<div class="help">${esc(e.message)}</div>`;
+  }
+}
+$("savePresetBtn").onclick=()=>{
+  $("presetName").value=board?.board?.title||"";
+  $("savedBoards").classList.add("show");
+  loadPresets();
+};
+$("loadPresetBtn").onclick=()=>{
+  $("presetName").value="";
+  $("savedBoards").classList.add("show");
+  loadPresets();
+};
+$("closeSavedBoards").onclick=()=>$("savedBoards").classList.remove("show");
+$("savePresetNow").onclick=async()=>{
+  const name=$("presetName").value.trim();
+  if(!name){alert("Give this saved board a name.");return}
+  try{
+    await post({
+      action:"teacher_save_instruction_preset",
+      teacher_code:teacherCode,
+      name,
+      title:board.board.title||"Instructions",
+      steps:board.board.steps||[],
+      timer_minutes:Number(board.board.timer_minutes)||0,
+      layout_mode:board.board.layout_mode||"split"
+    });
+    $("presetName").value="";
+    await loadPresets();
+  }catch(e){alert(e.message)}
+};
 
 $("editBtn").onclick=()=>{$("titleInput").value=board.board.title||"";$("stepsInput").value=(board.board.steps||[]).join("\n");$("timerInput").value=board.board.timer_minutes||0;const mode=board.board.layout_mode||"split";const radio=document.querySelector(`input[name="layoutMode"][value="${mode}"]`);if(radio)radio.checked=true;$("editor").classList.add("show")};
 $("cancelEdit").onclick=()=>$("editor").classList.remove("show");
