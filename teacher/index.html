@@ -189,7 +189,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
       <div class="panel">
         <div class="panelhead"><h3>Students</h3></div>
         <div style="overflow:auto">
-          <table><thead><tr><th>Name</th><th>Class</th><th>Code</th><th>Status</th></tr></thead><tbody id="studentRows"></tbody></table>
+          <table><thead><tr><th>Name</th><th>Class</th><th>Code</th><th>Status</th><th style="text-align:right">Access</th></tr></thead><tbody id="studentRows"></tbody></table>
         </div>
         <div class="empty" id="studentEmpty">No students yet.</div>
       </div>
@@ -366,7 +366,17 @@ async function loadStudents(){
     $("studentEmpty").style.display=students.length?"none":"block";
     students.forEach(s=>{
       const tr=document.createElement("tr");
-      tr.innerHTML=`<td><strong>${esc(s.display_name)}</strong></td><td>${esc(s.class_name)}</td><td class="code">${esc(s.student_code)}</td><td><span class="status">${s.active===0?"Inactive":"Active"}</span></td>`;
+      const active=s.active!==0;
+      tr.innerHTML=`<td><strong>${esc(s.display_name)}</strong></td><td>${esc(s.class_name)}</td><td class="code">${esc(s.student_code)}</td><td><span class="status">${active?"Active":"Inactive"}</span></td><td style="text-align:right"><button class="small ${active?"":"primary"} student-access">${active?"Remove":"Restore"}</button></td>`;
+      tr.querySelector(".student-access").onclick=async()=>{
+        const verb=active?"remove":"restore";
+        const ok=confirm(active
+          ? `Remove ${s.display_name} from the active class? Their saved chats will be kept and you can restore them later.`
+          : `Restore ${s.display_name} to the active class?`);
+        if(!ok)return;
+        await post({action:"teacher_set_student_active",teacher_code:teacherCode,student_id:s.id,active:active?0:1});
+        await loadStudents();
+      };
       $("studentRows").appendChild(tr);
     });
   }catch(e){}
