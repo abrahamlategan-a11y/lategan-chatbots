@@ -7,33 +7,35 @@
 <style>
 :root{
   --green:#0d5a43;
-  --green2:#0b503c;
+  --green-deep:#0a4c39;
   --cream:#fbf8ef;
   --ink:#123c30;
-  --lav:#eee5f8;
+  --lav:#eee6f7;
   --sage:#edf3df;
   --lime:#dff2b4;
-  --muted:#67766f;
-  --shadow:0 8px 22px rgba(5,38,27,.13);
+  --purple:#6547b9;
+  --muted:#66766f;
+  --shadow:0 7px 20px rgba(5,38,27,.12);
 }
 *{box-sizing:border-box}
 html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,Helvetica,sans-serif;background:var(--green);color:var(--ink)}
 button,input,textarea,select{font:inherit}
+body{min-height:100vh}
 
 .page{
+  width:100vw;
   height:100vh;
-  overflow:hidden;
-  padding:12px 18px 12px;
+  padding:14px 18px 12px;
   display:grid;
-  grid-template-rows:112px minmax(0,1fr) 118px;
-  gap:10px;
-  background:linear-gradient(135deg,var(--green) 0%,#0f6048 48%,var(--green2) 100%);
+  grid-template-rows:118px minmax(0,1fr) 116px;
+  gap:11px;
+  background:linear-gradient(135deg,#0d5a43 0%,#0e6047 48%,#0a503c 100%);
 }
 
 .header{
   color:#fff;
   position:relative;
-  padding:0 4px;
+  min-height:0;
 }
 .kicker{
   font-size:12px;
@@ -43,13 +45,13 @@ button,input,textarea,select{font:inherit}
   opacity:.86;
 }
 h1{
-  margin:2px 0 7px;
-  font-size:clamp(44px,4vw,62px);
+  margin:3px 0 8px;
+  font-size:clamp(44px,4.1vw,64px);
   line-height:.94;
-  font-weight:900;
   letter-spacing:-.055em;
+  font-weight:900;
 }
-.class{color:#d9c7ed}
+.class{color:#d8c7eb}
 .datepill{
   display:inline-flex;
   align-items:center;
@@ -58,39 +60,38 @@ h1{
   color:#173f32;
   border-radius:999px;
   padding:7px 14px;
-  font-size:clamp(14px,1.25vw,19px);
+  font-size:clamp(15px,1.25vw,20px);
   font-weight:800;
 }
 .header-note{
   position:absolute;
-  left:43%;
-  bottom:3px;
+  left:42%;
+  bottom:1px;
   font-family:"Comic Sans MS","Segoe Print",cursive;
+  color:#d9eca7;
   font-size:12px;
   line-height:1.02;
-  color:#d9eca7;
   transform:rotate(-3deg);
 }
 
 .main{
   min-height:0;
-  display:grid;
-  grid-template-columns:.98fr 1.02fr;
+  display:flex;
   gap:14px;
-}
-
-.card{
-  background:var(--cream);
-  border-radius:20px;
-  box-shadow:var(--shadow);
-  min-height:0;
-  overflow:hidden;
+  align-items:stretch;
 }
 
 .todo{
-  padding:16px 18px;
-  display:flex;
-  flex-direction:column;
+  flex:1 1 auto;
+  min-width:0;
+  min-height:0;
+  background:var(--cream);
+  border-radius:20px;
+  padding:16px 18px 15px;
+  box-shadow:var(--shadow);
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  overflow:hidden;
 }
 .todo h2{
   margin:0 0 10px;
@@ -99,146 +100,175 @@ h1{
   line-height:1;
   letter-spacing:-.035em;
 }
-.hint{
-  font-family:Arial,Helvetica,sans-serif;
-  font-size:9px;
-  font-weight:400;
-  color:#78847e;
-  margin-left:6px;
-  vertical-align:middle;
-}
 .todo-list{
-  flex:1;
   min-height:0;
   display:grid;
-  grid-template-rows:repeat(4,1fr);
-  gap:7px;
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:8px;
 }
 .todo-row{
   min-height:0;
   display:grid;
-  grid-template-columns:44px 46px 1fr 22px;
+  grid-template-columns:42px 44px minmax(0,1fr) 20px;
   align-items:center;
-  padding:6px 12px 6px 8px;
+  padding:5px 12px 5px 8px;
   border-radius:16px;
-  font-size:clamp(17px,1.65vw,25px);
+  font-size:clamp(18px,1.55vw,25px);
   font-weight:800;
+  line-height:1.05;
 }
 .todo-row:nth-child(odd){background:var(--lav)}
 .todo-row:nth-child(even){background:var(--sage)}
 .todo-num{
-  width:34px;height:34px;border-radius:50%;
+  width:33px;height:33px;border-radius:50%;
   display:grid;place-items:center;
   background:#d5c1ef;
-  font-size:15px;font-weight:900;
+  font-size:15px;
+  font-weight:900;
 }
 .todo-row:nth-child(even) .todo-num{background:#cce7a6}
-.todo-icon{font-size:26px;text-align:center}
-.todo-arrow{font-size:27px}
+.todo-icon{font-size:25px;text-align:center}
+.todo-arrow{font-size:26px;text-align:right}
 
 .expect-card{
-  min-height:0;
+  height:100%;
+  aspect-ratio:810 / 696;
+  flex:0 0 auto;
+  min-width:0;
   border-radius:20px;
-  box-shadow:var(--shadow);
-  background:var(--cream);
-  display:flex;
-  align-items:center;
-  justify-content:center;
   overflow:hidden;
-  padding:0;
+  box-shadow:var(--shadow);
+  background:transparent;
 }
 .expect-card img{
   display:block;
   width:100%;
   height:100%;
-  object-fit:contain;
-  object-position:center center;
+  object-fit:fill;
 }
 
 .bottom{
   min-height:0;
   display:grid;
-  grid-template-columns:1.12fr 1.02fr .94fr 1.05fr .92fr;
+  grid-template-columns:1.12fr 1fr .96fr 1.07fr .94fr;
   gap:10px;
 }
 .mini{
+  min-width:0;
   min-height:0;
   height:100%;
-  overflow:hidden;
   border-radius:16px;
-  padding:11px 13px;
+  padding:10px 13px;
   box-shadow:var(--shadow);
   background:var(--cream);
+  overflow:hidden;
 }
 .mini h3{
   margin:0 0 5px;
-  font-size:clamp(15px,1.35vw,20px);
-  line-height:1.03;
+  font-size:clamp(15px,1.25vw,20px);
+  line-height:1.02;
 }
 .reminders{background:#e4d6f1}
 .reminder-line{
-  display:flex;gap:7px;align-items:flex-start;
-  font-size:clamp(11px,.95vw,14px);
-  line-height:1.22;
+  display:flex;
+  gap:7px;
+  align-items:flex-start;
+  font-size:clamp(11px,.9vw,14px);
+  line-height:1.18;
   margin:3px 0;
 }
-.bullet{width:7px;height:7px;border-radius:50%;background:#6547b9;flex:none;margin-top:4px}
+.bullet{width:7px;height:7px;border-radius:50%;background:var(--purple);flex:0 0 auto;margin-top:4px}
 .wordle{
   background:linear-gradient(150deg,#2a8c5d,#24784f);
-  color:#fff;text-decoration:none;
-  display:flex;align-items:center;justify-content:space-between;
+  color:#fff;
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
 }
-.wordle strong{display:block;font-size:clamp(21px,1.85vw,28px);margin-bottom:3px}
+.wordle strong{display:block;font-size:clamp(21px,1.8vw,28px);margin-bottom:3px}
 .wordle span{font-size:10px;letter-spacing:.06em}
 .wordle-arrow{font-size:25px}
 .namepill{
+  border-radius:11px;
   background:#eadff5;
-  border-radius:12px;
-  padding:6px 9px;
+  padding:6px 8px;
   text-align:center;
-  font-size:clamp(18px,1.65vw,25px);
-  font-weight:900;
+  font-size:clamp(18px,1.55vw,25px);
   line-height:1;
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .lunch .namepill{background:#e2efcf}
-.sub{font-size:9.5px;color:var(--muted);line-height:1.15;margin-top:5px}
+.sub{font-size:9.5px;color:var(--muted);line-height:1.12;margin-top:5px}
+
 .studenthub{
   background:#e8dcf3;
   display:grid;
-  grid-template-columns:60px 1fr;
+  grid-template-columns:58px minmax(0,1fr);
   gap:9px;
   align-items:center;
   color:inherit;
   text-decoration:none;
 }
-.studenthub img{width:58px;height:58px;background:#fff;padding:4px;border-radius:8px}
-.studenthub strong{display:block;font-size:clamp(16px,1.35vw,20px);line-height:1.02;margin-bottom:4px}
-.studenthub span{display:block;font-size:9px;line-height:1.15;color:#5c5b61}
+.studenthub img{
+  width:56px;
+  height:56px;
+  background:#fff;
+  padding:4px;
+  border-radius:8px;
+}
+.studenthub strong{
+  display:block;
+  font-size:clamp(16px,1.25vw,20px);
+  line-height:1.02;
+  margin-bottom:4px;
+}
+.studenthub span{
+  display:block;
+  font-size:9px;
+  line-height:1.15;
+  color:#5d5b61;
+}
 
-.editable{cursor:pointer;outline:2px solid transparent;outline-offset:2px;transition:outline-color .14s ease}
-.editable:hover{outline-color:rgba(255,255,255,.52)}
+.editable{
+  cursor:pointer;
+  outline:2px solid transparent;
+  outline-offset:2px;
+  transition:outline-color .14s ease,transform .12s ease;
+}
+.editable:hover{outline-color:rgba(255,255,255,.5)}
+.editable:active{transform:scale(.997)}
 
 .tools{
   position:fixed;
-  top:10px;right:10px;
+  top:10px;
+  right:10px;
   z-index:20;
-  display:flex;gap:6px;
+  display:flex;
+  gap:6px;
 }
 .tool{
   border:1px solid rgba(255,255,255,.28);
-  background:#164f3e;color:#fff;
+  background:#164f3e;
+  color:#fff;
   border-radius:9px;
   padding:7px 10px;
-  font-size:12px;font-weight:800;
+  font-size:12px;
+  font-weight:800;
   text-decoration:none;
 }
 
 .editor{
-  position:fixed;inset:0;
-  background:rgba(7,31,23,.72);
+  position:fixed;
+  inset:0;
   z-index:50;
-  display:none;place-items:center;
+  display:none;
+  place-items:center;
   padding:20px;
+  background:rgba(7,31,23,.72);
 }
 .editor.show{display:grid}
 .editcard{
@@ -256,36 +286,38 @@ h1{
 .field input,.field textarea,.field select{width:100%;border:1px solid #d6ded9;border-radius:10px;padding:10px 11px}
 .field textarea{min-height:120px}
 .people{
-  display:grid;grid-template-columns:repeat(2,1fr);
-  gap:8px;max-height:300px;overflow:auto;
-  border:1px solid #d6ded9;border-radius:10px;padding:10px;
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:8px;
+  max-height:300px;
+  overflow:auto;
+  border:1px solid #d6ded9;
+  border-radius:10px;
+  padding:10px;
 }
 .person{display:flex;gap:8px;align-items:center;font-size:13px}
 .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
 .btn{border:1px solid #d6ded9;background:#fff;border-radius:9px;padding:9px 12px;font-weight:800}
 .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
 
-@media(max-height:760px){
-  .page{grid-template-rows:96px minmax(0,1fr) 105px;padding-top:9px}
-  .header-note{display:none}
+@media(max-height:780px){
+  .page{grid-template-rows:102px minmax(0,1fr) 104px;padding-top:10px}
   h1{font-size:46px}
+  .header-note{display:none}
   .todo{padding:13px 15px}
-  .todo h2{font-size:34px}
-  .todo-row{grid-template-columns:40px 42px 1fr 18px;padding:4px 10px 4px 7px}
-  .todo-num{width:31px;height:31px}
-  .todo-icon{font-size:23px}
-  .mini{padding:9px 11px}
-  .studenthub{grid-template-columns:52px 1fr}
-  .studenthub img{width:50px;height:50px}
+  .todo h2{font-size:34px;margin-bottom:8px}
+  .todo-list{gap:6px}
+  .todo-row{grid-template-columns:38px 40px minmax(0,1fr) 18px;font-size:18px}
+  .todo-num{width:30px;height:30px}
+  .todo-icon{font-size:22px}
+  .mini{padding:8px 10px}
+  .studenthub{grid-template-columns:48px minmax(0,1fr)}
+  .studenthub img{width:46px;height:46px}
 }
 
-@media(max-width:1050px){
-  html,body{overflow:auto}
-  .page{height:auto;min-height:100vh;overflow:auto;grid-template-rows:auto auto auto}
-  .main{grid-template-columns:1fr}
-  .expect-card{min-height:auto}
-  .expect-card img{width:100%;height:auto;object-fit:contain}
-  .bottom{grid-template-columns:repeat(3,1fr)}
+@media(max-width:1200px){
+  .expect-card{aspect-ratio:auto;flex:1 1 49%;}
+  .expect-card img{object-fit:contain;background:var(--cream)}
 }
 </style>
 </head>
@@ -300,14 +332,19 @@ h1{
   <header class="header">
     <div class="kicker">Welcome to our class</div>
     <h1>Good Morning <span class="class" id="className">4L</span></h1>
-    <div class="datepill">📅 <span id="dateText"></span></div>
+    <div class="datepill">📅 <span id="dateText">Wednesday 9 September 2026</span></div>
     <div class="header-note">Be kind<br>Do your best<br>You've got this! ♡</div>
   </header>
 
   <section class="main">
-    <div class="card todo editable" id="todoPanel">
-      <h2>To Do <span class="hint">click to edit</span></h2>
-      <div class="todo-list" id="todoList"></div>
+    <div class="todo editable" id="todoPanel">
+      <h2>To Do</h2>
+      <div class="todo-list" id="todoList">
+        <div class="todo-row"><span class="todo-num">1</span><span class="todo-icon">🎒</span><span>Bag in cubby</span><span class="todo-arrow">›</span></div>
+        <div class="todo-row"><span class="todo-num">2</span><span class="todo-icon">💻</span><span>Laptop on desk</span><span class="todo-arrow">›</span></div>
+        <div class="todo-row"><span class="todo-num">3</span><span class="todo-icon">⭐</span><span>Finish Brightpath</span><span class="todo-arrow">›</span></div>
+        <div class="todo-row"><span class="todo-num">4</span><span class="todo-icon">📚</span><span>Reading or Mathmentum</span><span class="todo-arrow">›</span></div>
+      </div>
     </div>
 
     <div class="expect-card">
@@ -317,8 +354,11 @@ h1{
 
   <section class="bottom">
     <div class="mini reminders editable" id="remindersPanel">
-      <h3>📣 Reminders <span class="hint">click to edit</span></h3>
-      <div id="reminders"></div>
+      <h3>📣 Reminders</h3>
+      <div id="reminders">
+        <div class="reminder-line"><span class="bullet"></span><span>Outdoor Ed Info after Lunch</span></div>
+        <div class="reminder-line"><span class="bullet"></span><span>House Uniform tomorrow</span></div>
+      </div>
     </div>
 
     <a class="mini wordle" id="wordleLink" target="_blank" rel="noopener">
@@ -327,14 +367,14 @@ h1{
     </a>
 
     <div class="mini editable" id="helperPanel">
-      <h3>👥 Daily Helper <span class="hint">click to change</span></h3>
-      <div class="namepill" id="helperName">—</div>
+      <h3>👥 Daily Helper</h3>
+      <div class="namepill" id="helperName">Aya</div>
       <div class="sub">Helps with jobs around our class today.</div>
     </div>
 
     <div class="mini lunch editable" id="lunchPanel">
-      <h3>🍎 Lunch Orders <span class="hint">click to change</span></h3>
-      <div class="namepill" id="lunchNames">—</div>
+      <h3>🍎 Lunch Orders</h3>
+      <div class="namepill" id="lunchNames">Zoe & Aya</div>
       <div class="sub">Stays the same for the school week.</div>
     </div>
 
@@ -385,21 +425,18 @@ const $=id=>document.getElementById(id);
 let data=null,editMode=null;
 
 function dateKey(){
-  const d=new Date(), y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
+  const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${day}`;
 }
-
 async function post(payload){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const j=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(j.error||"Something went wrong.");
   return j;
 }
-
 function esc(s){
   return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
-
 function iconFor(text){
   const s=String(text||"").toLowerCase();
   if(s.includes("bag"))return "🎒";
@@ -408,7 +445,6 @@ function iconFor(text){
   if(s.includes("read")||s.includes("math"))return "📚";
   return "✓";
 }
-
 function render(){
   const d=data.daily;
   const dt=new Date(d.date_key+"T12:00:00");
@@ -434,40 +470,34 @@ function render(){
   $("lunchNames").textContent=(d.lunch||[]).map(x=>x.name).join(" & ")||"—";
   $("wordleLink").href=d.wordle_url||"https://www.nytimes.com/games/wordle/index.html";
 }
-
 async function load(){
   if(!teacherCode){location.href="../teacher/";return}
   data=await post({action:"teacher_daily_state",teacher_code:teacherCode,date_key:dateKey()});
   render();
 }
-
 function resetSections(){
   ["todoEditSection","remindersEditSection","helperEditSection","lunchEditSection"].forEach(id=>$(id).style.display="none");
 }
-
 function openEdit(mode){
   editMode=mode;
   resetSections();
-  const d=data.daily, t=d.todo||[];
+  const d=data.daily,t=d.todo||[];
 
   if(mode==="todo"){
     $("editorTitle").textContent="Edit To Do";
     for(let i=1;i<=4;i++)$("todo"+i).value=t[i-1]||"";
     $("todoEditSection").style.display="block";
   }
-
   if(mode==="reminders"){
     $("editorTitle").textContent="Edit Reminders";
     $("reminderInput").value=d.reminders||"";
     $("remindersEditSection").style.display="block";
   }
-
   if(mode==="helper"){
     $("editorTitle").textContent="Choose Daily Helper";
     $("helperSelect").innerHTML=(data.roster||[]).map(x=>`<option value="${x.id}" ${d.helper?.id===x.id?"selected":""}>${esc(x.name)}</option>`).join("");
     $("helperEditSection").style.display="block";
   }
-
   if(mode==="lunch"){
     $("editorTitle").textContent="Choose Lunch Orders for This Week";
     const selected=new Set((d.lunch||[]).map(x=>Number(x.id)));
@@ -478,7 +508,6 @@ function openEdit(mode){
       </label>`).join("");
     $("lunchEditSection").style.display="block";
   }
-
   $("editor").classList.add("show");
 }
 
@@ -497,15 +526,12 @@ $("saveEdit").onclick=async()=>{
     const todo=[1,2,3,4].map(i=>$("todo"+i).value);
     await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:dateKey(),reminders:data.daily.reminders||"",todo});
   }
-
   if(editMode==="reminders"){
     await post({action:"teacher_daily_save",teacher_code:teacherCode,date_key:dateKey(),reminders:$("reminderInput").value,todo:data.daily.todo||[]});
   }
-
   if(editMode==="helper"){
     await post({action:"teacher_set_helper",teacher_code:teacherCode,date_key:dateKey(),student_id:Number($("helperSelect").value)});
   }
-
   if(editMode==="lunch"){
     const ids=[...document.querySelectorAll("#lunchPeople input:checked")].map(x=>Number(x.value));
     await post({action:"teacher_set_lunch",teacher_code:teacherCode,date_key:dateKey(),student_ids:ids});
