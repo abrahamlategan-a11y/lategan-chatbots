@@ -31,7 +31,7 @@ button,input{font:inherit}button{cursor:pointer}
 .info-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:#64746b;margin-bottom:5px}.info-value{font-size:24px;font-weight:950;letter-spacing:-.025em}.reminder-preview{font-size:13px;line-height:1.35;white-space:pre-wrap}.todayline{font-size:10.5px;color:#6d6a73;line-height:1.35;margin-top:6px}
 
 .section-title{display:flex;justify-content:space-between;align-items:end;margin-bottom:11px}.section-title h2{font-size:25px;letter-spacing:-.025em;margin:0}.section-title span{font-size:12px;color:var(--muted)}
-.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.action-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 .action{min-height:220px;background:#fff;border:1px solid var(--line);border-radius:21px;padding:21px;box-shadow:var(--shadow);display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:.16s ease;cursor:pointer}
 .action:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(26,55,43,.13)}
 .action.chat{background:linear-gradient(145deg,#fff,#f1f8f4)}.action.games{background:linear-gradient(145deg,#fff,#fff5dc)}.action.wordle{background:linear-gradient(145deg,#fff,#e8f6ed)}
@@ -97,7 +97,7 @@ button,input{font:inherit}button{cursor:pointer}
     </section>
 
     <div class="section-title">
-      <h2>What do you want to open?</h2>
+      <h2>Open a class tool</h2>
       <span>Choose a tile</span>
     </div>
 
@@ -114,13 +114,6 @@ button,input{font:inherit}button{cursor:pointer}
         <h3>Class Games</h3>
         <p>Join a live class game your teacher has started.</p>
         <div class="go">Open games →</div>
-      </a>
-
-      <a class="action wordle" id="wordleTile" target="_blank" rel="noopener">
-        <div class="action-icon">🟩</div>
-        <h3>Wordle</h3>
-        <p>Open today’s Wordle.</p>
-        <div class="go">Play →</div>
       </a>
     </section>
   </div>
@@ -165,7 +158,6 @@ async function loadDaily(){
     $("lunchNames").textContent=(x.lunch||[]).map(a=>a.name).join(" & ")||"—";
     $("studentReminders").textContent=(x.reminders||"").trim()||"No reminders today.";
     $("studentTodo").textContent=(x.todo||[]).filter(Boolean).length?"Morning: "+x.todo.filter(Boolean).join(" · "):"";
-    $("wordleTile").href=x.wordle_url||"https://www.nytimes.com/games/wordle/index.html";
   }catch(e){console.warn(e)}
 }
 async function login(){
