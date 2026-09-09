@@ -234,7 +234,21 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
             <div class="field"><label>Weather location name</label><input id="settingsWeatherName" placeholder="Swanbourne"></div>
             <div class="field"><label>Latitude</label><input id="settingsLat" type="number" step="0.0001"></div>
             <div class="field"><label>Longitude</label><input id="settingsLon" type="number" step="0.0001"></div>
-            <div class="field full"><label>Florence speech bubble</label><input id="settingsBubble" placeholder="Let's make it a great day, 4L!"><div class="help">Use your class name or write your own short message.</div></div>
+            <div class="field full">
+              <label>Florence message</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                <label class="btn" style="cursor:pointer"><input type="radio" name="mascotMode" value="daily" style="margin-right:6px">Daily random</label>
+                <label class="btn" style="cursor:pointer"><input type="radio" name="mascotMode" value="list" style="margin-right:6px">Choose from list</label>
+                <label class="btn" style="cursor:pointer"><input type="radio" name="mascotMode" value="custom" style="margin-right:6px">Make your own</label>
+              </div>
+              <div id="mascotListWrap" style="display:none;margin-bottom:8px">
+                <select id="settingsMascotChoice" style="width:100%"></select>
+              </div>
+              <div id="mascotCustomWrap" style="display:none">
+                <input id="settingsBubble" placeholder="Let's make it a great day, 4L!">
+              </div>
+              <div class="help" id="mascotHelp">Daily random picks one message for the whole school day.</div>
+            </div>
             <div class="field full">
               <label>Morning quick links</label>
               <div class="help" style="margin-bottom:8px">Use 1–4 buttons. Leave unused rows blank.</div>
@@ -660,6 +674,46 @@ async function loadSharedBots(){
 }
 
 
+
+const FLORENCE_QUOTES=[
+  "Do the little things well.",
+  "Be curious today.",
+  "Make someone’s day better.",
+  "Challenge yourself, not each other.",
+  "Mistakes mean you’re learning.",
+  "Leave the room better than you found it.",
+  "Be the person others can rely on.",
+  "Start strong. Finish proud.",
+  "Choose effort over excuses.",
+  "Ask a good question today.",
+  "Make today count.",
+  "Be brave enough to try.",
+  "Focus on what you can control.",
+  "Kindness is always a good choice.",
+  "One good choice can change your day.",
+  "Keep going when it gets tricky.",
+  "Listen well. Think deeply.",
+  "Bring your best to the next thing.",
+  "Learn something worth remembering.",
+  "Help the class get better today."
+];
+function setupMascotOptions(){
+  $("settingsMascotChoice").innerHTML=FLORENCE_QUOTES.map(q=>`<option value="${esc(q)}">${esc(q)}</option>`).join("");
+}
+function mascotMode(){
+  return document.querySelector('input[name="mascotMode"]:checked')?.value||"daily";
+}
+function updateMascotModeUI(){
+  const mode=mascotMode();
+  $("mascotListWrap").style.display=mode==="list"?"block":"none";
+  $("mascotCustomWrap").style.display=mode==="custom"?"block":"none";
+  $("mascotHelp").textContent=
+    mode==="daily"?"A different curated message is chosen automatically each school day.":
+    mode==="list"?"Choose one message and keep it until you change it.":
+    "Write your own short message for Florence.";
+}
+document.querySelectorAll('input[name="mascotMode"]').forEach(r=>r.addEventListener("change",updateMascotModeUI));
+
 function renderQuickLinksEditor(links=[]){
   const defaults=[{label:"Wordle",url:"https://www.nytimes.com/games/wordle/index.html"}];
   const vals=[...(links.length?links:defaults)];
@@ -680,7 +734,16 @@ async function loadClassSettings(){
     $("settingsWeatherName").value=s.weather_name||"";
     $("settingsLat").value=s.weather_lat??"";
     $("settingsLon").value=s.weather_lon??"";
+    setupMascotOptions();
+    const mode=["daily","list","custom"].includes(s.mascot_mode)?s.mascot_mode:"daily";
+    const radio=document.querySelector(`input[name="mascotMode"][value="${mode}"]`);
+    if(radio)radio.checked=true;
     $("settingsBubble").value=s.mascot_bubble||`Let's make it a great day, ${teacher?.class_name||"class"}!`;
+    if(s.mascot_choice && FLORENCE_QUOTES.includes(s.mascot_choice)){
+      $("settingsMascotChoice").value=s.mascot_choice;
+    }
+    updateMascotModeUI();
+
     let links=[];
     try{links=JSON.parse(s.quick_links_json||"[]")}catch{}
     renderQuickLinksEditor(Array.isArray(links)?links:[]);
@@ -688,7 +751,17 @@ async function loadClassSettings(){
 }
 $("saveClassSettings").onclick=async()=>{
   try{
-    await post({action:"teacher_save_class_settings",teacher_code:teacherCode,weather_name:$("settingsWeatherName").value,weather_lat:Number($("settingsLat").value),weather_lon:Number($("settingsLon").value),mascot_bubble:$("settingsBubble").value,quick_links:readQuickLinksEditor()});
+    await post({
+      action:"teacher_save_class_settings",
+      teacher_code:teacherCode,
+      weather_name:$("settingsWeatherName").value,
+      weather_lat:Number($("settingsLat").value),
+      weather_lon:Number($("settingsLon").value),
+      mascot_mode:mascotMode(),
+      mascot_choice:$("settingsMascotChoice").value,
+      mascot_bubble:$("settingsBubble").value,
+      quick_links:readQuickLinksEditor()
+    });
     alert("Class settings saved.");
   }catch(e){alert(e.message)}
 };
