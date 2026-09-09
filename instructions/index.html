@@ -35,7 +35,18 @@
 .instructions{position:relative}
 .canvaspanel{position:relative}
 
-.canvaspanel{position:relative;background:#fff;border-radius:21px;overflow:hidden;min-height:0}.canvasbar{position:absolute;z-index:4;top:10px;left:10px;display:flex;gap:6px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}.canvasbar button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:850}.canvasbar button.on{background:var(--green);color:#fff;border-color:var(--green)}
+.canvaspanel{position:relative;background:#fff;border-radius:21px;overflow:hidden;min-height:0}.canvasbar{position:absolute;z-index:4;top:10px;left:10px;display:flex;gap:6px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}.canvasbar button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:850}
+
+.swatches{display:flex;align-items:center;gap:5px;padding:0 3px}
+.swatch{
+  width:25px!important;height:25px!important;min-width:25px!important;
+  padding:0!important;border-radius:50%!important;
+  background:var(--sw)!important;border:2px solid #fff!important;
+  box-shadow:0 0 0 1px #cfd8d2;
+}
+.swatch.on{box-shadow:0 0 0 3px #9cc8b4}
+.size-btn.on{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important}
+.canvasbar button.on{background:var(--green);color:#fff;border-color:var(--green)}
 canvas{width:100%;height:100%;display:block;touch-action:none;background:white}
 .editor{position:fixed;inset:0;display:none;place-items:center;background:rgba(7,30,22,.72);z-index:20;padding:18px}.editor.show{display:grid}.card{width:min(700px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:23px}.card h2{margin:0 0 15px}.field{margin-bottom:12px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:5px}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px}.field textarea{min-height:180px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 12px;font-weight:850}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
 .mode-instructions .stage{grid-template-columns:1fr}.mode-instructions .canvaspanel{display:none}
@@ -70,7 +81,22 @@ canvas{width:100%;height:100%;display:block;touch-action:none;background:white}
 
     <section class="canvaspanel">
       <button class="expand-btn" id="whiteboardExpand" title="Make whiteboard full width">+</button>
-      <div class="canvasbar"><button id="penBtn" class="on">✎ Pen</button><button id="eraseBtn">Eraser</button><button id="clearBtn">Clear</button></div>
+      <div class="canvasbar">
+        <button id="penBtn" class="on">✎ Pen</button>
+        <div class="swatches" aria-label="Pen colours">
+          <button class="swatch on" data-colour="#17352b" style="--sw:#17352b" title="Dark green"></button>
+          <button class="swatch" data-colour="#111111" style="--sw:#111111" title="Black"></button>
+          <button class="swatch" data-colour="#1f5fbf" style="--sw:#1f5fbf" title="Blue"></button>
+          <button class="swatch" data-colour="#c53d3d" style="--sw:#c53d3d" title="Red"></button>
+          <button class="swatch" data-colour="#7a4bb7" style="--sw:#7a4bb7" title="Purple"></button>
+          <button class="swatch" data-colour="#e0a11b" style="--sw:#e0a11b" title="Gold"></button>
+        </div>
+        <button class="size-btn on" data-size="3" title="Fine pen">Thin</button>
+        <button class="size-btn" data-size="6" title="Medium pen">Medium</button>
+        <button class="size-btn" data-size="11" title="Thick pen">Thick</button>
+        <button id="eraseBtn">Eraser</button>
+        <button id="clearBtn">Clear</button>
+      </div>
       <canvas id="canvas"></canvas>
     </section>
   </div>
@@ -156,14 +182,33 @@ $("whiteboardExpand").onclick=()=>{
 $("fullBtn").onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()};
 
 // Whiteboard canvas with stylus/touch/mouse support
-const canvas=$("canvas"),ctx=canvas.getContext("2d");let drawing=false,lastX=0,lastY=0,mode="pen";
+const canvas=$("canvas"),ctx=canvas.getContext("2d");let drawing=false,lastX=0,lastY=0,mode="pen",penColour="#17352b",penSize=3;
 function resizeCanvas(){const rect=canvas.getBoundingClientRect(),ratio=window.devicePixelRatio||1,old=ctx.getImageData(0,0,canvas.width||1,canvas.height||1);canvas.width=Math.max(1,Math.floor(rect.width*ratio));canvas.height=Math.max(1,Math.floor(rect.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.lineCap="round";ctx.lineJoin="round"}
 function point(e){const r=canvas.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
 canvas.addEventListener("pointerdown",e=>{drawing=true;canvas.setPointerCapture(e.pointerId);[lastX,lastY]=point(e)});
-canvas.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=point(e),pressure=e.pressure||.5;ctx.globalCompositeOperation=mode==="erase"?"destination-out":"source-over";ctx.strokeStyle="#17352b";ctx.lineWidth=mode==="erase"?24:Math.max(2,3.2*pressure+1.5);ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y});
+canvas.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=point(e),pressure=e.pressure||.5;ctx.globalCompositeOperation=mode==="erase"?"destination-out":"source-over";ctx.strokeStyle=penColour;ctx.lineWidth=mode==="erase"?28:Math.max(1.5,penSize*(0.7+pressure*0.6));ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y});
 ["pointerup","pointercancel","pointerleave"].forEach(ev=>canvas.addEventListener(ev,()=>drawing=false));
 $("penBtn").onclick=()=>{mode="pen";$("penBtn").classList.add("on");$("eraseBtn").classList.remove("on")};
 $("eraseBtn").onclick=()=>{mode="erase";$("eraseBtn").classList.add("on");$("penBtn").classList.remove("on")};
+document.querySelectorAll(".swatch").forEach(btn=>{
+  btn.onclick=()=>{
+    penColour=btn.dataset.colour||"#17352b";
+    mode="pen";
+    $("penBtn").classList.add("on");
+    $("eraseBtn").classList.remove("on");
+    document.querySelectorAll(".swatch").forEach(x=>x.classList.toggle("on",x===btn));
+  };
+});
+document.querySelectorAll(".size-btn").forEach(btn=>{
+  btn.onclick=()=>{
+    penSize=Number(btn.dataset.size)||3;
+    mode="pen";
+    $("penBtn").classList.add("on");
+    $("eraseBtn").classList.remove("on");
+    document.querySelectorAll(".size-btn").forEach(x=>x.classList.toggle("on",x===btn));
+  };
+});
+
 $("clearBtn").onclick=()=>{if(confirm("Clear the whiteboard?"))ctx.clearRect(0,0,canvas.width,canvas.height)};
 window.addEventListener("resize",resizeCanvas);
 
