@@ -145,8 +145,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
     <div class="navlabel">Class</div>
     <div class="nav">
       <button id="morningNav"><span class="ico">☀</span>Good Morning</button>
-      <button data-section="settings"><span class="ico">⚙</span>Class settings</button>
-      <button id="adminNav" style="display:none"><span class="ico">◆</span>Admin</button>
+            <button id="adminNav" style="display:none"><span class="ico">◆</span>Admin</button>
     </div>
     <div class="account">
       <strong id="teacherName">Teacher</strong>
@@ -171,8 +170,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         <div class="tile clickable" data-go="chats"><div class="tile-icon">☰</div><h3>Chats & analytics</h3><p>Read transcripts and see how students are using each coach.</p><div class="tile-foot">Open →</div></div>
         <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
         <div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
-        <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
-        <div class="tile clickable" data-go="settings"><div class="tile-icon">⚙</div><h3>Class settings</h3><p>Set your weather location and customise Florence's message.</p><div class="tile-foot">Open settings →</div></div>
+        <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div></div>
       </div>
     </section>
 
@@ -222,45 +220,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         </div>
       </div>
     </section>
-
-    <section class="section" id="section-settings">
-      <div class="sectionhead">
-        <div><div class="eyebrow">Class settings</div><h2>Morning screen</h2><p>These settings belong to your class and are used automatically on your morning screen.</p></div>
-      </div>
-      <div class="panel" style="max-width:760px">
-        <div class="panelhead"><h3>Class display settings</h3></div>
-        <div style="padding:18px">
-          <div class="formgrid">
-            <div class="field"><label>Weather location name</label><input id="settingsWeatherName" placeholder="Swanbourne"></div>
-            <div class="field"><label>Latitude</label><input id="settingsLat" type="number" step="0.0001"></div>
-            <div class="field"><label>Longitude</label><input id="settingsLon" type="number" step="0.0001"></div>
-            <div class="field full">
-              <label>Florence message</label>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-                <label class="btn" style="cursor:pointer"><input type="radio" name="mascotMode" value="daily" style="margin-right:6px">Daily random</label>
-                <label class="btn" style="cursor:pointer"><input type="radio" name="mascotMode" value="list" style="margin-right:6px">Choose from list</label>
-                <label class="btn" style="cursor:pointer"><input type="radio" name="mascotMode" value="custom" style="margin-right:6px">Make your own</label>
-              </div>
-              <div id="mascotListWrap" style="display:none;margin-bottom:8px">
-                <select id="settingsMascotChoice" style="width:100%"></select>
-              </div>
-              <div id="mascotCustomWrap" style="display:none">
-                <input id="settingsBubble" placeholder="Let's make it a great day, 4L!">
-              </div>
-              <div class="help" id="mascotHelp">Daily random picks one message for the whole school day.</div>
-            </div>
-            <div class="field full">
-              <label>Morning quick links</label>
-              <div class="help" style="margin-bottom:8px">Use 1–4 buttons. Leave unused rows blank.</div>
-              <div id="quickLinksEditor" style="display:grid;gap:8px"></div>
-            </div>
-          </div>
-          <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn primary" id="saveClassSettings">Save settings</button></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="section-games">
+<section class="section" id="section-games">
       <div class="sectionhead">
         <div><div class="eyebrow">Class Games</div><h2>Live classroom games</h2><p>Start a game on the teacher screen and students join from their Learning Hub.</p></div>
       </div>
@@ -387,7 +347,6 @@ function setSection(name){
   if(name==="shared")loadSharedBots();
   if(name==="students")loadStudents();
   if(name==="chats")loadChatStudents();
-  if(name==="settings")loadClassSettings();
 }
 document.querySelectorAll(".nav button[data-section]").forEach(b=>b.onclick=()=>setSection(b.dataset.section));
 document.querySelectorAll("[data-go]").forEach(t=>t.onclick=()=>setSection(t.dataset.go));
@@ -675,96 +634,7 @@ async function loadSharedBots(){
 
 
 
-const FLORENCE_QUOTES=[
-  "Do the little things well.",
-  "Be curious today.",
-  "Make someone’s day better.",
-  "Challenge yourself, not each other.",
-  "Mistakes mean you’re learning.",
-  "Leave the room better than you found it.",
-  "Be the person others can rely on.",
-  "Start strong. Finish proud.",
-  "Choose effort over excuses.",
-  "Ask a good question today.",
-  "Make today count.",
-  "Be brave enough to try.",
-  "Focus on what you can control.",
-  "Kindness is always a good choice.",
-  "One good choice can change your day.",
-  "Keep going when it gets tricky.",
-  "Listen well. Think deeply.",
-  "Bring your best to the next thing.",
-  "Learn something worth remembering.",
-  "Help the class get better today."
-];
-function setupMascotOptions(){
-  $("settingsMascotChoice").innerHTML=FLORENCE_QUOTES.map(q=>`<option value="${esc(q)}">${esc(q)}</option>`).join("");
-}
-function mascotMode(){
-  return document.querySelector('input[name="mascotMode"]:checked')?.value||"daily";
-}
-function updateMascotModeUI(){
-  const mode=mascotMode();
-  $("mascotListWrap").style.display=mode==="list"?"block":"none";
-  $("mascotCustomWrap").style.display=mode==="custom"?"block":"none";
-  $("mascotHelp").textContent=
-    mode==="daily"?"A different curated message is chosen automatically each school day.":
-    mode==="list"?"Choose one message and keep it until you change it.":
-    "Write your own short message for Florence.";
-}
-document.querySelectorAll('input[name="mascotMode"]').forEach(r=>r.addEventListener("change",updateMascotModeUI));
 
-function renderQuickLinksEditor(links=[]){
-  const defaults=[{label:"Wordle",url:"https://www.nytimes.com/games/wordle/index.html"}];
-  const vals=[...(links.length?links:defaults)];
-  while(vals.length<4)vals.push({label:"",url:""});
-  $("quickLinksEditor").innerHTML=vals.slice(0,4).map((x,i)=>`
-    <div style="display:grid;grid-template-columns:160px 1fr;gap:8px">
-      <input class="ql-label" placeholder="Button ${i+1} label" value="${esc(x.label||"")}">
-      <input class="ql-url" placeholder="https://..." value="${esc(x.url||"")}">
-    </div>`).join("");
-}
-function readQuickLinksEditor(){
-  const labels=[...document.querySelectorAll(".ql-label")],urls=[...document.querySelectorAll(".ql-url")];
-  return labels.map((el,i)=>({label:el.value.trim(),url:(urls[i]?.value||"").trim()})).filter(x=>x.url);
-}
-async function loadClassSettings(){
-  try{
-    const d=await post({action:"teacher_class_settings",teacher_code:teacherCode}),s=d.settings||{};
-    $("settingsWeatherName").value=s.weather_name||"";
-    $("settingsLat").value=s.weather_lat??"";
-    $("settingsLon").value=s.weather_lon??"";
-    setupMascotOptions();
-    const mode=["daily","list","custom"].includes(s.mascot_mode)?s.mascot_mode:"daily";
-    const radio=document.querySelector(`input[name="mascotMode"][value="${mode}"]`);
-    if(radio)radio.checked=true;
-    $("settingsBubble").value=s.mascot_bubble||`Let's make it a great day, ${teacher?.class_name||"class"}!`;
-    if(s.mascot_choice && FLORENCE_QUOTES.includes(s.mascot_choice)){
-      $("settingsMascotChoice").value=s.mascot_choice;
-    }
-    updateMascotModeUI();
-
-    let links=[];
-    try{links=JSON.parse(s.quick_links_json||"[]")}catch{}
-    renderQuickLinksEditor(Array.isArray(links)?links:[]);
-  }catch(e){alert(e.message)}
-}
-$("saveClassSettings").onclick=async()=>{
-  try{
-    await post({
-      action:"teacher_save_class_settings",
-      teacher_code:teacherCode,
-      weather_name:$("settingsWeatherName").value,
-      weather_lat:Number($("settingsLat").value),
-      weather_lon:Number($("settingsLon").value),
-      mascot_mode:mascotMode(),
-      mascot_choice:$("settingsMascotChoice").value,
-      mascot_bubble:$("settingsBubble").value,
-      quick_links:readQuickLinksEditor()
-    });
-    alert("Class settings saved.");
-  }catch(e){alert(e.message)}
-};
 
 $("instructionsNav").onclick=()=>{location.href="../instructions/?role=teacher"};
 $("instructionsTile").onclick=()=>{location.href="../instructions/?role=teacher"};
