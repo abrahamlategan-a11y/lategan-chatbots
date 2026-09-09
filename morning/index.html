@@ -509,7 +509,7 @@ h1{
 .expect-card .edit-dot{right:2.5%;top:24.5%;z-index:7}
 
 
-#helperName,#lunchNames{cursor:pointer}
+#helperName,#lunchNames{cursor:pointer;position:relative;z-index:2}
 #helperName:hover,#lunchNames:hover{outline:2px solid rgba(23,61,49,.18);outline-offset:2px}
 .florence-message{cursor:pointer}
 .quick-link{position:relative;z-index:2}
@@ -571,7 +571,7 @@ h1{
       </div>
     </div>
 
-    <div class="quick-links count-1" id="quickLinks" style="position:relative"><button type="button" id="quickLinksEdit" class="edit-dot" style="right:6px;top:6px;z-index:8" title="Edit morning links">✎</button></div>
+    <div class="quick-links count-1" id="quickLinks" style="position:relative"></div>
 
     <div class="mini editable inline-picker" id="helperPanel">
       <h3>👥 Daily Helper</h3>
@@ -623,6 +623,19 @@ h1{
     <div class="actions">
       <button class="btn" id="closeEdit">Cancel</button>
       <button class="btn primary" id="saveEdit">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="inline-editor-backdrop" id="morningEditor">
+  <div class="inline-editor-card" style="position:relative">
+    <button type="button" id="morningEditorX" aria-label="Close" style="position:absolute;right:14px;top:12px;border:0;background:#eef3ef;width:34px;height:34px;border-radius:50%;font-size:20px;font-weight:900;color:#173d31;cursor:pointer">×</button>
+    <h2 id="morningEditorTitle">Edit</h2>
+    <p id="morningEditorIntro"></p>
+    <div id="morningEditorBody"></div>
+    <div class="inline-editor-actions">
+      <button type="button" id="morningEditorCancel">Cancel</button>
+      <button type="button" class="save" id="morningEditorSave">Save</button>
     </div>
   </div>
 </div>
@@ -865,7 +878,7 @@ function render(){
     const label=String(x.label||"Link").replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
     const url=String(x.url||"").replace(/"/g,"&quot;");
     return `<a class="quick-link" href="${url}" target="_blank" rel="noopener"><span>${label}</span><span class="ql-arrow">→</span></a>`;
-  }).join("");
+  }).join("")+`<button type="button" class="edit-dot quick-links-edit" title="Edit morning links" style="right:6px;top:6px;z-index:8">✎</button>`;
 }
 async function load(){
   if(!teacherCode){location.href="../teacher/";return}
@@ -977,16 +990,23 @@ $("lunchNames").onclick=(e)=>{e.stopPropagation();openLunchPicker()};
 $("florenceMessage").onclick=(e)=>{e.stopPropagation();openMorningEditor("florence")};
 $("florenceCard").querySelector(".edit-dot")?.addEventListener("click",e=>{e.stopPropagation();openMorningEditor("florence")});
 $("weatherBox").onclick=(e)=>{e.stopPropagation();openMorningEditor("weather")};
-$("quickLinksEdit").onclick=(e)=>{e.stopPropagation();openMorningEditor("links")};
+$("quickLinks").onclick=(e)=>{
+  if(e.target.closest(".quick-links-edit")){
+    e.preventDefault();
+    e.stopPropagation();
+    openMorningEditor("links");
+  }
+};
 function closeMorningEditor(){
   $("morningEditor").classList.remove("show");
   morningEditorMode=null;
   $("morningEditorSave").textContent="Save";
 }
-$("morningEditorCancel").onclick=closeMorningEditor;
-$("morningEditorX").onclick=closeMorningEditor;
-$("morningEditorSave").onclick=saveMorningEditor;
+$("morningEditorCancel")?.addEventListener("click",closeMorningEditor);
+$("morningEditorX")?.addEventListener("click",closeMorningEditor);
+$("morningEditorSave")?.addEventListener("click",saveMorningEditor);
 $("morningEditor").onclick=e=>{if(e.target===$("morningEditor"))closeMorningEditor()};
+$("morningEditor").querySelector(".inline-editor-card")?.addEventListener("click",e=>e.stopPropagation());
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("morningEditor").classList.contains("show"))closeMorningEditor()});
 
 
@@ -1061,19 +1081,6 @@ async function loadWeather(settings={}){
 
 load();
 </script>
-
-<div class="inline-editor-backdrop" id="morningEditor">
-  <div class="inline-editor-card" style="position:relative">
-    <button type="button" id="morningEditorX" aria-label="Close" style="position:absolute;right:14px;top:12px;border:0;background:#eef3ef;width:34px;height:34px;border-radius:50%;font-size:20px;font-weight:900;color:#173d31;cursor:pointer">×</button>
-    <h2 id="morningEditorTitle">Edit</h2>
-    <p id="morningEditorIntro"></p>
-    <div id="morningEditorBody"></div>
-    <div class="inline-editor-actions">
-      <button type="button" id="morningEditorCancel">Cancel</button>
-      <button type="button" class="save" id="morningEditorSave">Save</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
