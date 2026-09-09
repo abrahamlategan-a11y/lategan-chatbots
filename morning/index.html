@@ -399,6 +399,49 @@ h1{
   }
 }
 
+
+.inline-picker{position:relative}
+.inline-picker-panel{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(100% + 8px);
+  z-index:50;
+  display:none;
+  max-height:300px;
+  overflow:auto;
+  background:#fff;
+  color:#173d31;
+  border:1px solid rgba(23,61,49,.14);
+  border-radius:14px;
+  box-shadow:0 18px 45px rgba(0,0,0,.18);
+  padding:9px;
+}
+.inline-picker-panel.show{display:block}
+.inline-person{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:8px 7px;
+  border-radius:9px;
+  font-size:13px;
+  font-weight:750;
+  cursor:pointer;
+}
+.inline-person:hover{background:#f2f6f3}
+.inline-person input{width:18px;height:18px}
+.inline-picker-done{
+  width:100%;
+  border:0;
+  border-radius:9px;
+  margin-top:6px;
+  padding:8px 10px;
+  background:#1d654e;
+  color:#fff;
+  font-weight:850;
+  cursor:pointer;
+}
+
 </style>
 </head>
 <body>
@@ -457,16 +500,18 @@ h1{
 
     <div class="quick-links count-1" id="quickLinks"></div>
 
-    <div class="mini editable" id="helperPanel">
+    <div class="mini editable inline-picker" id="helperPanel">
       <h3>👥 Daily Helper</h3>
       <div class="namepill" id="helperName">Aya</div>
       <div class="sub">Helps with jobs around our class today.</div>
+      <div class="inline-picker-panel" id="helperPicker"></div>
     </div>
 
-    <div class="mini lunch editable" id="lunchPanel">
+    <div class="mini lunch editable inline-picker" id="lunchPanel">
       <h3>🍎 Lunch Orders</h3>
       <div class="namepill" id="lunchNames">Zoe & Aya</div>
-      <div class="sub">Stays the same for the school week.</div>
+      <div class="sub">Stays the same until you change it.</div>
+      <div class="inline-picker-panel" id="lunchPicker"></div>
     </div>
 
     <a class="mini studenthub" href="../student/">
@@ -656,10 +701,67 @@ function openEdit(mode){
   $("editor").classList.add("show");
 }
 
+
+function escHtml(s){return String(s||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function closeInlinePickers(){
+  $("helperPicker")?.classList.remove("show");
+  $("lunchPicker")?.classList.remove("show");
+}
+function openHelperPicker(){
+  const panel=$("helperPicker");
+  const current=Number(data?.daily?.helper?.id||0);
+  panel.innerHTML=(data?.roster||[]).map(s=>`
+    <label class="inline-person">
+      <input type="radio" name="inlineHelper" value="${s.id}" ${Number(s.id)===current?"checked":""}>
+      <span>${escHtml(s.name)}</span>
+    </label>`).join("");
+  panel.querySelectorAll('input[name="inlineHelper"]').forEach(inp=>{
+    inp.onchange=async(e)=>{
+      e.stopPropagation();
+      await post({
+        action:"teacher_set_helper",
+        teacher_code:teacherCode,
+        date_key:dateKey(),
+        student_id:Number(inp.value)
+      });
+      closeInlinePickers();
+      await load();
+    };
+  });
+  $("lunchPicker")?.classList.remove("show");
+  panel.classList.toggle("show");
+}
+function openLunchPicker(){
+  const panel=$("lunchPicker");
+  const selected=new Set((data?.daily?.lunch||[]).map(x=>Number(x.id)));
+  panel.innerHTML=(data?.roster||[]).map(s=>`
+    <label class="inline-person">
+      <input type="checkbox" value="${s.id}" ${selected.has(Number(s.id))?"checked":""}>
+      <span>${escHtml(s.name)}</span>
+    </label>`).join("")+`<button class="inline-picker-done" id="inlineLunchDone">Done</button>`;
+  $("inlineLunchDone").onclick=async(e)=>{
+    e.stopPropagation();
+    const ids=[...panel.querySelectorAll('input[type="checkbox"]:checked')].map(x=>Number(x.value));
+    await post({
+      action:"teacher_set_lunch",
+      teacher_code:teacherCode,
+      date_key:dateKey(),
+      student_ids:ids
+    });
+    closeInlinePickers();
+    await load();
+  };
+  $("helperPicker")?.classList.remove("show");
+  panel.classList.toggle("show");
+}
+document.addEventListener("click",e=>{
+  if(!e.target.closest(".inline-picker"))closeInlinePickers();
+});
+
 $("todoPanel").onclick=()=>openEdit("todo");
 $("remindersPanel").onclick=()=>openEdit("reminders");
-$("helperPanel").onclick=()=>openEdit("helper");
-$("lunchPanel").onclick=()=>openEdit("lunch");
+$("helperPanel").onclick=(e)=>{e.stopPropagation();openHelperPicker()};
+$("lunchPanel").onclick=(e)=>{e.stopPropagation();openLunchPicker()};
 
 $("closeEdit").onclick=()=>{
   $("editor").classList.remove("show");
