@@ -235,6 +235,11 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
             <div class="field"><label>Latitude</label><input id="settingsLat" type="number" step="0.0001"></div>
             <div class="field"><label>Longitude</label><input id="settingsLon" type="number" step="0.0001"></div>
             <div class="field full"><label>Florence speech bubble</label><input id="settingsBubble" placeholder="Let's make it a great day, 4L!"><div class="help">Use your class name or write your own short message.</div></div>
+            <div class="field full">
+              <label>Morning quick links</label>
+              <div class="help" style="margin-bottom:8px">Use 1–4 buttons. Leave unused rows blank.</div>
+              <div id="quickLinksEditor" style="display:grid;gap:8px"></div>
+            </div>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="btn primary" id="saveClassSettings">Save settings</button></div>
         </div>
@@ -654,6 +659,21 @@ async function loadSharedBots(){
   }catch(e){grid.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
 }
 
+
+function renderQuickLinksEditor(links=[]){
+  const defaults=[{label:"Wordle",url:"https://www.nytimes.com/games/wordle/index.html"}];
+  const vals=[...(links.length?links:defaults)];
+  while(vals.length<4)vals.push({label:"",url:""});
+  $("quickLinksEditor").innerHTML=vals.slice(0,4).map((x,i)=>`
+    <div style="display:grid;grid-template-columns:160px 1fr;gap:8px">
+      <input class="ql-label" placeholder="Button ${i+1} label" value="${esc(x.label||"")}">
+      <input class="ql-url" placeholder="https://..." value="${esc(x.url||"")}">
+    </div>`).join("");
+}
+function readQuickLinksEditor(){
+  const labels=[...document.querySelectorAll(".ql-label")],urls=[...document.querySelectorAll(".ql-url")];
+  return labels.map((el,i)=>({label:el.value.trim(),url:(urls[i]?.value||"").trim()})).filter(x=>x.url);
+}
 async function loadClassSettings(){
   try{
     const d=await post({action:"teacher_class_settings",teacher_code:teacherCode}),s=d.settings||{};
@@ -661,11 +681,14 @@ async function loadClassSettings(){
     $("settingsLat").value=s.weather_lat??"";
     $("settingsLon").value=s.weather_lon??"";
     $("settingsBubble").value=s.mascot_bubble||`Let's make it a great day, ${teacher?.class_name||"class"}!`;
+    let links=[];
+    try{links=JSON.parse(s.quick_links_json||"[]")}catch{}
+    renderQuickLinksEditor(Array.isArray(links)?links:[]);
   }catch(e){alert(e.message)}
 }
 $("saveClassSettings").onclick=async()=>{
   try{
-    await post({action:"teacher_save_class_settings",teacher_code:teacherCode,weather_name:$("settingsWeatherName").value,weather_lat:Number($("settingsLat").value),weather_lon:Number($("settingsLon").value),mascot_bubble:$("settingsBubble").value});
+    await post({action:"teacher_save_class_settings",teacher_code:teacherCode,weather_name:$("settingsWeatherName").value,weather_lat:Number($("settingsLat").value),weather_lon:Number($("settingsLon").value),mascot_bubble:$("settingsBubble").value,quick_links:readQuickLinksEditor()});
     alert("Class settings saved.");
   }catch(e){alert(e.message)}
 };
