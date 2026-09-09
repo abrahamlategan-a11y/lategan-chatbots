@@ -9,7 +9,8 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
 button,input{font:inherit}.shell{max-width:1100px;margin:auto;padding:24px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.brand{display:flex;align-items:center;gap:10px;font-weight:900}.logo{width:42px;height:42px;border-radius:13px;background:var(--deep);color:#fff;display:grid;place-items:center}.back{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;text-decoration:none;color:var(--ink);font-size:12px;font-weight:850}
 .hero{background:var(--deep);color:#fff;border-radius:22px;padding:24px;box-shadow:var(--shadow);margin-bottom:18px}.hero h1{margin:0 0 6px;font-size:34px}.hero p{margin:0;color:#c9d8d1;font-size:13px}
-.grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}.ph{padding:15px 17px;border-bottom:1px solid var(--line)}.ph h2{margin:0;font-size:17px}.pb{padding:17px}.field{margin-bottom:12px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:5px}.field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:850}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.teacher{padding:13px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:12px}.teacher:last-child{border-bottom:0}.teacher strong{display:block}.meta{font-size:11px;color:var(--muted);margin-top:3px}.code{font-family:ui-monospace,monospace;background:#f2f5f3;padding:5px 7px;border-radius:8px;font-size:11px}.actions{display:flex;gap:6px;align-items:center}.empty{font-size:13px;color:var(--muted)}@media(max-width:800px){.grid{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px}.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}.ph{padding:15px 17px;border-bottom:1px solid var(--line)}.ph h2{margin:0;font-size:17px}.pb{padding:17px}.field{margin-bottom:12px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:5px}.field input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:850}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.teacher{padding:13px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:12px}.teacher:last-child{border-bottom:0}.teacher strong{display:block}.meta{font-size:11px;color:var(--muted);margin-top:3px}.code{font-family:ui-monospace,monospace;background:#f2f5f3;padding:5px 7px;border-radius:8px;font-size:11px}.actions{display:flex;gap:6px;align-items:center}.empty{font-size:13px;color:var(--muted)}.modal{position:fixed;inset:0;background:rgba(10,38,29,.62);display:none;place-items:center;padding:18px;z-index:30}.modal.show{display:grid}.modalcard{width:min(680px,100%);background:#fff;border-radius:20px;padding:20px;box-shadow:0 24px 60px rgba(0,0,0,.22)}.modalcard h2{margin:0 0 6px}.modalcard p{color:var(--muted);font-size:12px}.modalcard textarea{width:100%;min-height:280px;border:1px solid var(--line);border-radius:12px;padding:12px;resize:vertical;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.modalactions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -37,12 +38,70 @@ button,input{font:inherit}.shell{max-width:1100px;margin:auto;padding:24px}.top{
   </div>
 </div>
 
+
+<div class="modal" id="emailModal">
+  <div class="modalcard">
+    <h2>Teacher welcome email</h2>
+    <p>Edit anything you like, then copy it into Outlook/Gmail.</p>
+    <textarea id="emailText"></textarea>
+    <div class="modalactions">
+      <button class="btn" id="closeEmail">Close</button>
+      <button class="btn primary" id="copyEmail">Copy email</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const $=id=>document.getElementById(id);
 async function post(p){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d}
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+
+const TEACHER_URL="https://abrahamlategan-a11y.github.io/lategan-chatbots/teacher/";
+function teacherEmail(t){
+  return `Hi ${t.display_name},
+
+I've set you up on our Learning Hub for ${t.class_name}${t.year_level?` (${t.year_level})`:""}.
+
+Teacher website:
+${TEACHER_URL}
+
+Your teacher code:
+${t.teacher_code}
+
+Once you log in, you can:
+• add and manage your own class list
+• print student login cards
+• use the Good Morning screen
+• create or assign shared Learning Coaches
+• use Class Games
+• use the Instructions Board and whiteboard tools
+
+Your students will only see the tools and Learning Coaches assigned to your class.
+
+Keep your teacher code private, as it gives access to your class management page.
+
+If anything looks confusing, let me know and I'll help you get set up.
+
+Braam`;
+}
+function openTeacherEmail(t){
+  $("emailText").value=teacherEmail(t);
+  $("emailModal").classList.add("show");
+}
+$("closeEmail").onclick=()=>$("emailModal").classList.remove("show");
+$("copyEmail").onclick=async()=>{
+  try{
+    await navigator.clipboard.writeText($("emailText").value);
+    $("copyEmail").textContent="Copied!";
+    setTimeout(()=>$("copyEmail").textContent="Copy email",1300);
+  }catch{
+    $("emailText").select();
+    document.execCommand("copy");
+  }
+};
 
 async function load(){
   try{
@@ -52,7 +111,8 @@ async function load(){
     const list=$("teacherList");list.innerHTML="";
     (d.teachers||[]).forEach(t=>{
       const el=document.createElement("div");el.className="teacher";
-      el.innerHTML=`<div><strong>${esc(t.display_name)} · ${esc(t.class_name||"")}</strong><div class="meta">${esc(t.year_level||"")} · ${t.active?"Active":"Inactive"}</div><div class="meta"><span class="code">${esc(t.teacher_code)}</span></div></div><div class="actions"><button class="btn toggle">${t.active?"Deactivate":"Restore"}</button></div>`;
+      el.innerHTML=`<div><strong>${esc(t.display_name)} · ${esc(t.class_name||"")}</strong><div class="meta">${esc(t.year_level||"")} · ${t.active?"Active":"Inactive"}</div><div class="meta"><span class="code">${esc(t.teacher_code)}</span></div></div><div class="actions"><button class="btn email">Email setup</button><button class="btn toggle">${t.active?"Deactivate":"Restore"}</button></div>`;
+      el.querySelector(".email").onclick=()=>openTeacherEmail(t);
       el.querySelector(".toggle").onclick=async()=>{
         if(!confirm(`${t.active?"Deactivate":"Restore"} ${t.display_name}?`))return;
         await post({action:"admin_update_teacher",teacher_code:teacherCode,teacher_id:t.id,display_name:t.display_name,class_name:t.class_name,year_level:t.year_level,active:t.active?0:1});
@@ -67,7 +127,9 @@ $("addBtn").onclick=async()=>{
   $("result").textContent="";
   try{
     const d=await post({action:"admin_create_teacher",teacher_code:teacherCode,display_name:$("name").value,class_name:$("className").value,year_level:$("yearLevel").value,new_teacher_code:$("teacherCodeNew").value});
-    $("result").innerHTML=`Created. Teacher code: <strong>${esc(d.teacher_code)}</strong>`;
+    const created={display_name:$("name").value.trim(),class_name:$("className").value.trim().toUpperCase(),year_level:$("yearLevel").value.trim(),teacher_code:d.teacher_code};
+    $("result").innerHTML=`Created. Teacher code: <strong>${esc(d.teacher_code)}</strong> <button class="btn" id="newEmailBtn" style="margin-left:6px">Generate email</button>`;
+    $("newEmailBtn").onclick=()=>openTeacherEmail(created);
     $("name").value="";$("className").value="";$("yearLevel").value="";$("teacherCodeNew").value="";
     await load();
   }catch(e){$("result").textContent=e.message}
