@@ -6,38 +6,46 @@
 <title>Student Learning Hub</title>
 <style>
 :root{
-  --bg:#f4f6f3;--panel:#fff;--ink:#1d2420;--muted:#6b746f;--line:#dfe5df;
-  --green:#2f6655;--green-soft:#eaf2ee;--blue-soft:#edf3f7;--yellow-soft:#fbf3df;
-  --shadow:0 12px 34px rgba(29,48,39,.08)
+  --bg:#f3f7f2;--panel:#fff;--ink:#17352b;--muted:#68776f;--line:#dce5de;
+  --green:#23684f;--deep:#164f3e;--mint:#e2f1e8;--lav:#eee5f7;--yellow:#fff2cf;
+  --blue:#e8f3fb;--peach:#fbe7dc;--shadow:0 12px 32px rgba(26,55,43,.09)
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{margin:0;background:linear-gradient(180deg,#eef6f0 0,#f7f8f5 340px);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 button,input{font:inherit}button{cursor:pointer}
-.shell{max-width:1180px;margin:0 auto;padding:28px 24px 54px}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:46px}
-.brand{display:flex;align-items:center;gap:11px;font-weight:850}.logo{width:42px;height:42px;border-radius:12px;background:var(--green);color:#fff;display:grid;place-items:center;font-weight:900}
-.student-chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 12px;font-size:12px;color:var(--muted)}
-.hero{max-width:760px;margin-bottom:30px}.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--green);font-weight:850;margin-bottom:8px}
-h1{font-size:44px;line-height:1.05;letter-spacing:-.04em;margin:0 0 12px}.sub{font-size:17px;color:var(--muted);line-height:1.52}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}
-.tile{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);min-height:190px;display:flex;flex-direction:column;text-decoration:none;color:inherit}
-.tile.click{cursor:pointer}.tile.click:hover{transform:translateY(-2px);transition:.18s ease}
-.tile.big{grid-column:span 2;min-height:220px}.icon{width:44px;height:44px;border-radius:13px;background:var(--green-soft);display:grid;place-items:center;font-size:21px;margin-bottom:20px}
-.icon.blue{background:var(--blue-soft)}.icon.yellow{background:var(--yellow-soft)}
-.tile h2{font-size:18px;margin:0 0 7px}.tile p{font-size:13px;color:var(--muted);line-height:1.48;margin:0}
-.tile-foot{margin-top:auto;padding-top:18px;font-size:12px;font-weight:850;color:var(--green)}
-.date-big{font-size:40px;font-weight:900;letter-spacing:-.04em;line-height:1}.date-day{font-size:13px;color:var(--muted);margin-top:8px}
-.helper-name{font-size:24px;font-weight:900;margin-top:2px}.cleaning{font-size:20px;font-weight:900;margin-top:3px}.lunch-name{font-size:19px;font-weight:900;margin-top:3px}.reminder-preview{font-size:13px;color:var(--muted);line-height:1.45;margin-top:8px;white-space:pre-wrap}.todayline{font-size:11px;color:var(--muted);line-height:1.45;margin-top:9px}
-.bot-list{display:none;margin-top:26px}
-.bot-list.show{display:block}.sectionhead{display:flex;justify-content:space-between;align-items:end;margin-bottom:14px}.sectionhead h2{font-size:24px;margin:0}.backbtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800}
-.botgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.botcard{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;text-decoration:none;color:inherit;box-shadow:var(--shadow);min-height:195px;display:flex;flex-direction:column}
-.botcard .icon{margin-bottom:17px}.botcard h3{margin:0 0 6px;font-size:17px}.botcard p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}.botcard .go{margin-top:auto;padding-top:18px;color:var(--green);font-size:12px;font-weight:850}
-.login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;padding:20px;z-index:100}
-.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}.login-card h2{font-size:28px;margin:0 0 7px}.login-card p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px}
-.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px}.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px}
-.primary{width:100%;border:0;background:var(--green);color:#fff;border-radius:11px;padding:12px;font-weight:850;margin-top:12px}.error{font-size:12px;color:#95483e;margin-top:10px}
-@media(max-width:950px){.grid{grid-template-columns:1fr 1fr}.botgrid{grid-template-columns:1fr 1fr}}
-@media(max-width:620px){.shell{padding:20px 15px}.grid,.botgrid{grid-template-columns:1fr}.tile.big{grid-column:auto}h1{font-size:35px}.student-chip{display:none}}
+.shell{max-width:1180px;margin:0 auto;padding:22px 24px 54px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900}.logo{width:42px;height:42px;border-radius:13px;background:var(--deep);color:#fff;display:grid;place-items:center}
+.student-chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 12px;font-size:12px;color:var(--muted);font-weight:700}
+
+.today-hero{background:linear-gradient(135deg,#176044,#2d7b5c);color:#fff;border-radius:26px;padding:25px 28px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-bottom:18px;position:relative;overflow:hidden}
+.today-hero:after{content:"";position:absolute;width:230px;height:230px;border-radius:50%;background:rgba(255,255,255,.06);right:-70px;top:-80px}
+.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:900;opacity:.8;margin-bottom:5px}
+.greeting{font-size:39px;line-height:1.03;letter-spacing:-.04em;font-weight:900;margin:0 0 8px}.hero-sub{font-size:14px;opacity:.82}
+.datebox{position:relative;z-index:1;background:#e1efb6;color:#173c2f;border-radius:20px;padding:13px 20px;text-align:center;min-width:220px}
+.date-dayname{font-size:14px;font-weight:900}.date-full{font-size:28px;line-height:1;font-weight:950;letter-spacing:-.03em;margin-top:4px}
+
+.info-strip{display:grid;grid-template-columns:1fr 1fr 1.45fr;gap:12px;margin-bottom:22px}
+.info{border:1px solid var(--line);border-radius:17px;background:#fff;padding:14px 16px;box-shadow:0 7px 20px rgba(30,54,43,.05);min-height:106px}
+.info.helper{background:var(--yellow)}.info.lunch{background:var(--mint)}.info.remind{background:var(--lav)}
+.info-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:900;color:#64746b;margin-bottom:5px}.info-value{font-size:24px;font-weight:950;letter-spacing:-.025em}.reminder-preview{font-size:13px;line-height:1.35;white-space:pre-wrap}.todayline{font-size:10.5px;color:#6d6a73;line-height:1.35;margin-top:6px}
+
+.section-title{display:flex;justify-content:space-between;align-items:end;margin-bottom:11px}.section-title h2{font-size:25px;letter-spacing:-.025em;margin:0}.section-title span{font-size:12px;color:var(--muted)}
+.action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.action{min-height:220px;background:#fff;border:1px solid var(--line);border-radius:21px;padding:21px;box-shadow:var(--shadow);display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:.16s ease;cursor:pointer}
+.action:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(26,55,43,.13)}
+.action.chat{background:linear-gradient(145deg,#fff,#f1f8f4)}.action.games{background:linear-gradient(145deg,#fff,#fff5dc)}.action.wordle{background:linear-gradient(145deg,#fff,#e8f6ed)}
+.action-icon{width:52px;height:52px;border-radius:15px;background:#e6f1ec;display:grid;place-items:center;font-size:25px;margin-bottom:25px}.games .action-icon{background:#fff0ca}.wordle .action-icon{background:#dff1e5}
+.action h3{font-size:22px;margin:0 0 7px}.action p{font-size:13px;color:var(--muted);line-height:1.45;margin:0}.go{margin-top:auto;padding-top:22px;font-size:13px;font-weight:900;color:var(--green)}
+
+.bot-list{display:none;margin-top:8px}.bot-list.show{display:block}
+.bothead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.bothead h2{margin:0;font-size:27px}.homebtn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 12px;font-size:12px;font-weight:850;color:var(--ink)}
+.botgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.botcard{background:#fff;border:1px solid var(--line);border-radius:19px;padding:19px;text-decoration:none;color:inherit;box-shadow:var(--shadow);min-height:205px;display:flex;flex-direction:column}.botcard h3{margin:0 0 6px;font-size:18px}.botcard p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}.botcard .go{margin-top:auto}.botcard .action-icon{margin-bottom:18px}
+
+.login{position:fixed;inset:0;background:#f2f6f2;display:grid;place-items:center;padding:20px;z-index:100}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}.login-card h2{font-size:28px;margin:0 0 7px}.login-card p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px}.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px}.primary{width:100%;border:0;background:var(--green);color:#fff;border-radius:11px;padding:12px;font-weight:850;margin-top:12px}.error{font-size:12px;color:#95483e;margin-top:10px}
+
+@media(max-width:900px){.action-grid,.botgrid{grid-template-columns:1fr 1fr}.info-strip{grid-template-columns:1fr 1fr}.info.remind{grid-column:1/-1}.today-hero{grid-template-columns:1fr}.datebox{text-align:left;min-width:0}}
+@media(max-width:600px){.shell{padding:15px}.action-grid,.botgrid,.info-strip{grid-template-columns:1fr}.info.remind{grid-column:auto}.greeting{font-size:33px}.student-chip{display:none}.action{min-height:180px}}
 </style>
 </head>
 <body>
@@ -60,69 +68,67 @@ h1{font-size:44px;line-height:1.05;letter-spacing:-.04em;margin:0 0 12px}.sub{fo
   </div>
 
   <div id="homeView">
-    <div class="hero">
-      <div class="eyebrow">Your classroom</div>
-      <h1 id="greeting">Good morning.</h1>
-      <div class="sub">Everything you need for today — class tools, learning coaches and quick links.</div>
-    </div>
-
-    <div class="grid">
-      <div class="tile big click" id="chatbotsTile">
-        <div class="icon">✦</div>
-        <h2>Chatbots</h2>
-        <p>Open a learning coach your teacher has published for your class.</p>
-        <div class="tile-foot"><span id="botCount">0</span> available · Open →</div>
+    <section class="today-hero">
+      <div>
+        <div class="eyebrow">Your classroom today</div>
+        <h1 class="greeting" id="greeting">Good morning.</h1>
+        <div class="hero-sub">Your class information and learning tools are all here.</div>
       </div>
-
-
-      <a class="tile big click" href="../pirate/" style="text-decoration:none;color:inherit">
-        <div class="icon yellow">🎮</div>
-        <h2>Class Games</h2>
-        <p>Join live class games your teacher has started.</p>
-        <div class="tile-foot">Open games →</div>
-      </a>
-
-      <div class="tile">
-        <div class="icon blue">📅</div>
-        <h2>Today</h2>
-        <div class="date-big" id="dateNumber">8</div>
-        <div class="date-day" id="dateText">Tuesday · September</div>
+      <div class="datebox">
+        <div class="date-dayname" id="dateDayName">Wednesday</div>
+        <div class="date-full" id="dateFull">9 September</div>
       </div>
+    </section>
 
-      <div class="tile">
-        <div class="icon yellow">⭐</div>
-        <h2>Daily helper</h2>
-        <div class="helper-name" id="helperName">—</div>
-        <p>Today’s class helper.</p>
+    <section class="info-strip">
+      <div class="info helper">
+        <div class="info-label">⭐ Daily helper</div>
+        <div class="info-value" id="helperName">—</div>
       </div>
-
-      <div class="tile">
-        <div class="icon">🍴</div>
-        <h2>Lunch orders</h2>
-        <div class="lunch-name" id="lunchNames">—</div>
-        <p>Today’s confirmed lunch-order students.</p>
+      <div class="info lunch">
+        <div class="info-label">🍴 Lunch orders this week</div>
+        <div class="info-value" id="lunchNames">—</div>
       </div>
-
-      <a class="tile click" id="wordleTile" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">
-        <div class="icon blue">🟩</div>
-        <h2>Wordle</h2>
-        <p>Open today’s Wordle.</p>
-        <div class="tile-foot">Play →</div>
-      </a>
-
-      <div class="tile">
-        <div class="icon yellow">📌</div>
-        <h2>Morning reminders</h2>
+      <div class="info remind">
+        <div class="info-label">📌 Morning reminders</div>
         <div class="reminder-preview" id="studentReminders">No reminders today.</div>
         <div class="todayline" id="studentTodo"></div>
       </div>
+    </section>
+
+    <div class="section-title">
+      <h2>What do you want to open?</h2>
+      <span>Choose a tile</span>
     </div>
+
+    <section class="action-grid">
+      <div class="action chat" id="chatbotsTile">
+        <div class="action-icon">✦</div>
+        <h3>Learning Coaches</h3>
+        <p>Open a chatbot your teacher has published to help with class learning.</p>
+        <div class="go"><span id="botCount">0</span> available · Open →</div>
+      </div>
+
+      <a class="action games" href="../pirate/">
+        <div class="action-icon">🎮</div>
+        <h3>Class Games</h3>
+        <p>Join a live class game your teacher has started.</p>
+        <div class="go">Open games →</div>
+      </a>
+
+      <a class="action wordle" id="wordleTile" target="_blank" rel="noopener">
+        <div class="action-icon">🟩</div>
+        <h3>Wordle</h3>
+        <p>Open today’s Wordle.</p>
+        <div class="go">Play →</div>
+      </a>
+    </section>
   </div>
 
   <div class="bot-list" id="botView">
-    <div class="sectionhead">
-      <div><div class="eyebrow">Chatbots</div><h2>Choose a learning coach</h2></div>
-      <button class="backbtn" id="backHome">← Home</button>
+    <div class="bothead">
+      <div><div class="eyebrow" style="color:var(--green)">Learning coaches</div><h2>Choose a coach</h2></div>
+      <button class="homebtn" id="backHome">⌂ Student Home</button>
     </div>
     <div class="botgrid" id="botGrid"></div>
   </div>
@@ -140,16 +146,17 @@ async function post(payload){
   if(!r.ok) throw new Error(d.error||"Something went wrong.");
   return d;
 }
-
-function renderDate(){
-  const d=new Date();
-  $("dateNumber").textContent=d.getDate();
-  $("dateText").textContent=d.toLocaleDateString("en-AU",{weekday:"long",month:"long"});
-}
 function localDateKey(){
   const d=new Date(),y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
   return `${y}-${m}-${day}`;
 }
+function renderDate(){
+  const d=new Date();
+  $("dateDayName").textContent=d.toLocaleDateString("en-AU",{weekday:"long"});
+  $("dateFull").textContent=d.toLocaleDateString("en-AU",{day:"numeric",month:"long"});
+}
+renderDate();
+
 async function loadDaily(){
   try{
     const d=await post({action:"student_daily_state",student_code:student.student_code,date_key:localDateKey()});
@@ -157,12 +164,10 @@ async function loadDaily(){
     $("helperName").textContent=x.helper?.name||"—";
     $("lunchNames").textContent=(x.lunch||[]).map(a=>a.name).join(" & ")||"—";
     $("studentReminders").textContent=(x.reminders||"").trim()||"No reminders today.";
-    $("studentTodo").textContent=(x.todo||[]).length?"Morning: "+x.todo.join(" · "):"";
+    $("studentTodo").textContent=(x.todo||[]).filter(Boolean).length?"Morning: "+x.todo.filter(Boolean).join(" · "):"";
     $("wordleTile").href=x.wordle_url||"https://www.nytimes.com/games/wordle/index.html";
   }catch(e){console.warn(e)}
 }
-renderDate();
-
 async function login(){
   $("loginError").textContent="";
   const code=$("studentCode").value.trim();
@@ -188,18 +193,17 @@ async function loadBots(){
   $("botCount").textContent=bots.length;
   const grid=$("botGrid");grid.innerHTML="";
   if(!bots.length){
-    grid.innerHTML='<div class="tile" style="grid-column:1/-1"><h2>No chatbots available yet</h2><p>Your teacher has not published any chatbots for your class.</p></div>';
+    grid.innerHTML='<div class="botcard" style="grid-column:1/-1"><h3>No learning coaches available yet</h3><p>Your teacher has not published any for your class.</p></div>';
     return;
   }
   bots.forEach(bot=>{
     const a=document.createElement("a");
     a.className="botcard";
     a.href=bot.slug==="travel-coach"?"../travel-coach/":`../chat/?bot=${encodeURIComponent(bot.slug)}`;
-    a.innerHTML=`<div class="icon">${esc(bot.icon||"✦")}</div><h3>${esc(bot.name)}</h3><p>${esc(bot.description||"")}</p><div class="go">Open coach →</div>`;
+    a.innerHTML=`<div class="action-icon">${esc(bot.icon||"✦")}</div><h3>${esc(bot.name)}</h3><p>${esc(bot.description||"")}</p><div class="go">Open coach →</div>`;
     grid.appendChild(a);
   });
 }
-
 $("chatbotsTile").onclick=()=>{$("homeView").style.display="none";$("botView").classList.add("show")};
 $("backHome").onclick=()=>{$("botView").classList.remove("show");$("homeView").style.display="block"};
 
