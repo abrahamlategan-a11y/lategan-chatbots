@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Instructions Board · Learning Hub</title>
+<style>
+:root{--green:#15533f;--green2:#0f4434;--paper:#fbf9f1;--ink:#17362b;--muted:#6b7770;--lav:#e8def3;--sage:#e5efdc;--line:#d9e1dc}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--green);color:var(--ink)}button,input,textarea{font:inherit}
+.page{height:100vh;padding:16px 18px;display:grid;grid-template-rows:auto 1fr;gap:12px;background:linear-gradient(145deg,#175f47,#104838)}
+.top{display:flex;justify-content:space-between;align-items:center;color:#fff}.titlewrap{display:flex;align-items:center;gap:14px}.badge{width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:24px}.top h1{margin:0;font-size:36px;letter-spacing:-.035em}.top small{display:block;color:#c9dbd3;margin-top:3px}.tools{display:flex;gap:8px}.tool{border:1px solid rgba(255,255,255,.25);background:rgba(7,48,35,.6);color:#fff;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:850;text-decoration:none}
+.stage{min-height:0;display:grid;grid-template-columns:1.05fr .95fr;gap:14px}.panel{background:var(--paper);border-radius:21px;overflow:hidden;min-height:0}.instructions{padding:22px;display:flex;flex-direction:column}.instruction-title{font-size:44px;font-weight:950;letter-spacing:-.04em;margin-bottom:15px}.steps{display:grid;gap:10px}.step{display:grid;grid-template-columns:46px 1fr;gap:12px;align-items:center;padding:13px 15px;border-radius:15px;background:var(--lav);font-size:24px;font-weight:800}.step:nth-child(even){background:var(--sage)}.num{width:38px;height:38px;border-radius:50%;background:#d4c1eb;display:grid;place-items:center;font-size:17px}.step:nth-child(even) .num{background:#cce4aa}
+.timer{margin-top:auto;display:none;align-items:center;justify-content:center;gap:18px;background:#173f33;color:#fff;border-radius:17px;padding:12px 16px}.timer.show{display:flex}.time{font-size:46px;font-weight:950;letter-spacing:.03em}.timer button{border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.09);color:#fff;border-radius:9px;padding:8px 10px;font-weight:800}
+.canvaspanel{position:relative;background:#fff;border-radius:21px;overflow:hidden;min-height:0}.canvasbar{position:absolute;z-index:4;top:10px;left:10px;display:flex;gap:6px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,.08)}.canvasbar button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 9px;font-size:12px;font-weight:850}.canvasbar button.on{background:var(--green);color:#fff;border-color:var(--green)}
+canvas{width:100%;height:100%;display:block;touch-action:none;background:white}
+.editor{position:fixed;inset:0;display:none;place-items:center;background:rgba(7,30,22,.72);z-index:20;padding:18px}.editor.show{display:grid}.card{width:min(700px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:23px}.card h2{margin:0 0 15px}.field{margin-bottom:12px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:5px}.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px}.field textarea{min-height:180px}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 12px;font-weight:850}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}
+.no-canvas .stage{grid-template-columns:1fr}.no-canvas .canvaspanel{display:none}@media(max-width:900px){.stage{grid-template-columns:1fr}.canvaspanel{min-height:420px}.instruction-title{font-size:34px}.step{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <div class="top">
+    <div class="titlewrap"><div class="badge">☰</div><div><h1 id="classTitle">Instructions</h1><small id="classMeta">Class instructions board</small></div></div>
+    <div class="tools"><button class="tool" id="editBtn">Edit instructions</button><button class="tool" id="fullBtn">Full screen</button><a class="tool" href="../teacher/">⌂ Teacher Hub</a></div>
+  </div>
+
+  <div class="stage">
+    <section class="panel instructions">
+      <div class="instruction-title" id="boardTitle">Instructions</div>
+      <div class="steps" id="steps"></div>
+      <div class="timer" id="timer">
+        <div class="time" id="time">10:00</div>
+        <button id="startPause">Start</button>
+        <button id="resetTimer">Reset</button>
+      </div>
+    </section>
+
+    <section class="canvaspanel">
+      <div class="canvasbar"><button id="penBtn" class="on">✎ Pen</button><button id="eraseBtn">Eraser</button><button id="clearBtn">Clear</button></div>
+      <canvas id="canvas"></canvas>
+    </section>
+  </div>
+</div>
+
+<div class="editor" id="editor">
+  <div class="card">
+    <h2>Edit instructions</h2>
+    <div class="field"><label>Heading</label><input id="titleInput"></div>
+    <div class="field"><label>Steps — one per line</label><textarea id="stepsInput" placeholder="Open your book&#10;Write the date and heading&#10;Complete questions 1–5"></textarea></div>
+    <div class="row">
+      <div class="field"><label>Timer (minutes, 0 = off)</label><input id="timerInput" type="number" min="0" max="180"></div>
+      <div class="field"><label>Canvas</label><div style="padding-top:8px"><label><input type="checkbox" id="canvasInput"> Show whiteboard canvas</label></div></div>
+    </div>
+    <div class="actions"><button class="btn" id="cancelEdit">Cancel</button><button class="btn primary" id="saveEdit">Save</button></div>
+  </div>
+</div>
+
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev",teacherCode=localStorage.getItem("lategan_teacher_code")||"", $=id=>document.getElementById(id);
+let board=null,totalSeconds=0,remaining=0,timerHandle=null,running=false;
+async function post(p){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)}),d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function render(){
+  $("classTitle").textContent=`Instructions · ${board.teacher.class_name||""}`;
+  $("classMeta").textContent=board.teacher.display_name||"Teacher";
+  $("boardTitle").textContent=board.board.title||"Instructions";
+  $("steps").innerHTML=(board.board.steps||[]).map((x,i)=>`<div class="step"><span class="num">${i+1}</span><span>${esc(x)}</span></div>`).join("");
+  $("page").classList.toggle("no-canvas",!board.board.canvas_enabled);
+  totalSeconds=Math.round(Number(board.board.timer_minutes||0)*60);remaining=totalSeconds;updateTimer();
+  $("timer").classList.toggle("show",totalSeconds>0);
+}
+function updateTimer(){const m=Math.floor(remaining/60),s=remaining%60;$("time").textContent=`${m}:${String(s).padStart(2,"0")}`}
+function tick(){if(!running)return;if(remaining<=0){running=false;clearInterval(timerHandle);$("startPause").textContent="Start";return}remaining--;updateTimer()}
+$("startPause").onclick=()=>{if(!totalSeconds)return;running=!running;$("startPause").textContent=running?"Pause":"Start";clearInterval(timerHandle);if(running)timerHandle=setInterval(tick,1000)};
+$("resetTimer").onclick=()=>{running=false;clearInterval(timerHandle);remaining=totalSeconds;updateTimer();$("startPause").textContent="Start"};
+
+$("editBtn").onclick=()=>{$("titleInput").value=board.board.title||"";$("stepsInput").value=(board.board.steps||[]).join("\n");$("timerInput").value=board.board.timer_minutes||0;$("canvasInput").checked=!!board.board.canvas_enabled;$("editor").classList.add("show")};
+$("cancelEdit").onclick=()=>$("editor").classList.remove("show");
+$("saveEdit").onclick=async()=>{const d=await post({action:"teacher_save_instructions",teacher_code:teacherCode,title:$("titleInput").value,steps:$("stepsInput").value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),timer_minutes:Number($("timerInput").value)||0,canvas_enabled:$("canvasInput").checked?1:0});board.board=d.board;$("editor").classList.remove("show");render()};
+$("fullBtn").onclick=async()=>{if(!document.fullscreenElement)await document.documentElement.requestFullscreen();else await document.exitFullscreen()};
+
+// Whiteboard canvas with stylus/touch/mouse support
+const canvas=$("canvas"),ctx=canvas.getContext("2d");let drawing=false,lastX=0,lastY=0,mode="pen";
+function resizeCanvas(){const rect=canvas.getBoundingClientRect(),ratio=window.devicePixelRatio||1,old=ctx.getImageData(0,0,canvas.width||1,canvas.height||1);canvas.width=Math.max(1,Math.floor(rect.width*ratio));canvas.height=Math.max(1,Math.floor(rect.height*ratio));ctx.setTransform(ratio,0,0,ratio,0,0);ctx.lineCap="round";ctx.lineJoin="round"}
+function point(e){const r=canvas.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
+canvas.addEventListener("pointerdown",e=>{drawing=true;canvas.setPointerCapture(e.pointerId);[lastX,lastY]=point(e)});
+canvas.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=point(e),pressure=e.pressure||.5;ctx.globalCompositeOperation=mode==="erase"?"destination-out":"source-over";ctx.strokeStyle="#17352b";ctx.lineWidth=mode==="erase"?24:Math.max(2,3.2*pressure+1.5);ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(x,y);ctx.stroke();lastX=x;lastY=y});
+["pointerup","pointercancel","pointerleave"].forEach(ev=>canvas.addEventListener(ev,()=>drawing=false));
+$("penBtn").onclick=()=>{mode="pen";$("penBtn").classList.add("on");$("eraseBtn").classList.remove("on")};
+$("eraseBtn").onclick=()=>{mode="erase";$("eraseBtn").classList.add("on");$("penBtn").classList.remove("on")};
+$("clearBtn").onclick=()=>{if(confirm("Clear the whiteboard?"))ctx.clearRect(0,0,canvas.width,canvas.height)};
+window.addEventListener("resize",resizeCanvas);
+
+(async()=>{try{board=await post({action:"teacher_get_instructions",teacher_code:teacherCode});render();setTimeout(resizeCanvas,50)}catch(e){alert(e.message);location.href="../teacher/"}})();
+</script>
+</body>
+</html>
