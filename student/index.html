@@ -46,9 +46,76 @@ button,input{font:inherit}button{cursor:pointer}
 
 @media(max-width:900px){.action-grid,.botgrid{grid-template-columns:1fr 1fr}.info-strip{grid-template-columns:1fr 1fr}.info.remind{grid-column:1/-1}.today-hero{grid-template-columns:1fr}.datebox{text-align:left;min-width:0}}
 @media(max-width:600px){.shell{padding:15px}.action-grid,.botgrid,.info-strip{grid-template-columns:1fr}.info.remind{grid-column:auto}.greeting{font-size:33px}.student-chip{display:none}.action{min-height:180px}}
+
+/* Student Hub weekday access gate */
+.access-lock{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:none;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at 20% 20%,rgba(255,255,255,.08),transparent 32%),
+    linear-gradient(145deg,#164f3e,#0f3f32);
+  color:#fff;
+}
+.access-lock.show{display:grid}
+.access-card{
+  width:min(560px,94vw);
+  background:#fff;
+  color:#17352b;
+  border-radius:26px;
+  padding:32px;
+  text-align:center;
+  box-shadow:0 28px 70px rgba(0,0,0,.28);
+}
+.access-icon{
+  width:74px;height:74px;border-radius:22px;
+  display:grid;place-items:center;
+  margin:0 auto 18px;
+  background:#e6f0e8;
+  font-size:36px;
+}
+.access-card h1{
+  margin:0 0 10px;
+  font-size:34px;
+  letter-spacing:-.035em;
+}
+.access-card p{
+  margin:0 auto;
+  max-width:430px;
+  color:#65736d;
+  line-height:1.55;
+}
+.access-hours{
+  margin:20px auto 0;
+  display:inline-block;
+  padding:10px 15px;
+  border-radius:12px;
+  background:#f0f4ef;
+  font-weight:900;
+}
+.access-note{
+  margin-top:14px!important;
+  font-size:12px;
+  color:#87918c!important;
+}
+
 </style>
 </head>
 <body>
+
+<div class="access-lock" id="accessLock">
+  <div class="access-card">
+    <div class="access-icon">🔒</div>
+    <h1>Learning Hub is closed</h1>
+    <p id="accessMessage">Student access is available during school hours.</p>
+    <div class="access-hours">Monday–Friday · 8:00am–3:30pm</div>
+    <p class="access-note">Times are based on Perth time.</p>
+  </div>
+</div>
+
 
 <div class="login" id="loginScreen">
   <div class="login-card">
@@ -127,7 +194,56 @@ button,input{font:inherit}button{cursor:pointer}
   </div>
 </div>
 
+
 <script>
+const STUDENT_HUB_OPEN_HOUR=8;
+const STUDENT_HUB_CLOSE_HOUR=15;
+const STUDENT_HUB_CLOSE_MINUTE=30;
+
+function perthNowParts(){
+  const parts=new Intl.DateTimeFormat("en-AU",{
+    timeZone:"Australia/Perth",
+    weekday:"short",
+    hour:"2-digit",
+    minute:"2-digit",
+    hour12:false
+  }).formatToParts(new Date());
+  const obj={};
+  parts.forEach(p=>obj[p.type]=p.value);
+  return {
+    weekday:obj.weekday,
+    hour:Number(obj.hour),
+    minute:Number(obj.minute)
+  };
+}
+function studentHubIsOpen(){
+  const t=perthNowParts();
+  const weekday=["Mon","Tue","Wed","Thu","Fri"].includes(t.weekday);
+  const mins=t.hour*60+t.minute;
+  const open=STUDENT_HUB_OPEN_HOUR*60;
+  const close=STUDENT_HUB_CLOSE_HOUR*60+STUDENT_HUB_CLOSE_MINUTE;
+  return weekday && mins>=open && mins<close;
+}
+function updateStudentHubAccess(){
+  const gate=document.getElementById("accessLock");
+  if(!gate)return;
+  const open=studentHubIsOpen();
+  gate.classList.toggle("show",!open);
+
+  if(!open){
+    const t=perthNowParts();
+    const weekend=["Sat","Sun"].includes(t.weekday);
+    const msg=document.getElementById("accessMessage");
+    if(msg){
+      msg.textContent=weekend
+        ?"Learning Hub is available to students on school weekdays."
+        :"Learning Hub is available to students between 8:00am and 3:30pm.";
+    }
+  }
+}
+updateStudentHubAccess();
+setInterval(updateStudentHubAccess,30000);
+
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 let student=null,bots=[];
 const $=id=>document.getElementById(id);
