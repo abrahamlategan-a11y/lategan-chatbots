@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Groups · Learning Hub</title>
+<style>
+:root{
+  --bg:#f4f7f4;--panel:#fff;--ink:#17352b;--muted:#6e7b75;--line:#dae4de;
+  --green:#176147;--deep:#104636;--sage:#e5f0e4;--lav:#ebe3f4;--gold:#f2df9c;
+  --shadow:0 12px 30px rgba(28,58,47,.08)
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:950}.logo{width:42px;height:42px;border-radius:13px;background:var(--deep);color:#fff;display:grid;place-items:center}
+.top a{border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:850}
+.hero{background:linear-gradient(140deg,#155b43,#0e4434);color:#fff;border-radius:23px;padding:24px;box-shadow:var(--shadow);margin-bottom:16px}
+.hero h1{margin:0 0 5px;font-size:34px;letter-spacing:-.035em}.hero p{margin:0;color:#c9dad2;font-size:13px}
+.tabs{display:flex;gap:8px;margin:15px 0}.tab{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 14px;font-weight:850;color:var(--ink);cursor:pointer}.tab.on{background:var(--green);color:#fff;border-color:var(--green)}
+.view{display:none}.view.on{display:block}.toolbar{display:flex;align-items:end;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:14px;box-shadow:var(--shadow)}
+.field label{display:block;font-size:10px;font-weight:900;margin:0 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.field select,.field input{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:9px 11px;font-size:12px;font-weight:900;cursor:pointer}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.danger{color:#a7433e}.btn:disabled{opacity:.45;cursor:not-allowed}
+.panel{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);overflow:hidden}.ph{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.ph h2{margin:0;font-size:17px}.pb{padding:15px}
+.student-select{display:flex;gap:7px;flex-wrap:wrap}.student-check{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 9px;font-size:12px;font-weight:750;background:#fff;cursor:pointer}.student-check input{margin:0}
+.groups-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.group-card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow);min-height:150px}.group-card:nth-child(4n+2) .group-head{background:var(--lav)}.group-card:nth-child(4n+3) .group-head{background:var(--sage)}.group-card:nth-child(4n+4) .group-head{background:var(--gold)}
+.group-head{background:#e7eee8;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}.group-head input{border:0;background:transparent;font-weight:950;font-size:16px;color:var(--ink);min-width:0;width:100%;outline:none}.group-body{padding:12px;display:flex;gap:7px;flex-wrap:wrap;align-content:flex-start}.chip{border-radius:999px;background:#f2f5f3;padding:7px 10px;font-size:12px;font-weight:800;border:1px solid #e2e8e4;cursor:pointer}.chip:hover{background:#e7eee9}.empty{font-size:12px;color:#8b9691;padding:4px}
+.job-layout{display:grid;grid-template-columns:260px 1fr;gap:14px}.pool{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);padding:13px;min-height:300px}.pool h3{margin:0 0 4px}.pool p{margin:0 0 10px;font-size:11px;color:var(--muted)}.pool-list{display:flex;flex-direction:column;gap:6px}.pool-student{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:7px 8px;font-size:12px;font-weight:800}.pool-student select{min-width:105px;border:1px solid var(--line);border-radius:8px;padding:5px;font-size:11px}
+.job-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.job-card{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);overflow:hidden;min-height:180px}.job-head{padding:11px 12px;background:#e5eee7;display:grid;grid-template-columns:1fr auto;gap:8px}.job-head input{border:0;background:transparent;font-weight:950;font-size:16px;color:var(--ink);outline:none;min-width:0}.job-members{padding:11px;display:flex;gap:7px;flex-wrap:wrap}.remove-group{border:0;background:transparent;color:#9a554f;cursor:pointer;font-weight:900}
+.saved{font-size:11px;color:var(--muted);margin-left:auto}@media(max-width:850px){.groups-grid,.job-grid{grid-template-columns:1fr}.job-layout{grid-template-columns:1fr}.pool-list{display:grid;grid-template-columns:repeat(2,1fr)}}@media print{.top,.hero,.tabs,.toolbar,.pool{display:none!important}.shell{max-width:none;padding:0}.view{display:none!important}.view.on{display:block!important}.groups-grid,.job-grid{grid-template-columns:repeat(2,1fr)}body{background:#fff}.group-card,.job-card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="top"><div class="brand"><div class="logo">LH</div><div>Learning Hub · Groups</div></div><a href="../teacher/">⌂ Teacher Hub</a></div>
+  <div class="hero"><h1>Groups</h1><p>Make quick working groups or keep permanent job groups for your class.</p></div>
+
+  <div class="tabs">
+    <button class="tab on" data-view="quick">Quick Group Maker</button>
+    <button class="tab" data-view="jobs">Job Groups</button>
+  </div>
+
+  <section class="view on" id="view-quick">
+    <div class="toolbar">
+      <div class="field"><label>Number of groups</label><select id="quickCount"></select></div>
+      <button class="btn primary" id="makeQuick">Randomise groups</button>
+      <button class="btn" id="clearQuick">Clear</button>
+      <button class="btn" onclick="window.print()">Print / display</button>
+      <div class="saved" id="quickSummary"></div>
+    </div>
+
+    <div class="panel" style="margin-bottom:14px">
+      <div class="ph"><h2>Students to include</h2><button class="btn" id="toggleAll">Deselect all</button></div>
+      <div class="pb"><div class="student-select" id="quickStudents"></div></div>
+    </div>
+    <div class="groups-grid" id="quickGroups"></div>
+  </section>
+
+  <section class="view" id="view-jobs">
+    <div class="toolbar">
+      <button class="btn primary" id="randomJobs">Fill randomly</button>
+      <button class="btn" id="addJobGroup">+ Add group</button>
+      <button class="btn" id="clearJobs">Clear students</button>
+      <button class="btn" onclick="window.print()">Print / display</button>
+      <div class="saved" id="saveState">Saved automatically</div>
+    </div>
+
+    <div class="job-layout">
+      <aside class="pool">
+        <h3>Assign students</h3>
+        <p>Choose a group for each student, or use Fill randomly.</p>
+        <div class="pool-list" id="studentPool"></div>
+      </aside>
+      <div class="job-grid" id="jobGroups"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev";
+const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
+const $=id=>document.getElementById(id);
+let students=[],jobGroups=[],quickGroups=[],saveTimer=null;
+
+async function post(p){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||"Something went wrong.");
+  return d;
+}
+function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function activeStudents(){return students.filter(s=>Number(s.active)===1)}
+
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="view-"+b.dataset.view));
+});
+
+function renderQuickStudentChecks(){
+  const active=activeStudents();
+  $("quickStudents").innerHTML=active.map(s=>`<label class="student-check"><input type="checkbox" value="${s.id}" checked><span>${esc(s.display_name)}</span></label>`).join("");
+  updateQuickSummary();
+  $("quickStudents").querySelectorAll("input").forEach(x=>x.onchange=updateQuickSummary);
+}
+function selectedQuickStudents(){
+  const ids=new Set([...$("quickStudents").querySelectorAll("input:checked")].map(x=>Number(x.value)));
+  return activeStudents().filter(s=>ids.has(Number(s.id)));
+}
+function updateQuickSummary(){
+  const n=selectedQuickStudents().length;
+  $("quickSummary").textContent=`${n} student${n===1?"":"s"} selected`;
+}
+function renderQuickGroups(){
+  $("quickGroups").innerHTML=quickGroups.map((g,i)=>`
+    <div class="group-card">
+      <div class="group-head"><input class="quick-name" data-i="${i}" value="${esc(g.name)}"></div>
+      <div class="group-body">${g.students.length?g.students.map(s=>`<span class="chip">${esc(s.display_name)}</span>`).join(""):'<span class="empty">No students yet</span>'}</div>
+    </div>`).join("");
+  document.querySelectorAll(".quick-name").forEach(x=>x.oninput=()=>quickGroups[Number(x.dataset.i)].name=x.value);
+}
+$("makeQuick").onclick=()=>{
+  const picked=shuffle(selectedQuickStudents()),count=Math.max(2,Math.min(Number($("quickCount").value)||2,picked.length||2));
+  quickGroups=Array.from({length:count},(_,i)=>({name:`Group ${i+1}`,students:[]}));
+  picked.forEach((s,i)=>quickGroups[i%count].students.push(s));
+  renderQuickGroups();
+};
+$("clearQuick").onclick=()=>{quickGroups=[];renderQuickGroups()};
+$("toggleAll").onclick=()=>{
+  const boxes=[...$("quickStudents").querySelectorAll("input")],all=boxes.every(x=>x.checked);
+  boxes.forEach(x=>x.checked=!all);$("toggleAll").textContent=all?"Select all":"Deselect all";updateQuickSummary();
+};
+
+function sanitiseJobGroups(){
+  const valid=new Set(activeStudents().map(s=>Number(s.id))),seen=new Set();
+  jobGroups.forEach(g=>{
+    g.student_ids=(g.student_ids||[]).map(Number).filter(id=>valid.has(id)&&!seen.has(id)&&seen.add(id));
+  });
+}
+function groupForStudent(id){return jobGroups.find(g=>(g.student_ids||[]).includes(Number(id)))?.id||""}
+function renderJobs(){
+  sanitiseJobGroups();
+  const active=activeStudents();
+  $("studentPool").innerHTML=active.map(s=>{
+    const current=groupForStudent(s.id);
+    const opts=['<option value="">Unassigned</option>',...jobGroups.map(g=>`<option value="${esc(g.id)}" ${current===g.id?"selected":""}>${esc(g.name)}</option>`)].join("");
+    return `<div class="pool-student"><span>${esc(s.display_name)}</span><select class="student-group" data-id="${s.id}">${opts}</select></div>`;
+  }).join("");
+
+  $("jobGroups").innerHTML=jobGroups.map((g,i)=>{
+    const members=(g.student_ids||[]).map(id=>active.find(s=>Number(s.id)===Number(id))).filter(Boolean);
+    return `<div class="job-card">
+      <div class="job-head"><input class="job-name" data-i="${i}" value="${esc(g.name)}"><button class="remove-group" data-i="${i}" title="Remove group">×</button></div>
+      <div class="job-members">${members.length?members.map(s=>`<span class="chip member-chip" data-id="${s.id}" title="Click to unassign">${esc(s.display_name)}</span>`).join(""):'<span class="empty">No students assigned</span>'}</div>
+    </div>`;
+  }).join("");
+
+  document.querySelectorAll(".student-group").forEach(sel=>sel.onchange=()=>{
+    const id=Number(sel.dataset.id);
+    jobGroups.forEach(g=>g.student_ids=(g.student_ids||[]).filter(x=>Number(x)!==id));
+    if(sel.value){const g=jobGroups.find(g=>g.id===sel.value);if(g)g.student_ids.push(id)}
+    renderJobs();queueSave();
+  });
+  document.querySelectorAll(".job-name").forEach(inp=>inp.oninput=()=>{
+    jobGroups[Number(inp.dataset.i)].name=inp.value||`Job Group ${Number(inp.dataset.i)+1}`;queueSave();
+  });
+  document.querySelectorAll(".remove-group").forEach(btn=>btn.onclick=()=>{
+    const i=Number(btn.dataset.i),g=jobGroups[i];
+    if(!confirm(`Remove "${g.name}"? Students in it will become unassigned.`))return;
+    jobGroups.splice(i,1);renderJobs();queueSave();
+  });
+  document.querySelectorAll(".member-chip").forEach(ch=>ch.onclick=()=>{
+    const id=Number(ch.dataset.id);jobGroups.forEach(g=>g.student_ids=(g.student_ids||[]).filter(x=>Number(x)!==id));renderJobs();queueSave();
+  });
+}
+function queueSave(){
+  $("saveState").textContent="Saving…";
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(saveJobs,350);
+}
+async function saveJobs(){
+  try{
+    await post({action:"teacher_save_job_groups",teacher_code:teacherCode,groups:jobGroups});
+    $("saveState").textContent="Saved";
+  }catch(e){$("saveState").textContent="Could not save";console.error(e)}
+}
+$("randomJobs").onclick=()=>{
+  if(!jobGroups.length)return;
+  const picked=shuffle(activeStudents());
+  jobGroups.forEach(g=>g.student_ids=[]);
+  picked.forEach((s,i)=>jobGroups[i%jobGroups.length].student_ids.push(Number(s.id)));
+  renderJobs();queueSave();
+};
+$("addJobGroup").onclick=()=>{
+  jobGroups.push({id:`job-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,name:`Job Group ${jobGroups.length+1}`,student_ids:[]});
+  renderJobs();queueSave();
+};
+$("clearJobs").onclick=()=>{
+  if(!confirm("Clear all students from the job groups?"))return;
+  jobGroups.forEach(g=>g.student_ids=[]);renderJobs();queueSave();
+};
+
+async function load(){
+  if(!teacherCode){location.href="../teacher/";return}
+  try{
+    const [sr,jr]=await Promise.all([
+      post({action:"teacher_list_students",teacher_code:teacherCode}),
+      post({action:"teacher_get_job_groups",teacher_code:teacherCode})
+    ]);
+    students=sr.students||[];
+    jobGroups=jr.groups||[];
+    for(let i=2;i<=10;i++)$("quickCount").insertAdjacentHTML("beforeend",`<option value="${i}" ${i===4?"selected":""}>${i} groups</option>`);
+    renderQuickStudentChecks();
+    renderQuickGroups();
+    renderJobs();
+  }catch(e){alert(e.message);location.href="../teacher/"}
+}
+load();
+</script>
+</body>
+</html>
