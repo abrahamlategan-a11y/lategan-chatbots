@@ -219,7 +219,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
           </div>
 
           <div class="panel" id="boardPanel" style="display:none">
-            <div class="ph"><h2>Captain's board</h2><div class="controls"><button class="btn" id="teacherFull">Full screen</button><button class="btn sound-on" id="soundToggle">🔊 Sound</button><button class="btn" id="saveGame">Save & Exit</button><button class="btn primary" id="resumeGame" style="display:none">Resume game</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
+            <div class="ph"><h2>Captain's board</h2><div class="controls"><button class="btn" id="cancelSetup" style="display:none">← Change game setup</button><button class="btn" id="teacherFull">Full screen</button><button class="btn sound-on" id="soundToggle">🔊 Sound</button><button class="btn" id="saveGame">Save & Exit</button><button class="btn primary" id="resumeGame" style="display:none">Resume game</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
             <div class="boardwrap"><div class="board" id="teacherBoard"></div></div>
           </div>
         </div>
@@ -477,6 +477,7 @@ function renderTeacher(){
   feed($("teacherFeed"),g.public_feed);queueTeacherEvents(g.public_feed);
 
   $("forceGame").disabled=g.status!=="running"||players.every(p=>!p.busy);
+  $("cancelSetup").style.display=["lobby","setup"].includes(g.status)?"":"none";
   $("saveGame").style.display=["running","ready","ready_chosen","choosing"].includes(g.status)?"":"none";
   $("resumeGame").style.display=g.status==="paused"?"":"none";
 
@@ -742,6 +743,21 @@ $("soundToggle").onclick=()=>{
   $("soundToggle").classList.toggle("sound-on",soundEnabled);
   if(soundEnabled)playSound("event");
 };
+$("cancelSetup").onclick=async()=>{
+  if(!state?.game)return;
+  const hasPlayers=(state.players||[]).length>0;
+  const msg=hasPlayers
+    ?"Cancel this game setup? Joined players will be removed and you can choose a different board size."
+    :"Cancel this game setup and choose a different board size?";
+  if(!confirm(msg))return;
+  try{
+    await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"delete"});
+    state={game:null,players:[]};
+    qrMadeFor="";
+    renderTeacher();
+  }catch(e){alert(e.message)}
+};
+
 $("closeFinal").onclick=async()=>{
   if(!state?.game)return;
   if(!confirm("Close the leaderboard and finish this game for everyone?"))return;
