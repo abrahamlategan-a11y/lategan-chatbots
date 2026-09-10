@@ -152,6 +152,20 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 :fullscreen .panel .pb{padding:8px}
 :fullscreen #teacherPlayers .playerrow{padding:5px 0}
 
+
+.tile-guide{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile-guide>div{display:grid;grid-template-columns:28px 1fr;grid-template-rows:auto auto;column-gap:7px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fafcfb}
+.tile-guide span{grid-row:1/3;font-size:20px;text-align:center;font-weight:950}
+.tile-guide strong{font-size:11px}
+.tile-guide small{font-size:9px;line-height:1.25;color:var(--muted)}
+@media(max-width:760px){.tile-guide{grid-template-columns:1fr}}
+
+
+.player-money{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:9px;color:var(--muted)}
+.player-money span{background:#f3f6f4;border-radius:999px;padding:3px 6px}
+.player-money b{color:var(--ink)}
+.player-money .total{background:#e5f0e8;color:var(--deep)}
+
 </style>
 </head>
 <body>
@@ -249,6 +263,23 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
       </div>
       <div style="display:flex;flex-direction:column;gap:18px">
         <div class="panel"><div class="ph"><h3>Public events</h3></div><div class="pb"><div class="feed" id="studentFeed"></div></div></div>
+        <div class="panel" id="tileGuidePanel">
+          <div class="ph"><h3>Special tile guide</h3></div>
+          <div class="pb">
+            <div class="tile-guide">
+              <div><span>🛡️</span><strong>Shield</strong><small>Block a future attack.</small></div>
+              <div><span>🪞</span><strong>Mirror</strong><small>Bounce an attack back.</small></div>
+              <div><span>🏴‍☠️</span><strong>Rob</strong><small>Try to steal another pirate's cash.</small></div>
+              <div><span>🌊</span><strong>Sink</strong><small>Wipe out another pirate's unbanked cash.</small></div>
+              <div><span>🎁</span><strong>Present</strong><small>Give treasure to another pirate.</small></div>
+              <div><span>🔁</span><strong>Swap</strong><small>Swap unbanked cash with another pirate.</small></div>
+              <div><span>🎯</span><strong>Choose</strong><small>Pick the next grid reference.</small></div>
+              <div><span>💣</span><strong>Bomb</strong><small>Lose all unbanked cash.</small></div>
+              <div><span>×2</span><strong>Double</strong><small>Double your unbanked cash.</small></div>
+              <div><span>🏦</span><strong>Bank</strong><small>Move cash into your safe total.</small></div>
+            </div>
+          </div>
+        </div>
         <div class="panel" id="finishPanel" style="display:none"><div class="ph"><h3>Final standings</h3></div><div class="pb" id="podium"></div></div>
       </div>
     </div>
@@ -281,7 +312,7 @@ const params=new URLSearchParams(location.search);
 const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="";
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0;
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -463,7 +494,8 @@ function renderTeacher(){
     const status=g.status==="lobby"?(p.locked?"ready ✓":`${p.placed}/${totalCells} placed`):
       g.status==="paused"?"paused":
       (p.busy?`⏳ ${p.waiting_on}`:"✅ complete");
-    return `<div class="playerrow"><div><strong>${p.name}</strong><div class="playerstatus" style="text-align:left">${status}</div></div>
+    const moneyLine=g.status==="lobby"?"":`<div class="player-money"><span>Cash <b>${money(p.cash)}</b></span><span>Bank <b>${money(p.bank)}</b></span><span class="total">Total <b>${money(p.total)}</b></span></div>`;
+    return `<div class="playerrow"><div><strong>${p.name}</strong><div class="playerstatus" style="text-align:left">${status}</div>${moneyLine}</div>
       <div class="playerbtns">
         ${!["lobby","finished","paused"].includes(g.status)?`<button class="mini skip-player" data-id="${p.id}" data-name="${p.name}">Skip round</button>`:""}
         ${g.status!=="finished"?`<button class="mini danger remove-player" data-id="${p.id}" data-name="${p.name}">Remove</button>`:""}
@@ -482,13 +514,22 @@ function renderTeacher(){
 
   // Teacher no longer has to hunt for a Reveal button.
   const ready=["ready","ready_chosen"].includes(g.status);
-  $("roundReady").classList.toggle("show",ready);
-  if(ready){
+  const showReady=ready&&!advancingRound;
+  $("roundReady").classList.toggle("show",showReady);
+  if(showReady){
     $("roundReadyText").textContent=g.status==="ready_chosen"
       ?`Everyone is done. The next chosen coordinate is ${g.current_coord}.`
       :"Everyone is done. Continue when you're ready for the next coordinate.";
+    $("continueRound").disabled=false;
+    $("continueRound").textContent="Continue";
   }else{
     $("roundReady").classList.remove("show");
+  }
+
+  // Only release the transition lock once we have definitely observed
+  // the NEXT running round (not a stale 'ready' response from polling).
+  if(advancingRound && g.status==="running" && Number(g.round_number)>Number(advanceFromRound)){
+    advancingRound=false;
   }
 
   const finished=g.status==="finished";
@@ -692,7 +733,15 @@ function renderAction(){
 async function load(){
   try{
     if(teacherMode){
-      state=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+      const fresh=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+
+      if(advancingRound && fresh?.game){
+        const staleReady=["ready","ready_chosen"].includes(fresh.game.status) &&
+          Number(fresh.game.round_number)<=Number(advanceFromRound);
+        if(!staleReady)state=fresh;
+      }else{
+        state=fresh;
+      }
       renderTeacher();
     }
     else if(token){
@@ -724,9 +773,38 @@ async function removePlayer(id,name){
 }
 
 $("continueRound").onclick=async()=>{
+  if(advancingRound||!state?.game)return;
+  advancingRound=true;
+  advanceFromRound=Number(state.game.round_number||0);
+  $("continueRound").disabled=true;
+  $("continueRound").textContent="Starting next round…";
   $("roundReady").classList.remove("show");
-  state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"next"});
-  playSound("event");renderTeacher()
+
+  try{
+    const nextState=await post({
+      action:"pirate_teacher_control",
+      teacher_code:teacherCode,
+      game_id:state.game.id,
+      command:"next"
+    });
+    state=nextState;
+
+    // The backend response should already be the new running round.
+    // If it is, release immediately. Otherwise keep the lock until polling
+    // observes a higher round number.
+    if(state?.game?.status==="running" &&
+       Number(state.game.round_number)>advanceFromRound){
+      advancingRound=false;
+    }
+
+    playSound("event");
+    renderTeacher();
+  }catch(e){
+    advancingRound=false;
+    $("continueRound").disabled=false;
+    $("continueRound").textContent="Continue";
+    alert(e.message);
+  }
 };
 $("saveGame").onclick=async()=>{
   state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"pause"});
@@ -757,6 +835,7 @@ $("cancelLobbySetup").onclick=async()=>{
       command:"delete"
     });
     state={game:null,players:[]};
+    advancingRound=false;advanceFromRound=0;
     qrMadeFor="";
     renderTeacher();
   }catch(e){alert(e.message)}
