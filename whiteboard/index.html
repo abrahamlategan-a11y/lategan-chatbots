@@ -19,7 +19,7 @@ button,input{font:inherit}.btn{border:1px solid var(--line);background:#fff;colo
 .board-top{height:58px;flex:0 0 58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px}.board-top .left,.board-top .right{display:flex;align-items:center;gap:8px}.student-name{font-weight:950;font-size:13px}.session-pill{border-radius:999px;background:var(--sage);padding:6px 9px;font-size:11px;font-weight:900}
 .frost-note{display:none;background:#dce8f4;border-bottom:1px solid #c8d9e8;color:#244a66;text-align:center;padding:7px 12px;font-size:12px;font-weight:850}.frost-note.on{display:block}
 .toolbar{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px}.toolset{display:flex;align-items:center;gap:5px;padding-right:8px;border-right:1px solid var(--line)}.tool{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;cursor:pointer;font-size:11px;font-weight:900}.tool.on{outline:2px solid var(--green);outline-offset:1px}.color{width:25px;height:25px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}.color.on{box-shadow:0 0 0 3px #80a695}
-.canvas-wrap{flex:1;min-height:0;padding:10px;position:relative}#boardCanvas{width:100%;height:100%;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(20,50,40,.06);touch-action:none;display:block}
+.canvas-wrap{flex:1;min-height:0;padding:10px;position:relative}#boardCanvas{width:100%;height:100%;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(20,50,40,.06);touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;display:block}
 .corner-name{position:absolute;right:20px;bottom:17px;font-size:11px;font-weight:900;color:#809087;pointer-events:none}
 .save-drawer{position:fixed;right:14px;top:70px;width:min(360px,calc(100vw - 28px));max-height:calc(100vh - 84px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:0 18px 50px rgba(20,50,40,.18);padding:14px;display:none;z-index:50}.save-drawer.on{display:block}.saved-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:9px 0}.saved-row:first-of-type{border-top:0}.saved-row strong{font-size:12px}.saved-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.saved-actions{display:flex;gap:5px}
 .modal{position:fixed;inset:0;background:rgba(14,42,33,.52);display:none;place-items:center;padding:20px;z-index:80}.modal.on{display:grid}.modal-card{background:#fff;border-radius:18px;width:min(420px,94vw);padding:19px;box-shadow:0 20px 60px rgba(0,0,0,.2)}.modal-card h2{margin:0 0 5px}.modal-card p{font-size:12px;color:var(--muted)}.modal-card input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:9px 0 14px}.actions{display:flex;justify-content:flex-end;gap:7px}
@@ -72,15 +72,19 @@ const $=id=>document.getElementById(id);
 
 function blankBoard(){return {version:1,strokes:[]}}
 function cloneBoard(b){return JSON.parse(JSON.stringify(b||blankBoard()))}
-function drawBoardToCanvas(canvas,board){
+function fitCanvas(canvas){
   const ctx=canvas.getContext("2d");
   const r=canvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1);
   const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
   ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  return {ctx,r};
+}
+function drawBoardToCanvas(canvas,board){
+  const {ctx,r}=fitCanvas(canvas);
   ctx.clearRect(0,0,r.width,r.height);
   ctx.fillStyle="#ffffff";ctx.fillRect(0,0,r.width,r.height);
-  ctx.lineCap="round";ctx.lineJoin="round";
   for(const s of (board?.strokes||[])){
     const pts=s.points||[];if(!pts.length)continue;
     ctx.save();
@@ -100,21 +104,56 @@ function attachDrawingCanvas(canvas,getBoard,onCommit){
     const r=canvas.getBoundingClientRect();
     return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}
   }
+  function drawSegment(a,b,stroke,r){
+    const ctx=canvas.getContext("2d");
+    ctx.save();
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
+    ctx.globalCompositeOperation=stroke.tool==="eraser"?"destination-out":"source-over";
+    ctx.strokeStyle=stroke.color||"#17352b";
+    ctx.lineWidth=Number(stroke.width)||4;
+    ctx.beginPath();
+    ctx.moveTo(a.x*r.width,a.y*r.height);
+    ctx.lineTo(b.x*r.width,b.y*r.height);
+    ctx.stroke();
+    ctx.restore();
+  }
   function start(e){
-    if(!enabled)return;e.preventDefault();drawing=true;canvas.setPointerCapture?.(e.pointerId);
-    current={tool,color,width,points:[point(e)]};getBoard().strokes.push(current);drawBoardToCanvas(canvas,getBoard());
+    if(!enabled)return;
+    e.preventDefault();
+    drawing=true;
+    canvas.setPointerCapture?.(e.pointerId);
+    const r=canvas.getBoundingClientRect();
+    const p={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
+    current={tool,color,width,points:[p]};
+    getBoard().strokes.push(current);
+    drawSegment(p,{x:p.x+.00001,y:p.y+.00001},current,r);
   }
   function move(e){
-    if(!drawing||!enabled)return;e.preventDefault();
-    const p=point(e),last=current.points[current.points.length-1];
-    if(!last||Math.hypot(p.x-last.x,p.y-last.y)>.0015)current.points.push(p);
-    drawBoardToCanvas(canvas,getBoard());
+    if(!drawing||!enabled)return;
+    e.preventDefault();
+    const r=canvas.getBoundingClientRect();
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];
+    for(const ev of evs){
+      const p={x:Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height))};
+      const last=current.points[current.points.length-1];
+      if(!last||Math.hypot(p.x-last.x,p.y-last.y)>.00018){
+        current.points.push(p);
+        drawSegment(last||p,p,current,r);
+      }
+    }
   }
-  function end(e){if(!drawing)return;drawing=false;current=null;onCommit?.()}
-  canvas.addEventListener("pointerdown",start);
-  canvas.addEventListener("pointermove",move);
-  canvas.addEventListener("pointerup",end);
-  canvas.addEventListener("pointercancel",end);
+  function end(e){
+    if(!drawing)return;
+    e.preventDefault();
+    drawing=false;
+    current=null;
+    onCommit?.();
+  }
+  canvas.addEventListener("pointerdown",start,{passive:false});
+  canvas.addEventListener("pointermove",move,{passive:false});
+  canvas.addEventListener("pointerup",end,{passive:false});
+  canvas.addEventListener("pointercancel",end,{passive:false});
   canvas.addEventListener("contextmenu",e=>e.preventDefault());
   return{
     setTool(v){tool=v},
@@ -125,7 +164,7 @@ function attachDrawingCanvas(canvas,getBoard,onCommit){
   };
 }
 
-let student=null,mode="home",board=blankBoard(),drawer=null,participantId=0,sessionId=0,sessionCode="",stateTimer=null,syncing=false,currentSavedId=0;
+let student=null,mode="home",board=blankBoard(),drawer=null,participantId=0,sessionId=0,sessionCode="",stateTimer=null,syncInFlight=false,syncDirty=false,syncTimer=null,currentSavedId=0;
 let engine=null;
 
 async function post(p){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d}
@@ -137,13 +176,54 @@ function showHome(){
   clearInterval(stateTimer);stateTimer=null;$("boardApp").classList.remove("on");$("home").style.display="grid";mode="home";participantId=0;sessionId=0;sessionCode="";
 }
 function persistPrivate(){if(mode==="private")localStorage.setItem("lh_private_whiteboard_"+studentCode,JSON.stringify(board))}
-async function commit(){
+function commit(){
   if(mode==="private"){persistPrivate();$("syncState").textContent="Saved on this device";return}
-  if(mode!=="live"||!participantId||syncing)return;
-  syncing=true;$("syncState").textContent="Syncing…";
-  try{await post({action:"student_whiteboard_update",student_code:studentCode,participant_id:participantId,board});$("syncState").textContent="Live"}
-  catch(e){$("syncState").textContent="Could not sync"}
-  syncing=false;
+  if(mode!=="live"||!participantId)return;
+
+  // IMPORTANT FOR iPAD/APPLE PENCIL:
+  // Never start network/JSON work immediately after a stroke.
+  // Wait until the student pauses, so handwriting always gets the main thread first.
+  syncDirty=true;
+  clearTimeout(syncTimer);
+  $("syncState").textContent="Writing…";
+  syncTimer=setTimeout(flushSync,850);
+}
+async function flushSync(){
+  if(syncInFlight||mode!=="live"||!participantId||!syncDirty)return;
+
+  syncInFlight=true;
+  syncDirty=false;
+
+  // Let Safari paint any remaining Pencil input before cloning/stringifying the board.
+  await new Promise(resolve=>{
+    if("requestIdleCallback" in window){
+      requestIdleCallback(()=>resolve(),{timeout:250});
+    }else{
+      setTimeout(resolve,40);
+    }
+  });
+
+  const snapshot=cloneBoard(board);
+
+  try{
+    $("syncState").textContent="Syncing…";
+    await post({action:"student_whiteboard_update",student_code:studentCode,participant_id:participantId,board:snapshot});
+    $("syncState").textContent="Live";
+  }catch(e){
+    syncDirty=true;
+    $("syncState").textContent="Retrying…";
+    clearTimeout(syncTimer);
+    syncTimer=setTimeout(flushSync,1200);
+  }finally{
+    syncInFlight=false;
+
+    // If more strokes were added while the previous snapshot was uploading,
+    // wait for another pause rather than immediately doing more work.
+    if(syncDirty){
+      clearTimeout(syncTimer);
+      syncTimer=setTimeout(flushSync,850);
+    }
+  }
 }
 async function init(){
   if(!studentCode){location.href="../student/";return}
@@ -159,6 +239,12 @@ async function init(){
 }
 engine=attachDrawingCanvas($("boardCanvas"),()=>board,commit);
 window.addEventListener("resize",()=>engine.redraw());
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"&&mode==="live"&&syncDirty){
+    clearTimeout(syncTimer);
+    flushSync();
+  }
+});
 
 document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tool]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setTool(b.dataset.tool)});
 document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-color]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setColor(b.dataset.color);engine.setTool("pen");document.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("on",x.dataset.tool==="pen"))});
