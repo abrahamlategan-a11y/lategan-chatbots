@@ -37,6 +37,45 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 .point-total strong{color:var(--ink);font-size:16px}
 #pointsPanel.off{opacity:.55}
 @media(max-width:850px){.points-grid{grid-template-columns:repeat(2,1fr)}}
+
+.points-panel{overflow:visible}
+.points-hero{
+  display:flex;justify-content:space-between;gap:20px;align-items:center;
+  padding:18px 20px;background:linear-gradient(135deg,#153f32,#1c6b4e);color:#fff
+}
+.points-hero h2{margin:2px 0 3px;font-size:22px}.points-hero p{margin:0;color:#d4e4dc;font-size:11px;max-width:700px;line-height:1.45}
+.mini-eyebrow{font-size:9px;font-weight:950;letter-spacing:.11em;opacity:.72}
+.points-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.switch-row{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:900;background:rgba(255,255,255,.12);padding:8px 10px;border-radius:10px}
+.points-hero .btn.danger{background:#fff;color:#a7433e;border-color:#fff}
+.leaderboard{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:14px 16px 4px}
+.leader-card{border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:#fff;position:relative}
+.leader-card.first{background:linear-gradient(135deg,#fff8d8,#fffdf4);border-color:#eadb99}
+.leader-card .place{font-size:18px;line-height:1}.leader-card .lname{font-size:11px;font-weight:950;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leader-card .ltotal{font-size:22px;font-weight:950;color:var(--deep);margin-top:2px}.leader-card .tag{font-size:8px;color:var(--muted);font-weight:900}
+.points-entry-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px 16px}
+.fun-point-card{border:1px solid var(--line);border-radius:17px;padding:14px;background:#fbfcfb;position:relative;overflow:hidden}
+.fun-point-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#b8d2c2}
+.fun-point-card.c2::before{background:#c7b2dd}.fun-point-card.c3::before{background:#e5c76e}.fun-point-card.c4::before{background:#9ec4db}
+.point-card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.point-card-top h3{margin:0;font-size:17px}
+.running-pill{background:#e8f1ea;border-radius:999px;padding:6px 9px;font-size:10px;font-weight:900;white-space:nowrap}
+.running-pill b{font-size:15px;margin-left:3px}
+.point-main-row{display:grid;grid-template-columns:150px 1fr;gap:12px;margin-top:12px}
+.today-box{background:#fff;border:1px solid var(--line);border-radius:13px;padding:10px}.today-box label,.adjust-box label{display:block;font-size:9px;font-weight:950;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.today-line{display:flex;align-items:center;gap:7px}.today-line input{width:78px;border:1px solid var(--line);border-radius:9px;padding:9px;font-weight:950;text-align:center;font-size:17px}.today-line span{font-weight:900}
+.adjust-box{background:#fff;border:1px dashed #c9d8cf;border-radius:13px;padding:10px}
+.adjust-row{display:grid;grid-template-columns:92px 1fr auto;gap:7px}.adjust-row input{min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px}.adjust-row .amount{font-weight:950;text-align:center}.history-btn{margin-top:9px;font-size:10px;padding:6px 8px}
+.points-savebar{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:0 16px 16px}
+#pointsPanel.off .points-entry-grid,#pointsPanel.off .leaderboard{opacity:.45}
+.modal-backdrop{position:fixed;inset:0;background:rgba(16,44,34,.55);display:none;place-items:center;padding:18px;z-index:90}
+.modal-backdrop.show{display:grid}
+.history-modal{width:min(650px,94vw);max-height:82vh;overflow:auto;background:#fff;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.history-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+.history-head h2{margin:2px 0 0;font-size:20px}
+.history-list{padding:8px 18px 18px}.history-row{display:grid;grid-template-columns:100px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #eef1ef}
+.history-row:last-child{border-bottom:0}.history-date{font-size:10px;color:var(--muted);font-weight:800}.history-copy strong{display:block;font-size:12px}.history-copy small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.history-amount{font-size:16px;font-weight:950}.history-amount.plus{color:#177047}.history-amount.minus{color:#a7433e}.delete-adjust{font-size:9px;padding:5px 7px;margin-left:6px}
+@media(max-width:850px){.leaderboard{grid-template-columns:repeat(2,1fr)}.points-entry-grid{grid-template-columns:1fr}.point-main-row{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -80,20 +119,36 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
       <div class="saved" id="saveState">Saved automatically</div>
     </div>
 
-    <div class="panel" id="pointsPanel" style="margin-bottom:14px">
-      <div class="ph">
-        <div><h2>Group Points</h2><div style="font-size:11px;color:var(--muted);margin-top:2px">Score each group out of 10 each day. Totals continue until you reset them.</div></div>
-        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
-          <label style="font-size:11px;font-weight:900;display:flex;align-items:center;gap:6px"><input type="checkbox" id="pointsEnabled" checked> On</label>
+    <div class="panel points-panel" id="pointsPanel" style="margin-bottom:14px">
+      <div class="points-hero">
+        <div>
+          <div class="mini-eyebrow">GROUP POINTS</div>
+          <h2>Daily scores & leaderboard</h2>
+          <p>Score each group out of 10. Add catch-up or bonus points anytime. Totals continue until you reset them.</p>
+        </div>
+        <div class="points-controls">
+          <label class="switch-row"><input type="checkbox" id="pointsEnabled" checked><span>Points on</span></label>
           <button class="btn danger" id="resetPoints">Reset totals</button>
         </div>
       </div>
-      <div class="pb">
-        <div class="points-grid" id="pointsGrid"></div>
-        <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:12px">
-          <span id="pointsSaved" style="font-size:11px;color:var(--muted)"></span>
-          <button class="btn primary" id="savePoints">Save today's points</button>
+
+      <div class="leaderboard" id="pointsLeaderboard"></div>
+
+      <div class="points-entry-grid" id="pointsGrid"></div>
+
+      <div class="points-savebar">
+        <span id="pointsSaved" class="saved"></span>
+        <button class="btn primary" id="savePoints">Save today's scores</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="historyModal">
+      <div class="history-modal">
+        <div class="history-head">
+          <div><div class="mini-eyebrow">POINT HISTORY</div><h2 id="historyTitle">Group history</h2></div>
+          <button class="btn" id="closeHistory">×</button>
         </div>
+        <div id="historyBody"></div>
       </div>
     </div>
 
@@ -207,15 +262,109 @@ function renderPoints(){
   $("pointsEnabled").checked=!!pointsState.enabled;
   $("pointsPanel").classList.toggle("off",!pointsState.enabled);
   $("savePoints").disabled=!pointsState.enabled;
+
   const todayMap=new Map((pointsState.today||[]).map(x=>[String(x.group_id),Number(x.score)]));
   const totalMap=new Map((pointsState.totals||[]).map(x=>[String(x.group_id),Number(x.total)||0]));
-  $("pointsGrid").innerHTML=jobGroups.map(g=>{
+
+  const ranked=jobGroups.map(g=>({id:String(g.id),name:g.name,total:totalMap.get(String(g.id))||0}))
+    .sort((a,b)=>b.total-a.total);
+
+  $("pointsLeaderboard").innerHTML=ranked.map((g,i)=>`
+    <div class="leader-card ${i===0?"first":""}">
+      <div class="place">${["🥇","🥈","🥉"][i]||"⭐"}</div>
+      <div class="lname">${esc(g.name)}</div>
+      <div class="ltotal">${g.total.toFixed(1)}</div>
+      <div class="tag">${i===0?"CURRENT LEADER":"RUNNING TOTAL"}</div>
+    </div>`).join("");
+
+  $("pointsGrid").innerHTML=jobGroups.map((g,i)=>{
     const score=todayMap.has(String(g.id))?todayMap.get(String(g.id)):"";
     const total=totalMap.get(String(g.id))||0;
-    return `<div class="point-card"><h4>${esc(g.name)}</h4><div class="point-score-row"><input class="point-input" data-id="${esc(g.id)}" type="number" min="0" max="10" step="0.1" value="${score}"><span>/ 10</span></div><div class="point-total">Running total: <strong>${total.toFixed(1)}</strong></div></div>`;
+    return `<div class="fun-point-card c${(i%4)+1}">
+      <div class="point-card-top">
+        <h3>${esc(g.name)}</h3>
+        <div class="running-pill">Running total <b>${total.toFixed(1)}</b></div>
+      </div>
+      <div class="point-main-row">
+        <div class="today-box">
+          <label>Today's score</label>
+          <div class="today-line"><input class="point-input" data-id="${esc(g.id)}" type="number" min="0" max="10" step="0.1" value="${score}"><span>/ 10</span></div>
+          <button class="btn history-btn" data-history="${esc(g.id)}">View history</button>
+        </div>
+        <div class="adjust-box">
+          <label>Add catch-up / bonus / correction</label>
+          <div class="adjust-row">
+            <input class="amount adjustment-amount" data-id="${esc(g.id)}" type="number" min="-50" max="50" step="0.1" placeholder="+2.0">
+            <input class="adjustment-note" data-id="${esc(g.id)}" maxlength="120" placeholder="Reason, e.g. missed yesterday">
+            <button class="btn add-adjustment" data-id="${esc(g.id)}">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
   }).join("")||'<div class="empty">Create job groups first.</div>';
-  document.querySelectorAll(".point-input").forEach(i=>i.disabled=!pointsState.enabled);
+
+  document.querySelectorAll(".point-input,.adjustment-amount,.adjustment-note").forEach(i=>i.disabled=!pointsState.enabled);
+  document.querySelectorAll(".add-adjustment").forEach(b=>{b.disabled=!pointsState.enabled;b.onclick=()=>addAdjustment(b.dataset.id)});
+  document.querySelectorAll("[data-history]").forEach(b=>b.onclick=()=>openHistory(b.dataset.history));
 }
+
+async function addAdjustment(groupId){
+  const amountEl=document.querySelector(`.adjustment-amount[data-id="${CSS.escape(groupId)}"]`);
+  const noteEl=document.querySelector(`.adjustment-note[data-id="${CSS.escape(groupId)}"]`);
+  const amount=Number(amountEl?.value);
+  const note=String(noteEl?.value||"").trim();
+  if(!Number.isFinite(amount)||amount===0||amount<-50||amount>50||Math.round(amount*10)!==amount*10){
+    alert("Adjustment must be from -50 to +50, with at most one decimal place.");
+    return;
+  }
+  try{
+    await post({
+      action:"teacher_job_points_add_adjustment",
+      teacher_code:teacherCode,
+      date_key:todayKey(),
+      group_id:groupId,
+      amount,
+      note
+    });
+    $("pointsSaved").textContent="Adjustment added";
+    await loadPoints();
+  }catch(e){alert(e.message)}
+}
+
+function openHistory(groupId){
+  const g=jobGroups.find(x=>String(x.id)===String(groupId));
+  $("historyTitle").textContent=(g?.name||"Group")+" · history";
+  const rows=(pointsState?.history||[]).filter(x=>String(x.group_id)===String(groupId));
+  $("historyBody").innerHTML=rows.length
+    ?`<div class="history-list">${rows.map(x=>{
+      const daily=x.entry_type==="daily";
+      const amount=Number(x.amount)||0;
+      const cls=amount<0?"minus":"plus";
+      const amountText=daily?`${amount.toFixed(1)} / 10`:`${amount>0?"+":""}${amount.toFixed(1)}`;
+      const title=daily?"Daily score":"Adjustment";
+      const note=daily?(x.entered_by_name?`Entered by ${esc(x.entered_by_name)}`:""):esc(x.note||"No note");
+      return `<div class="history-row">
+        <div class="history-date">${esc(x.date_key)}</div>
+        <div class="history-copy"><strong>${title}</strong><small>${note}</small></div>
+        <div><span class="history-amount ${cls}">${amountText}</span>${!daily?`<button class="btn danger delete-adjust" data-delete-adjust="${x.id}">Delete</button>`:""}</div>
+      </div>`;
+    }).join("")}</div>`
+    :'<div style="padding:24px;color:var(--muted);font-size:12px">No points recorded for this group yet.</div>';
+
+  document.querySelectorAll("[data-delete-adjust]").forEach(b=>b.onclick=()=>deleteAdjustment(Number(b.dataset.deleteAdjust),groupId));
+  $("historyModal").classList.add("show");
+}
+async function deleteAdjustment(id,groupId){
+  if(!confirm("Delete this adjustment?"))return;
+  try{
+    await post({action:"teacher_job_points_delete_adjustment",teacher_code:teacherCode,adjustment_id:id});
+    await loadPoints();
+    openHistory(groupId);
+  }catch(e){alert(e.message)}
+}
+$("closeHistory").onclick=()=>$("historyModal").classList.remove("show");
+$("historyModal").onclick=e=>{if(e.target===$("historyModal"))$("historyModal").classList.remove("show")};
+
 $("pointsEnabled").onchange=async()=>{
   try{
     await post({action:"teacher_job_points_toggle",teacher_code:teacherCode,enabled:$("pointsEnabled").checked?1:0});
@@ -231,7 +380,7 @@ $("savePoints").onclick=async()=>{
   }
   try{
     await post({action:"teacher_job_points_save",teacher_code:teacherCode,date_key:todayKey(),scores});
-    $("pointsSaved").textContent="Saved";
+    $("pointsSaved").textContent="Today's scores saved ✓";
     await loadPoints();
   }catch(e){alert(e.message)}
 };
