@@ -216,8 +216,9 @@ function guestJoinUrl(){
   return location.origin+location.pathname.replace(/\/tewhiteboard\/$/,"/wbjoin/");
 }
 function guestQrUrl(){
-  const target=guestJoinUrl();
-  return "https://quickchart.io/qr?size=360&margin=1&text="+encodeURIComponent(target);
+  // Embedded QR for the guest join page so it always shows,
+  // even if external QR services are blocked on school Wi‑Fi.
+  return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZoAAAGaAQAAAAAefbjOAAADFElEQVR4nO2by23jMBCGv1kKyJECXIBLkTtISalpOxBLcQELiEcDFGYPJPVwTok3klcenqLHB5PQZB7/kKJ8eYRfX2fAIIMMMsgggww6JiRlNACjyCU2EKQBYgPE+sJll+kZtCGEqqrSqarq4HKeqT0u3wOc0g1OF+/1T74mg/4FFCcHkI0hAbFBe5/y3epB9pmeQTtC/lbiRzgnIIr81C8Z9IxQc3et4d2p4AeAsQH/p1HiXtMzaDfIq2oPZKfQDcCUQgCgqmm/6Rm0NRRERKQF+Ric5gqju5ZaQy6MudTYa3oGbR01FlJ2zh4AJY7VBPxa637yNRn0CPS5+vQpV5/aA7UinS6t+jw6VD/y/JdX1d4nVAeYHwBFlDCLODRUP7dXrflktYOe2T24/NQs4vjQ0gEU91Bto9NErjW6WmaYRRwfKplluIwCCHRXQUPrkhBbwN8EYpuTT+n6badn0OZQ+bfXgewUSgoxaw9TRlFeMR9xcKhahE6xYnBT1FCtVUcJHRY1jg8tLKJ2tZwWp6Bp5TcGZ73PF4AWmeVca5QP75caRW6Om0UcHlpqluGcGs39LcZGiQJdfxMlvilh7oE++ZoMehwSkQbtY4NIO/U1NE33RgGcrqDtpmfQ5j6C3P7OPXCojQyn0v0uTwWm/seTr8mgR6CFig2zSOk/5xFZ1rQ84uhQ7XStpMlaaaaqZ/sidFv1eXxosYdKiScVcKlkkfGkgEtFnujHxqLGC0GjiJyLAFGGT8iHJgjtKAR5U7nsNT2DtoLWeoRb7JSYle0yLGq8BLTULKeMIquX2Rhmcco0y5eAch5RxSeXNJxvQjeMENpBCe8A8ZSAUSyPOD50v6uuFqNz/IDl6S7zEUeHpuoT5oBRNtR5XezOL31xs4gXhJwSWpCPq0jZiOsTdAPIZf/pGfSz0P2ZLrprU6qL0IJmZcIDeUvV93/JoP8DmvoaCuvDfDlYdMMp5fQytK4Wok++JoMegSY9ApiPhRcVwi324GZR2/KIw0P3Z7p0anfVy9IFxbrhBhlkkEEGGWTQevwFt3KNXFPbnhUAAAAASUVORK5CYII=";
 }
 function refreshGuestJoinPanel(){
   if(!session)return;
