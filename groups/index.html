@@ -41,7 +41,13 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 
   <section class="view on" id="view-quick">
     <div class="toolbar">
-      <div class="field"><label>Number of groups</label><select id="quickCount"></select></div>
+      <div class="field"><label>Group by</label>
+        <select id="groupMode">
+          <option value="count">Number of groups</option>
+          <option value="size">Groups of</option>
+        </select>
+      </div>
+      <div class="field"><label id="quickValueLabel">Number of groups</label><select id="quickCount"></select></div>
       <button class="btn primary" id="makeQuick">Randomise groups</button>
       <button class="btn" id="clearQuick">Clear</button>
       <button class="btn" onclick="window.print()">Print / display</button>
@@ -118,10 +124,39 @@ function renderQuickGroups(){
     </div>`).join("");
   document.querySelectorAll(".quick-name").forEach(x=>x.oninput=()=>quickGroups[Number(x.dataset.i)].name=x.value);
 }
+function populateQuickOptions(){
+  const mode=$("groupMode").value;
+  $("quickCount").innerHTML="";
+  $("quickValueLabel").textContent=mode==="count"?"Number of groups":"Groups of";
+  const max=mode==="count"?10:12;
+  const start=2;
+  for(let i=start;i<=max;i++){
+    $("quickCount").insertAdjacentHTML("beforeend",`<option value="${i}" ${i===4&&mode==="count"?"selected":""}>${i}</option>`);
+  }
+  if(mode==="size")$("quickCount").value="3";
+}
+$("groupMode").onchange=populateQuickOptions;
+
 $("makeQuick").onclick=()=>{
-  const picked=shuffle(selectedQuickStudents()),count=Math.max(2,Math.min(Number($("quickCount").value)||2,picked.length||2));
-  quickGroups=Array.from({length:count},(_,i)=>({name:`Group ${i+1}`,students:[]}));
-  picked.forEach((s,i)=>quickGroups[i%count].students.push(s));
+  const picked=shuffle(selectedQuickStudents());
+  if(!picked.length){quickGroups=[];renderQuickGroups();return}
+
+  const mode=$("groupMode").value;
+  const value=Math.max(2,Number($("quickCount").value)||2);
+
+  if(mode==="size"){
+    const count=Math.ceil(picked.length/value);
+    quickGroups=Array.from({length:count},(_,i)=>({name:`Group ${i+1}`,students:[]}));
+    picked.forEach((s,i)=>{
+      const groupIndex=Math.floor(i/value);
+      quickGroups[groupIndex].students.push(s);
+    });
+  }else{
+    const count=Math.max(2,Math.min(value,picked.length));
+    quickGroups=Array.from({length:count},(_,i)=>({name:`Group ${i+1}`,students:[]}));
+    picked.forEach((s,i)=>quickGroups[i%count].students.push(s));
+  }
+
   renderQuickGroups();
 };
 $("clearQuick").onclick=()=>{quickGroups=[];renderQuickGroups()};
@@ -208,7 +243,7 @@ async function load(){
     ]);
     students=sr.students||[];
     jobGroups=jr.groups||[];
-    for(let i=2;i<=10;i++)$("quickCount").insertAdjacentHTML("beforeend",`<option value="${i}" ${i===4?"selected":""}>${i} groups</option>`);
+    populateQuickOptions();
     renderQuickStudentChecks();
     renderQuickGroups();
     renderJobs();
