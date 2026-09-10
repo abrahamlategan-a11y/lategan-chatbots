@@ -50,7 +50,8 @@ button,input{font:inherit}.btn{border:1px solid var(--line);background:#fff;colo
   </div>
   <div class="frost-note" id="frostNote">❄️ Your answer is hidden on the teacher screen until your teacher reveals it.</div>
   <div class="toolbar">
-    <div class="toolset"><button class="tool on" data-tool="pen">Pen</button><button class="tool" data-tool="eraser">Eraser</button></div>
+    <div class="toolset"><button class="tool on" data-tool="pen">Pen</button><button class="tool" data-tool="eraser">Eraser · Large</button></div>
+    <div class="toolset" id="eraserSizes" style="display:none"><button class="tool" data-eraser-width="24">S</button><button class="tool on" data-eraser-width="38">M</button><button class="tool" data-eraser-width="58">L</button></div>
     <div class="toolset" id="colors">
       <button class="color on" data-color="#17352b" style="background:#17352b"></button><button class="color" data-color="#000000" style="background:#000"></button><button class="color" data-color="#245da8" style="background:#245da8"></button><button class="color" data-color="#b73d38" style="background:#b73d38"></button><button class="color" data-color="#754aa3" style="background:#754aa3"></button><button class="color" data-color="#c69824" style="background:#c69824"></button>
     </div>
@@ -74,7 +75,7 @@ function blankBoard(){return {version:1,strokes:[]}}
 function cloneBoard(b){return JSON.parse(JSON.stringify(b||blankBoard()))}
 function fitCanvas(canvas){
   const ctx=canvas.getContext("2d");
-  const r=canvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1);
+  const r=canvas.getBoundingClientRect(),dpr=Math.min(1.5,Math.max(1,window.devicePixelRatio||1));
   const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
   ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -100,46 +101,60 @@ function drawBoardToCanvas(canvas,board){
 }
 function attachDrawingCanvas(canvas,getBoard,onCommit){
   let drawing=false,current=null,tool="pen",color="#17352b",width=4,enabled=true;
-  function point(e){
-    const r=canvas.getBoundingClientRect();
-    return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}
+  let rect=null,queued=[],raf=0;
+
+  function getRect(){rect=canvas.getBoundingClientRect();return rect}
+  function pointFrom(ev,r){
+    return{
+      x:Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)),
+      y:Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height))
+    };
   }
-  function drawSegment(a,b,stroke,r){
-    const ctx=canvas.getContext("2d");
+  function paintQueued(){
+    raf=0;
+    if(!queued.length)return;
+    const ctx=canvas.getContext("2d"),r=rect||canvas.getBoundingClientRect();
     ctx.save();
     ctx.lineCap="round";
     ctx.lineJoin="round";
-    ctx.globalCompositeOperation=stroke.tool==="eraser"?"destination-out":"source-over";
-    ctx.strokeStyle=stroke.color||"#17352b";
-    ctx.lineWidth=Number(stroke.width)||4;
-    ctx.beginPath();
-    ctx.moveTo(a.x*r.width,a.y*r.height);
-    ctx.lineTo(b.x*r.width,b.y*r.height);
-    ctx.stroke();
+    for(const seg of queued){
+      ctx.globalCompositeOperation=seg.stroke.tool==="eraser"?"destination-out":"source-over";
+      ctx.strokeStyle=seg.stroke.color||"#17352b";
+      ctx.lineWidth=Number(seg.stroke.width)||4;
+      ctx.beginPath();
+      ctx.moveTo(seg.a.x*r.width,seg.a.y*r.height);
+      ctx.lineTo(seg.b.x*r.width,seg.b.y*r.height);
+      ctx.stroke();
+    }
     ctx.restore();
+    queued=[];
+  }
+  function queueSegment(a,b,stroke){
+    queued.push({a,b,stroke});
+    if(!raf)raf=requestAnimationFrame(paintQueued);
   }
   function start(e){
     if(!enabled)return;
     e.preventDefault();
     drawing=true;
+    rect=getRect();
     canvas.setPointerCapture?.(e.pointerId);
-    const r=canvas.getBoundingClientRect();
-    const p={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
-    current={tool,color,width,points:[p]};
+    const p=pointFrom(e,rect);
+    const strokeWidth=tool==="eraser"?Math.max(width,34):width;
+    current={tool,color,width:strokeWidth,points:[p]};
     getBoard().strokes.push(current);
-    drawSegment(p,{x:p.x+.00001,y:p.y+.00001},current,r);
+    queueSegment(p,{x:p.x+.00001,y:p.y+.00001},current);
   }
   function move(e){
     if(!drawing||!enabled)return;
     e.preventDefault();
-    const r=canvas.getBoundingClientRect();
+    const r=rect||getRect();
     const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];
     for(const ev of evs){
-      const p={x:Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height))};
-      const last=current.points[current.points.length-1];
-      if(!last||Math.hypot(p.x-last.x,p.y-last.y)>.00018){
+      const p=pointFrom(ev,r),last=current.points[current.points.length-1];
+      if(!last||Math.hypot(p.x-last.x,p.y-last.y)>.00022){
         current.points.push(p);
-        drawSegment(last||p,p,current,r);
+        queueSegment(last||p,p,current);
       }
     }
   }
@@ -147,7 +162,9 @@ function attachDrawingCanvas(canvas,getBoard,onCommit){
     if(!drawing)return;
     e.preventDefault();
     drawing=false;
+    rect=null;
     current=null;
+    if(raf){cancelAnimationFrame(raf);paintQueued()}
     onCommit?.();
   }
   canvas.addEventListener("pointerdown",start,{passive:false});
@@ -155,6 +172,7 @@ function attachDrawingCanvas(canvas,getBoard,onCommit){
   canvas.addEventListener("pointerup",end,{passive:false});
   canvas.addEventListener("pointercancel",end,{passive:false});
   canvas.addEventListener("contextmenu",e=>e.preventDefault());
+
   return{
     setTool(v){tool=v},
     setColor(v){color=v},
@@ -246,9 +264,38 @@ document.addEventListener("visibilitychange",()=>{
   }
 });
 
-document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tool]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setTool(b.dataset.tool)});
-document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-color]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setColor(b.dataset.color);engine.setTool("pen");document.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("on",x.dataset.tool==="pen"))});
-document.querySelectorAll("[data-width]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-width]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setWidth(b.dataset.width)});
+let currentPenWidth=4,currentEraserWidth=38;
+document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-tool]").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  const isEraser=b.dataset.tool==="eraser";
+  $("eraserSizes").style.display=isEraser?"flex":"none";
+  engine.setTool(b.dataset.tool);
+  engine.setWidth(isEraser?currentEraserWidth:currentPenWidth);
+});
+document.querySelectorAll("[data-eraser-width]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-eraser-width]").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  currentEraserWidth=Number(b.dataset.eraserWidth)||38;
+  engine.setTool("eraser");
+  engine.setWidth(currentEraserWidth);
+});
+document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-color]").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  engine.setColor(b.dataset.color);
+  engine.setTool("pen");
+  engine.setWidth(currentPenWidth);
+  $("eraserSizes").style.display="none";
+  document.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("on",x.dataset.tool==="pen"));
+});
+document.querySelectorAll("[data-width]").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("[data-width]").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  currentPenWidth=Number(b.dataset.width)||4;
+  const erasing=document.querySelector("[data-tool='eraser']")?.classList.contains("on");
+  if(!erasing)engine.setWidth(currentPenWidth);
+});
 $("undoBtn").onclick=()=>{board.strokes.pop();engine.redraw();commit()};
 $("clearBtn").onclick=()=>{if(confirm("Clear this whiteboard?")){board=blankBoard();engine.redraw();commit()}};
 
