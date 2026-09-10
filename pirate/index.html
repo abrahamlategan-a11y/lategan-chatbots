@@ -102,6 +102,56 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 .difficulty-help{font-size:11px;color:var(--muted);margin-top:5px}
 
 @media(max-width:900px){.grid2,.lobby{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+
+/* v9 classroom-flow refinements */
+.locate-banner{
+  margin:10px 0 4px;padding:12px 14px;border-radius:14px;background:#fff4cf;
+  border:1px solid #ead28a;text-align:center;font-weight:900;color:#5d4913
+}
+.locate-banner .coord{font-size:34px;letter-spacing:.08em;display:block;color:var(--deep);margin-top:3px}
+.coord-error{margin-top:8px;padding:8px 10px;border-radius:10px;background:#fde9e7;color:#9e3f39;font-size:12px;font-weight:900}
+.math-timer{height:9px;border-radius:999px;background:#e9eeeb;overflow:hidden;margin:10px 0 4px}
+.math-timer > div{height:100%;background:#c99b2c;width:100%;transition:width .15s linear}
+.math-time-text{font-size:11px;font-weight:900;color:var(--muted);text-align:right}
+.round-ready{
+  position:fixed;inset:0;background:rgba(13,42,32,.66);z-index:95;display:none;place-items:center;padding:18px
+}
+.round-ready.show{display:grid}
+.round-ready-card{
+  width:min(560px,92vw);background:#fff;border-radius:24px;padding:27px;text-align:center;
+  box-shadow:0 28px 80px rgba(0,0,0,.28);border:4px solid #e1bd58
+}
+.round-ready-card .big{font-size:52px;line-height:1}.round-ready-card h2{font-size:28px;margin:10px 0 5px}
+.round-ready-card p{color:var(--muted);font-size:13px;margin:0 0 17px}
+.final-overlay{
+  position:fixed;inset:0;background:rgba(10,34,27,.78);z-index:110;display:none;place-items:center;padding:18px
+}
+.final-overlay.show{display:grid}
+.final-card{width:min(680px,94vw);max-height:90vh;overflow:auto;background:#fff;border-radius:26px;padding:26px;box-shadow:0 30px 90px rgba(0,0,0,.35);position:relative}
+.final-card h1{margin:0;text-align:center;font-size:34px}.final-sub{text-align:center;color:var(--muted);font-size:12px;margin:5px 0 18px}
+.final-x{position:absolute;right:14px;top:13px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:22px;font-weight:900;cursor:pointer}
+.final-row{display:flex;justify-content:space-between;gap:10px;padding:11px 4px;border-top:1px solid var(--line);font-weight:900}
+.final-row:first-child{border-top:0}.final-row.top1{font-size:22px}.final-row.top2,.final-row.top3{font-size:17px}
+.sound-on{background:#eef6ef!important;border-color:#bdd8c5!important}
+.paused-box{background:#e8eef5;border:1px solid #cbd7e4;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:850;color:#34536d;margin:8px 0}
+.player-top-actions{display:flex;gap:6px;align-items:center}
+.cell.locateable{cursor:pointer;outline:2px dashed rgba(23,97,71,.20);outline-offset:-3px}
+.cell.locateable:hover{outline-color:#176147;background:#eef6ef}
+:fullscreen body{overflow:hidden}
+:fullscreen .shell{height:100vh;overflow:hidden;padding:8px}
+:fullscreen .hero{padding:9px 14px;margin-bottom:7px}
+:fullscreen .hero h1{font-size:23px}
+:fullscreen .grid2{height:calc(100vh - 78px);grid-template-columns:minmax(0,1.55fr) minmax(240px,.45fr);gap:8px}
+:fullscreen #boardPanel{height:100%;display:flex!important;flex-direction:column}
+:fullscreen #boardPanel .boardwrap{flex:1;min-height:0;overflow:hidden;padding:6px}
+:fullscreen #teacherBoard{
+  width:min(100%,calc(100vh - 145px));height:auto;aspect-ratio:1/1;max-height:100%;
+  min-width:0!important;margin:auto;gap:2px
+}
+:fullscreen #teacherBoard .cell,:fullscreen #teacherBoard .hdr{min-width:0;min-height:0;font-size:clamp(7px,1vw,12px)}
+:fullscreen .panel .pb{padding:8px}
+:fullscreen #teacherPlayers .playerrow{padding:5px 0}
+
 </style>
 </head>
 <body>
@@ -112,7 +162,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   <div id="joinView" style="display:none">
     <div class="joincard">
       <h2>Join Pirate Game</h2>
-      <p>Enter the game code from your teacher, then your first name.</p>
+      <p>Enter the game code from your teacher, then your first name. If you get disconnected or leave, use the same code and exactly the same name to rejoin your pirate.</p>
       <div class="field"><label>Game code</label><input id="joinCode" inputmode="numeric" maxlength="6" placeholder="482731"></div>
       <div class="field"><label>First name</label><input id="joinName" maxlength="30" placeholder="Mia"></div>
       <button class="btn primary" id="joinBtn" style="width:100%;margin-top:15px;padding:12px">Join game</button>
@@ -169,7 +219,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
           </div>
 
           <div class="panel" id="boardPanel" style="display:none">
-            <div class="ph"><h2>Captain's board</h2><div class="controls"><button class="btn" id="teacherFull">Full screen</button><button class="btn primary" id="nextGame">Reveal next tile</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
+            <div class="ph"><h2>Captain's board</h2><div class="controls"><button class="btn" id="teacherFull">Full screen</button><button class="btn sound-on" id="soundToggle">🔊 Sound</button><button class="btn" id="saveGame">Save & Exit</button><button class="btn primary" id="resumeGame" style="display:none">Resume game</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
             <div class="boardwrap"><div class="board" id="teacherBoard"></div></div>
           </div>
         </div>
@@ -184,7 +234,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   <div id="playerView" style="display:none">
     <div class="grid2">
       <div class="panel">
-        <div class="ph"><h2 id="playerTitle">Your treasure map</h2><div class="controls" id="setupControls"><button class="btn" id="fillRandom">🎲 Fill randomly</button><button class="btn primary" id="lockBoard">🔒 Lock board</button></div></div>
+        <div class="ph"><h2 id="playerTitle">Your treasure map</h2><div class="player-top-actions"><div class="controls" id="setupControls"><button class="btn" id="fillRandom">🎲 Shuffle board</button><button class="btn primary" id="lockBoard">🔒 Lock board</button></div><button class="btn danger" id="leaveGame">Leave game</button></div></div>
         <div class="pb">
           <div class="stats">
             <div class="stat"><div class="lab">Cash</div><div class="val" id="cash">$0</div></div>
@@ -206,13 +256,32 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 </div>
 <div class="teacher-event" id="teacherEvent"><div class="teacher-event-card"><div class="teacher-event-icon" id="teacherEventIcon">🏴‍☠️</div><div class="teacher-event-text" id="teacherEventText"></div></div></div><div class="modalback" id="eventModal"><div class="eventmodal" id="eventModalCard"></div></div>
 
+
+<div class="round-ready" id="roundReady">
+  <div class="round-ready-card">
+    <div class="big">✅</div>
+    <h2>Everyone is ready</h2>
+    <p id="roundReadyText">The round is complete.</p>
+    <button class="btn primary" id="continueRound" style="width:100%;padding:13px">Continue</button>
+  </div>
+</div>
+
+<div class="final-overlay" id="finalOverlay">
+  <div class="final-card">
+    <button class="final-x" id="closeFinal">×</button>
+    <h1>🏆 Final Leaderboard</h1>
+    <div class="final-sub">The game stays here until you close it.</div>
+    <div id="finalLeaderboard"></div>
+  </div>
+</div>
+
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const params=new URLSearchParams(location.search);
 const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false;
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="";
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -237,12 +306,12 @@ $("joinBtn").onclick=async()=>{
   }catch(e){$("joinError").textContent=e.message}
 };
 
-function makeBoard(el,revealed,current,board,setup,chooseMode=false){
+function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=false){
   const size=Number(state?.game?.board_size||7),cols="ABCDEFGHIJ".slice(0,size),cellMin=size>=9?40:size>=7?48:58;
   el.classList.toggle("teacher-board",teacherMode);
   el.classList.toggle("player-board",!teacherMode);
-  el.style.gridTemplateColumns=`34px repeat(${size},minmax(${cellMin}px,1fr))`;
-  el.style.minWidth=`${34+size*(cellMin+6)}px`;
+  el.style.gridTemplateColumns=`34px repeat(${size},minmax(${teacherMode?0:cellMin}px,1fr))`;
+  el.style.minWidth=teacherMode?"0":`${34+size*(cellMin+6)}px`;
   el.innerHTML='<div></div>'+[...cols].map(x=>`<div class="hdr">${x}</div>`).join("");
   for(let r=1;r<=size;r++){
     el.insertAdjacentHTML("beforeend",`<div class="hdr">${r}</div>`);
@@ -260,7 +329,10 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false){
         d.onclick=async()=>{if(!dragInfo){if(tile){dragInfo={from_type:"slot",from_index:i};d.classList.add("selected")}return}const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
       }else if(board){
         d.innerHTML=`<span style="font-size:${size>=9?9:11}px;text-align:center">${tile?.label||"?"}</span>`;
-        if(chooseMode && !rev && !choosingNow){
+        if(locateMode){
+          d.classList.add("locateable");
+          d.onclick=()=>clickRoundCoord(coord,d);
+        }else if(chooseMode && !rev && !choosingNow){
           d.classList.add("chooseable");
           d.onclick=()=>chooseCoord(coord,d);
         }
@@ -284,7 +356,6 @@ function eventIcon(text){
   const t=String(text||"").toLowerCase();
   if(t.includes("rob"))return "🏴‍☠️";
   if(t.includes("sink")||t.includes("sank"))return "🌊";
-  if(t.includes("raid"))return "☠️";
   if(t.includes("mirror"))return "🪞";
   if(t.includes("shield"))return "🛡️";
   if(t.includes("swap"))return "🔁";
@@ -304,12 +375,43 @@ function queueTeacherEvents(feedItems){
     playNextTeacherEvent();
   }
 }
+
+function playSound(kind="event"){
+  if(!soundEnabled||!teacherMode)return;
+  try{
+    const AudioCtx=window.AudioContext||window.webkitAudioContext;
+    if(!AudioCtx)return;
+    const ctx=playSound.ctx||(playSound.ctx=new AudioCtx());
+    const now=ctx.currentTime;
+    const notes=kind==="winner"?[523,659,784,1047]:
+      kind==="bad"?[180,140]:
+      kind==="bank"?[440,660,880]:
+      kind==="special"?[392,523,659]:
+      [330,440];
+    notes.forEach((freq,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type="triangle";o.frequency.value=freq;
+      g.gain.setValueAtTime(.0001,now+i*.09);
+      g.gain.exponentialRampToValueAtTime(.09,now+i*.09+.015);
+      g.gain.exponentialRampToValueAtTime(.0001,now+i*.09+.12);
+      o.connect(g);g.connect(ctx.destination);o.start(now+i*.09);o.stop(now+i*.09+.14);
+    });
+  }catch(e){}
+}
+function soundKind(text){
+  const t=String(text||"").toLowerCase();
+  if(t.includes("bomb")||t.includes("sink")||t.includes("rob"))return "bad";
+  if(t.includes("bank"))return "bank";
+  if(t.includes("shield")||t.includes("mirror")||t.includes("present")||t.includes("swap"))return "special";
+  return "event";
+}
 function playNextTeacherEvent(){
   if(eventShowing||!eventQueue.length)return;
   eventShowing=true;
   const ev=eventQueue.shift();
   $("teacherEventIcon").textContent=eventIcon(ev.text);
   $("teacherEventText").textContent=ev.text;
+  playSound(soundKind(ev.text));
   $("teacherEvent").classList.add("show");
   setTimeout(()=>{
     $("teacherEvent").classList.remove("show");
@@ -324,16 +426,24 @@ async function toggleTeacherFullscreen(){
   }catch(e){console.error(e)}
 }
 function renderTeacher(){
-  if(!state?.game){$("teacherNoGame").style.display="block";$("teacherGame").style.display="none";updateGameBadge();return}
+  if(!state?.game){
+    $("teacherNoGame").style.display="block";$("teacherGame").style.display="none";
+    $("roundReady").classList.remove("show");$("finalOverlay").classList.remove("show");
+    updateGameBadge();return
+  }
   $("teacherNoGame").style.display="none";$("teacherGame").style.display="block";
   const g=state.game,players=state.players||[],totalCells=g.board_size*g.board_size;
   updateGameBadge();
+
   $("lobbyPanel").style.display=g.status==="lobby"?"block":"none";
   $("boardPanel").style.display=g.status==="lobby"?"none":"block";
   $("bigCode").textContent=g.join_code.slice(0,3)+" "+g.join_code.slice(3);
 
   const joinUrl=location.origin+location.pathname+"?code="+g.join_code;
-  if(qrMadeFor!==joinUrl&&typeof QRCode!=="undefined"){qrMadeFor=joinUrl;$("joinQR").innerHTML="";new QRCode($("joinQR"),{text:joinUrl,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})}
+  if(qrMadeFor!==joinUrl&&typeof QRCode!=="undefined"){
+    qrMadeFor=joinUrl;$("joinQR").innerHTML="";
+    new QRCode($("joinQR"),{text:joinUrl,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})
+  }
 
   $("lobbyPlayers").innerHTML=players.length
     ?players.map(p=>`<span class="chip">${p.name} · ${p.locked?"Ready ✓":`${p.placed}/${totalCells}`}</span>`).join("")
@@ -341,19 +451,22 @@ function renderTeacher(){
 
   const done=players.filter(p=>!p.busy).length,total=players.length,chooser=players.find(p=>p.id===g.chooser_player_id);
   let headline="Lobby";
-  if(g.status==="running")headline=`${done}/${total} complete · Round ${g.round_number} · ${g.current_coord}`;
-  if(g.status==="ready")headline=`${done}/${total} complete · Ready to reveal`;
+  if(g.status==="running")headline=`${done}/${total} complete · Round ${g.round_number} · Find ${g.current_coord}`;
+  if(g.status==="ready")headline=`${done}/${total} complete · Everyone ready`;
   if(g.status==="ready_chosen")headline=`${done}/${total} complete · ${g.current_coord} chosen`;
   if(g.status==="choosing")headline=`🎯 ${chooser?.name||"A pirate"} is choosing the next tile`;
+  if(g.status==="paused")headline="💾 Game saved · paused";
   if(g.status==="finished")headline="🏆 Game finished";
   $("roundStatus").textContent=headline;
 
   $("teacherPlayers").innerHTML=players.length?players.map(p=>{
-    const status=g.status==="lobby"?(p.locked?"ready ✓":`${p.placed}/${totalCells} placed`):(p.busy?`⏳ ${p.waiting_on}`:"✅ complete");
+    const status=g.status==="lobby"?(p.locked?"ready ✓":`${p.placed}/${totalCells} placed`):
+      g.status==="paused"?"paused":
+      (p.busy?`⏳ ${p.waiting_on}`:"✅ complete");
     return `<div class="playerrow"><div><strong>${p.name}</strong><div class="playerstatus" style="text-align:left">${status}</div></div>
       <div class="playerbtns">
-        ${g.status!=="lobby"&&g.status!=="finished"?`<button class="mini skip-player" data-id="${p.id}" data-name="${p.name}">Skip round</button>`:""}
-        <button class="mini danger remove-player" data-id="${p.id}" data-name="${p.name}">Remove</button>
+        ${!["lobby","finished","paused"].includes(g.status)?`<button class="mini skip-player" data-id="${p.id}" data-name="${p.name}">Skip round</button>`:""}
+        ${g.status!=="finished"?`<button class="mini danger remove-player" data-id="${p.id}" data-name="${p.name}">Remove</button>`:""}
       </div></div>`;
   }).join(""):'<div class="wait">No players yet.</div>';
 
@@ -361,47 +474,81 @@ function renderTeacher(){
   document.querySelectorAll(".remove-player").forEach(b=>b.onclick=()=>removePlayer(Number(b.dataset.id),b.dataset.name));
 
   if(g.status!=="lobby")makeBoard($("teacherBoard"),g.revealed||[],g.status==="running"?g.current_coord:null,null,false);
-  feed($("teacherFeed"),g.public_feed);
-  queueTeacherEvents(g.public_feed);
+  feed($("teacherFeed"),g.public_feed);queueTeacherEvents(g.public_feed);
 
-  const canReveal=["ready","ready_chosen"].includes(g.status);
-  $("nextGame").disabled=!canReveal;
-  $("nextGame").textContent=g.status==="ready_chosen"?`Reveal ${g.current_coord}`:"Reveal next tile";
   $("forceGame").disabled=g.status!=="running"||players.every(p=>!p.busy);
+  $("saveGame").style.display=["running","ready","ready_chosen","choosing"].includes(g.status)?"":"none";
+  $("resumeGame").style.display=g.status==="paused"?"":"none";
+
+  // Teacher no longer has to hunt for a Reveal button.
+  const ready=["ready","ready_chosen"].includes(g.status);
+  $("roundReady").classList.toggle("show",ready);
+  if(ready){
+    $("roundReadyText").textContent=g.status==="ready_chosen"
+      ?`Everyone is done. The next chosen coordinate is ${g.current_coord}.`
+      :"Everyone is done. Continue when you're ready for the next coordinate.";
+  }else{
+    $("roundReady").classList.remove("show");
+  }
 
   const finished=g.status==="finished";
-  $("teacherFinish").classList.toggle("show",finished);
+  $("teacherFinish").classList.remove("show");
+  $("finalOverlay").classList.toggle("show",finished);
   if(finished){
     const rank=state.ranking||[];
-    $("teacherPodium").innerHTML=rank.map((x,i)=>`<div class="pod big"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.name}</span><span>${money(x.total)}</span></div>`).join("");
+    $("finalLeaderboard").innerHTML=rank.map((x,i)=>`<div class="final-row ${i===0?"top1":i===1?"top2":i===2?"top3":""}"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.name}</span><span>${money(x.total)}</span></div>`).join("");
     if(!teacherFinishedShown&&rank.length){
-      teacherFinishedShown=true;
-      eventQueue.push({text:`${rank[0].name} wins The Pirate Game with ${money(rank[0].total)}!`,at:new Date().toISOString()});
-      playNextTeacherEvent();
+      teacherFinishedShown=true;playSound("winner");
     }
   }
 }
 function renderPlayer(){
-  if(!state?.game)return;const g=state.game,p=state.player;updateGameBadge();$("playerTitle").textContent=p.name+"'s treasure map";$("cash").textContent=money(p.cash);$("bank").textContent=money(p.bank);$("shield").textContent=p.shields;$("mirror").textContent=p.mirrors;
-  const setup=g.status==="lobby"&&!p.board_locked;$("setupControls").style.display=setup?"flex":"none";$("trayWrap").style.display=setup?"block":"none";$("studentNotice").style.display=g.status==="lobby"?"block":"none";
-  if(g.status==="lobby")$("studentNotice").textContent=p.board_locked?"Board locked. You're ready — waiting for the teacher.":"Arrange your treasure map, or use Fill randomly. When every square is filled, lock your board.";
+  if(!state?.game)return;
+  const g=state.game,p=state.player;
+  updateGameBadge();
+  $("playerTitle").textContent=p.name+"'s treasure map";
+  $("cash").textContent=money(p.cash);$("bank").textContent=money(p.bank);
+  $("shield").textContent=p.shields;$("mirror").textContent=p.mirrors;
+
+  const setup=g.status==="lobby"&&!p.board_locked;
+  $("setupControls").style.display=setup?"flex":"none";
+  $("trayWrap").style.display=setup?"block":"none";
+  $("studentNotice").style.display=["lobby","paused"].includes(g.status)?"block":"none";
+
+  if(g.status==="lobby"){
+    $("studentNotice").textContent=p.board_locked
+      ?"Board locked. You're ready — waiting for the teacher."
+      :"Your treasure map is filled automatically. Shuffle it as much as you like, or move individual tiles. When you're happy, lock your board.";
+  }else if(g.status==="paused"){
+    $("studentNotice").innerHTML="💾 This game has been saved and paused. You can close this page and rejoin later using the <strong>same game code and same name</strong>.";
+  }
+
   $("lockBoard").disabled=(p.placed_count||0)!==(g.board_size*g.board_size);
+
   const studentRevealed=[...(g.revealed||[])];
-  if(g.status==="running"&&!p.task&&g.current_coord&&!studentRevealed.includes(g.current_coord))studentRevealed.push(g.current_coord);
+  const locateMode=g.status==="running"&&p.task?.type==="locate";
+  if(g.status==="running"&&!locateMode&&g.current_coord&&!studentRevealed.includes(g.current_coord))studentRevealed.push(g.current_coord);
   const chooseMode=g.status==="choosing"&&p.can_choose_coord;
   $("chooseBanner").classList.toggle("show",chooseMode);
+
   makeBoard(
     $("playerBoard"),
     studentRevealed,
-    g.status==="running"&&p.task?g.current_coord:null,
+    null, // never highlight the answer square for students
     p.board,
     setup,
-    chooseMode
+    chooseMode,
+    locateMode
   );
+
   if(setup)renderTray();
   feed($("studentFeed"),g.public_feed);
   renderAction();
-  if(g.status==="finished"){$("finishPanel").style.display="block";$("podium").innerHTML=(state.ranking||[]).slice(0,10).map((x,i)=>`<div class="pod"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.display_name}</span><span>${money(x.total)}</span></div>`).join("")}else $("finishPanel").style.display="none";
+
+  if(g.status==="finished"){
+    $("finishPanel").style.display="block";
+    $("podium").innerHTML=(state.ranking||[]).slice(0,10).map((x,i)=>`<div class="pod"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.display_name}</span><span>${money(x.total)}</span></div>`).join("")
+  }else $("finishPanel").style.display="none";
 }
 function showModal(content,animateFromGrid=true){
   const back=$("eventModal"),card=$("eventModalCard");
@@ -446,17 +593,84 @@ function showModal(content,animateFromGrid=true){
   });
 }
 function hideModal(){$("eventModal").classList.remove("show")}
-function renderAction(){const a=$("actionArea"),g=state.game,p=state.player,t=p.task;a.innerHTML="";
-  if(lastFeedback){showModal(`<div class="eyebrow">Maths result</div><h2>${lastFeedback.correct?"✅ Correct!":"🏴‍☠️ Pirate Tax!"}</h2><p>${lastFeedback.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="dismissFeedback()">Continue</button>`,false);return}
-  if(g.status==="choosing"&&p.can_choose_coord){
+function clearMathTimer(){
+  if(mathTimerInt){clearInterval(mathTimerInt);mathTimerInt=null}
+}
+function startMathTimer(task){
+  clearMathTimer();
+  const deadline=Date.parse(task.deadline||"");
+  if(!Number.isFinite(deadline))return;
+  const tick=()=>{
+    const remain=Math.max(0,deadline-Date.now());
+    const total=Math.max(1,(state?.game?.math_seconds||20)*1000);
+    const pct=Math.max(0,Math.min(100,remain/total*100));
+    const bar=$("mathTimerBar"),txt=$("mathTimeText");
+    if(bar)bar.style.width=pct+"%";
+    if(txt)txt.textContent=Math.ceil(remain/1000)+"s";
+    if(remain<=0){
+      clearMathTimer();
+      mathTimeout();
+    }
+  };
+  tick();mathTimerInt=setInterval(tick,150);
+}
+function renderAction(){
+  const a=$("actionArea"),g=state.game,p=state.player,t=p.task;
+  a.innerHTML="";
+
+  if(g.status==="paused"){
+    clearMathTimer();hideModal();
+    a.innerHTML='<div class="paused-box">Game saved. You can safely close this page and come back later using the same code and your same name.</div>';
+    return;
+  }
+
+  if(lastFeedback&&lastFeedback.kind==="coord"&&!lastFeedback.correct){
     hideModal();
-    a.innerHTML='<div class="actionbox"><h3>🎯 Choose the next square</h3><p>Your grid is still active. Look at what remains and tap the unused square you want the teacher to reveal next.</p></div>';
+    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${g.current_coord}</span><div class="coord-error">${lastFeedback.message}</div><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the matching square on your map. Every wrong tap costs Pirate Tax.</div></div>`;
+    return;
+  }
+
+  if(lastFeedback){
+    clearMathTimer();
+    showModal(`<div class="eyebrow">Result</div><h2>${lastFeedback.correct?"✅ Correct!":"🏴‍☠️ Pirate Tax!"}</h2><p>${lastFeedback.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="dismissFeedback()">Continue</button>`,false);
     return
   }
-  if(!t){hideModal();if(g.status==="running")a.innerHTML='<div class="wait">✅ You are finished for this round. Waiting for the class…</div>';else if(g.status==="choosing")a.innerHTML='<div class="wait">Waiting for the chooser…</div>';else if(["ready","ready_chosen"].includes(g.status))a.innerHTML='<div class="wait">Round complete. Waiting for your teacher to reveal the next tile…</div>';return}
-  if(t.type==="math"){const title=t.kind==="raid"?"☠️ DEFEND YOUR TREASURE!":t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";const desc=t.kind==="raid"?"Get the subtraction correct to defend your treasure.":"Do the maths yourself. The game will check it and update your score.";showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>${desc}</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="answerrow"><input id="ans" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false" autofocus><button class="btn primary" onclick="answer()">Check</button></div>`);return}
+
+  if(g.status==="choosing"&&p.can_choose_coord){
+    clearMathTimer();hideModal();
+    a.innerHTML='<div class="actionbox"><h3>🎯 Choose the next square</h3><p>Tap any unused square on your grid. Your choice becomes the next coordinate for the whole class.</p></div>';
+    return
+  }
+
+  if(!t){
+    clearMathTimer();hideModal();
+    if(g.status==="running")a.innerHTML='<div class="wait">✅ You are finished for this round. Waiting for the class…</div>';
+    else if(g.status==="choosing")a.innerHTML='<div class="wait">Waiting for the chooser…</div>';
+    else if(["ready","ready_chosen"].includes(g.status))a.innerHTML='<div class="wait">Round complete. Waiting for your teacher to continue…</div>';
+    return
+  }
+
+  if(t.type==="locate"){
+    clearMathTimer();hideModal();
+    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${t.coord}</span><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the matching square on your map. Every wrong tap costs Pirate Tax.</div></div>`;
+    return
+  }
+
+  if(t.type==="math"){
+    const title=t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";
+    showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>Work it out before the timer runs out.</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="math-timer"><div id="mathTimerBar"></div></div><div class="math-time-text" id="mathTimeText"></div><div class="answerrow"><input id="ans" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false"><button class="btn primary" onclick="answer()">Check</button></div>`);
+    const key=(t.deadline||"")+"|"+t.prompt;
+    if(lastMathKey!==key){
+      lastMathKey=key;
+      setTimeout(()=>{const inp=$("ans");if(inp&&document.activeElement!==inp)inp.focus()},120);
+    }
+    startMathTimer(t);
+    return
+  }
+
+  clearMathTimer();
   if(t.type==="target"){
-    const info={rob:["🏴‍☠️ YOU FOUND ROB!","Choose a pirate to steal from."],sink:["🌊 SINK A PIRATE!","Choose whose unbanked treasure you want to sink."],present:["🎁 PRESENT!","Choose a pirate to receive 1,000 points."],swap:["🔁 SWAP SCORES!","Choose a pirate to swap unbanked scores with."]}[t.action];
+    const info={rob:["🏴‍☠️ YOU FOUND ROB!","Choose a pirate to steal from."],sink:["🌊 SINK A PIRATE!","Choose whose unbanked treasure you want to sink."],present:["🎁 PRESENT!","Choose a pirate to receive a present."],swap:["🔁 SWAP SCORES!","Choose a pirate to swap unbanked scores with."]}[t.action];
     const opts=p.target_options||[];
     if(!opts.length){
       showModal(`<div class="eyebrow">Public action</div><h2>${info[0]}</h2><p>There are no other pirates available, so this action is skipped.</p><button class="btn primary" style="width:100%;padding:13px" onclick="skipImpossibleTarget()">Continue</button>`);
@@ -465,25 +679,27 @@ function renderAction(){const a=$("actionArea"),g=state.game,p=state.player,t=p.
     }
     return
   }
-  if(t.type==="defend"){showModal(`<div class="eyebrow">Under attack</div><h2>⚔️ ${t.attacker_name} is trying to ${t.action==="rob"?"ROB":"SINK"} you!</h2><p>Use a Shield to block it, a Mirror to bounce it back, or take the hit. A reflected attack can be mirrored again.</p><div class="controls"><button class="btn" ${p.shields<1?"disabled":""} onclick="defend('shield')">🛡 Shield (${p.shields})</button><button class="btn" ${p.mirrors<1?"disabled":""} onclick="defend('mirror')">🪞 Mirror (${p.mirrors})</button><button class="btn danger" onclick="defend('take')">Take the hit</button></div>`);return}
-  if(t.type==="ack"){showModal(`<div class="eyebrow">${g.current_coord||"Special tile"}</div><h2>${t.title}</h2><p>${t.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="ackEvent()">Continue</button>`);return}
+  if(t.type==="defend"){
+    showModal(`<div class="eyebrow">Under attack</div><h2>⚔️ ${t.attacker_name} is trying to ${t.action==="rob"?"ROB":"SINK"} you!</h2><p>Use a Shield to block it, a Mirror to bounce it back, or take the hit.</p><div class="controls"><button class="btn" ${p.shields<1?"disabled":""} onclick="defend('shield')">🛡 Shield (${p.shields})</button><button class="btn" ${p.mirrors<1?"disabled":""} onclick="defend('mirror')">🪞 Mirror (${p.mirrors})</button><button class="btn danger" onclick="defend('take')">Take the hit</button></div>`);
+    return
+  }
+  if(t.type==="ack"){
+    showModal(`<div class="eyebrow">${g.current_coord||"Special tile"}</div><h2>${t.title}</h2><p>${t.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="ackEvent()">Continue</button>`);
+    return
+  }
 }
 
 async function load(){
   try{
-    // On iPhone/iPad, don't rebuild the maths modal while the student is typing.
-    // Re-rendering the input every 1.2 seconds causes Safari to drop focus/keyboard.
-    if(!teacherMode && document.activeElement && document.activeElement.id==="ans"){
-      return;
-    }
-
     if(teacherMode){
       state=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
       renderTeacher();
     }
     else if(token){
-      state=await post({action:"pirate_player_state",join_token:token});
-      renderPlayer();
+      const fresh=await post({action:"pirate_player_state",join_token:token});
+      const typing=document.activeElement&&document.activeElement.id==="ans";
+      state=fresh;
+      if(!typing)renderPlayer();
     }
   }catch(e){console.error(e)}
 }
@@ -507,14 +723,66 @@ async function removePlayer(id,name){
   renderTeacher();
 }
 
-$("nextGame").onclick=async()=>{state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"next"});renderTeacher()};
+$("continueRound").onclick=async()=>{
+  $("roundReady").classList.remove("show");
+  state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"next"});
+  playSound("event");renderTeacher()
+};
+$("saveGame").onclick=async()=>{
+  state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"pause"});
+  renderTeacher()
+};
+$("resumeGame").onclick=async()=>{
+  state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"resume"});
+  renderTeacher()
+};
+$("soundToggle").onclick=()=>{
+  soundEnabled=!soundEnabled;
+  $("soundToggle").textContent=soundEnabled?"🔊 Sound":"🔇 Muted";
+  $("soundToggle").classList.toggle("sound-on",soundEnabled);
+  if(soundEnabled)playSound("event");
+};
+$("closeFinal").onclick=async()=>{
+  if(!state?.game)return;
+  if(!confirm("Close the leaderboard and finish this game for everyone?"))return;
+  await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"delete"});
+  $("finalOverlay").classList.remove("show");
+  state={game:null};teacherFinishedShown=false;renderTeacher();
+};
 $("forceGame").onclick=async()=>{if(confirm("Force unfinished actions to resolve and finish this round?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"force"});renderTeacher()}};
-$("endGame").onclick=async()=>{if(confirm("End game now and show final standings?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"end"});renderTeacher()}};
+$("endGame").onclick=async()=>{if(confirm("End game now and show the final leaderboard?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"end"});renderTeacher()}};
 $("fillRandom").onclick=async()=>{state=await post({action:"pirate_fill_random",join_token:token});renderPlayer()};
 $("lockBoard").onclick=async()=>{state=await post({action:"pirate_lock_board",join_token:token});renderPlayer()};
 
-async function answer(){state=await post({action:"pirate_math_answer",join_token:token,answer:$("ans").value});lastFeedback=state.feedback||null;renderPlayer()}
-function dismissFeedback(){lastFeedback=null;hideModal();renderPlayer()}
+async function answer(){
+  const inp=$("ans"),value=inp?inp.value:"";
+  clearMathTimer();
+  state=await post({action:"pirate_math_answer",join_token:token,answer:value});
+  lastFeedback=state.feedback||null;lastMathKey="";renderPlayer()
+}
+async function mathTimeout(){
+  if(!token||state?.player?.task?.type!=="math")return;
+  state=await post({action:"pirate_math_timeout",join_token:token});
+  lastFeedback=state.feedback||null;lastMathKey="";renderPlayer();
+}
+async function clickRoundCoord(coord,cell){
+  if(cell)cell.classList.add("choice-pending");
+  try{
+    state=await post({action:"pirate_click_coord",join_token:token,coord});
+    lastFeedback=state.feedback||null;
+    renderPlayer();
+    if(lastFeedback?.kind==="coord"&&!lastFeedback.correct){
+      setTimeout(()=>{if(lastFeedback?.kind==="coord"){lastFeedback=null;renderPlayer()}},850);
+    }
+  }catch(e){console.error(e)}
+}
+$("leaveGame").onclick=async()=>{
+  if(!confirm("Leave this Pirate Game? You can rejoin later with the same game code and the same name."))return;
+  try{await post({action:"pirate_leave_game",join_token:token})}catch(e){}
+  token="";sessionStorage.removeItem("pirate_join_token");
+  location.href=location.pathname+(params.get("code")?"?code="+params.get("code"):"");
+};
+function dismissFeedback(){lastFeedback=null;lastMathKey="";hideModal();renderPlayer()}
 async function ackEvent(){state=await post({action:"pirate_ack",join_token:token});renderPlayer()}
 async function target(id){state=await post({action:"pirate_choose_target",join_token:token,target_player_id:id});renderPlayer()}
 async function skipImpossibleTarget(){
