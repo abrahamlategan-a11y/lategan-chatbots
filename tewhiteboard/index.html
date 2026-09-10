@@ -24,7 +24,7 @@ body{overflow:hidden}.app{height:100vh;display:flex;flex-direction:column}.top{b
 <div class="app">
   <div class="top">
     <div class="brand"><div class="logo">LH</div><div class="title"><strong>Student Whiteboards</strong><span>Live classroom view</span></div></div>
-    <div class="top-actions"><span class="count" id="countText"></span><div class="code" id="joinCode" style="display:none"></div><button class="btn" onclick="location.href='../teacher/'">⌂ Hub</button></div>
+    <div class="top-actions"><span class="count" id="countText"></span><div class="code" id="joinCode" style="display:none"></div><button class="btn" id="guestJoinInfo" style="display:none">Guest join</button><button class="btn" onclick="location.href='../teacher/'">⌂ Hub</button></div>
   </div>
 
   <section class="empty" id="emptyState"><div class="empty-card"><div class="ico">✎</div><h1>Start a whiteboard session</h1><p>Students in your class can join from their Student Hub. Anyone from another class can also join by entering the code shown here.</p><div class="start-options"><button class="btn primary" id="startNormal">Start session</button><button class="btn frost-on" id="startFrost">❄️ Start frosted</button></div></div></section>
@@ -43,6 +43,15 @@ body{overflow:hidden}.app{height:100vh;display:flex;flex-direction:column}.top{b
 </div>
 
 <div class="toast-stack" id="toasts"></div>
+
+<div class="modal" id="guestModal"><div class="zoom-card" style="width:min(620px,94vw);height:auto">
+  <div class="zoom-head"><strong>Guest join</strong><button class="btn dark" id="closeGuestModal">Close</button></div>
+  <div style="padding:20px">
+    <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Students without a Learning Hub account can join this session as a guest.</p>
+    <div style="background:#f3f7f4;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px"><strong style="display:block;font-size:11px;margin-bottom:4px">Guest page</strong><span id="guestUrl" style="font-size:13px;word-break:break-all"></span></div>
+    <div style="background:#f3f7f4;border:1px solid var(--line);border-radius:12px;padding:13px"><strong style="display:block;font-size:11px;margin-bottom:4px">Session code</strong><span id="guestCode" style="font-size:24px;font-weight:950;letter-spacing:.14em"></span></div>
+  </div>
+</div></div>
 
 <div class="modal" id="zoomModal"><div class="zoom-card">
   <div class="zoom-head"><strong id="zoomName">Student</strong><div class="zoom-actions"><button class="btn" id="revealOne">Reveal this board</button><button class="btn" id="saveOne">Save image</button><button class="btn" id="prevBoard">←</button><button class="btn" id="nextBoard">→</button><button class="btn dark" id="closeZoom">Close</button></div></div>
@@ -123,9 +132,17 @@ async function start(frost){
 }
 $("startNormal").onclick=()=>start(false);$("startFrost").onclick=()=>start(true);
 function enterSession(){
-  $("emptyState").style.display="none";$("session").classList.add("on");$("joinCode").style.display="";$("joinCode").textContent=session.join_code;
+  $("emptyState").style.display="none";$("session").classList.add("on");$("joinCode").style.display="";$("joinCode").textContent=session.join_code;$("guestJoinInfo").style.display="";
   updateFrostButton();clearInterval(pollTimer);pollTimer=setInterval(refresh,1000);
 }
+$("guestJoinInfo").onclick=()=>{
+  $("guestUrl").textContent=location.origin+location.pathname.replace(/\/tewhiteboard\/$/,"/wbjoin/");
+  $("guestCode").textContent=session?.join_code||"";
+  $("guestModal").classList.add("on");
+};
+$("closeGuestModal").onclick=()=>$("guestModal").classList.remove("on");
+$("guestModal").onclick=e=>{if(e.target===$("guestModal"))$("guestModal").classList.remove("on")};
+
 function updateFrostButton(){
   const on=Number(session?.frost_mode)===1;
   $("frostBtn").classList.toggle("frost-on",on);
@@ -137,7 +154,11 @@ async function refresh(){
   try{
     const d=await post({action:"teacher_whiteboard_state",teacher_code:teacherCode,session_id:session.id,revs});
     session=d.session;participants=d.participants||[];
-    for(const p of participants){if(p.board)boards[p.id]=p.board;revs[p.id]=p.board_rev}
+    for(const p of participants){
+      if(p.board)boards[p.id]=p.board;
+      const key=p.participant_type==="guest"?`g${Math.abs(p.id)}`:`s${p.id}`;
+      revs[key]=p.board_rev;
+    }
     renderGrid();renderRequests();updateFrostButton();
     if(zoomId)renderZoom();
   }catch(e){console.warn(e)}
@@ -153,7 +174,8 @@ function renderGrid(){
   $("countText").textContent=n?`${n} joined · ${participants.filter(online).length} online`:"Waiting for students…";
   $("grid").innerHTML=participants.map(p=>{
     const hidden=Number(session.frost_mode)===1&&Number(p.revealed)!==1;
-    return `<article class="board-card ${p.ask_share?"request":""}" data-id="${p.id}"><div class="card-head"><strong>${escapeHtml(p.display_name)}</strong><div class="badges">${p.ask_share?'<span class="badge ask">WANTS TO SHARE</span>':""}${p.revealed&&session.frost_mode?'<span class="badge">REVEALED</span>':""}</div></div><div class="thumb-wrap"><canvas class="thumb" data-id="${p.id}"></canvas>${hidden?'<div class="frost">❄️ FROSTED</div>':""}${online(p)?"":'<span class="offline">offline</span>'}</div></article>`;
+    const kind=p.participant_kind==="class"?"MY CLASS":p.participant_kind==="other"?"OTHER CLASS":"GUEST";
+    return `<article class="board-card ${p.ask_share?"request":""}" data-id="${p.id}"><div class="card-head"><strong>${escapeHtml(p.display_name)}</strong><div class="badges"><span class="badge">${kind}</span>${p.ask_share?'<span class="badge ask">WANTS TO SHARE</span>':""}${p.revealed&&session.frost_mode?'<span class="badge">REVEALED</span>':""}</div></div><div class="thumb-wrap"><canvas class="thumb" data-id="${p.id}"></canvas>${hidden?'<div class="frost">❄️ FROSTED</div>':""}${online(p)?"":'<span class="offline">offline</span>'}</div></article>`;
   }).join("")||'<div style="grid-column:1/-1;display:grid;place-items:center;color:var(--muted);font-weight:800">Waiting for students to join…</div>';
   document.querySelectorAll(".board-card").forEach(c=>c.onclick=()=>openZoom(Number(c.dataset.id)));
   requestAnimationFrame(()=>document.querySelectorAll(".thumb").forEach(c=>{const p=participants.find(x=>x.id===Number(c.dataset.id));if(p&&!(session.frost_mode&& !p.revealed))drawBoardToCanvas(c,boards[p.id]||blankBoard())}));
