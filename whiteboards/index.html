@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student Whiteboards · Learning Hub</title>
+<style>
+
+:root{--ink:#17352b;--muted:#6f7f77;--line:#d9e4de;--green:#176147;--deep:#104636;--bg:#f3f6f3;--panel:#fff;--sage:#e5f0e4;--lav:#ebe3f4;--gold:#f1dfa0;--red:#a74842;--shadow:0 14px 34px rgba(23,53,43,.10)}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+button,input{font:inherit}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:9px 12px;font-size:12px;font-weight:900;cursor:pointer}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.dark{background:var(--deep);color:#fff;border-color:var(--deep)}.btn.danger{color:var(--red)}.btn:disabled{opacity:.45;cursor:not-allowed}
+
+body{overflow:hidden}.app{height:100vh;display:flex;flex-direction:column}.top{background:#fff;border-bottom:1px solid var(--line);padding:9px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.brand{display:flex;align-items:center;gap:10px}.logo{width:36px;height:36px;border-radius:11px;background:var(--deep);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:950}.title strong{display:block;font-size:14px}.title span{font-size:10px;color:var(--muted)}.top-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.code{background:#eef5ef;border:1px solid #d8e7dd;border-radius:11px;padding:7px 11px;font-weight:950;letter-spacing:.14em;font-size:16px}.status-dot{width:8px;height:8px;border-radius:50%;background:#3ba36d;display:inline-block;margin-right:5px}
+.empty{flex:1;display:grid;place-items:center;padding:30px}.empty-card{width:min(650px,94vw);background:#fff;border:1px solid var(--line);border-radius:23px;padding:28px;text-align:center;box-shadow:var(--shadow)}.empty-card .ico{width:74px;height:74px;border-radius:22px;background:var(--sage);display:grid;place-items:center;margin:0 auto 14px;font-size:36px}.empty-card h1{margin:0 0 7px;font-size:34px;letter-spacing:-.04em}.empty-card p{color:var(--muted);font-size:13px;line-height:1.5}.start-options{display:flex;justify-content:center;gap:8px;margin-top:17px}
+.session{flex:1;min-height:0;display:none;flex-direction:column}.session.on{display:flex}.sessionbar{background:#f8faf8;border-bottom:1px solid var(--line);padding:8px 14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}.sessionbar .spacer{flex:1}.frost-on{background:#dbe8f5!important;color:#234a65!important;border-color:#c8d9ea!important}
+.grid{flex:1;min-height:0;padding:10px;display:grid;gap:9px;overflow:hidden}.board-card{background:#fff;border:1px solid var(--line);border-radius:13px;overflow:hidden;display:flex;flex-direction:column;min-width:0;min-height:0;box-shadow:0 4px 14px rgba(21,50,40,.05);position:relative}.board-card.request{outline:3px solid #d5a72e;outline-offset:-2px}.card-head{height:34px;flex:0 0 34px;padding:6px 8px;display:flex;align-items:center;justify-content:space-between;gap:5px;background:#fff;border-bottom:1px solid #edf1ee}.card-head strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badges{display:flex;gap:4px}.badge{font-size:8px;font-weight:950;padding:3px 5px;border-radius:999px;background:#eef3ef}.badge.ask{background:#faebbd}.thumb-wrap{flex:1;min-height:0;position:relative;cursor:pointer;background:#fff}.thumb{width:100%;height:100%;display:block}.frost{position:absolute;inset:0;background:linear-gradient(135deg,#e8f0f6,#d6e4ef);display:grid;place-items:center;text-align:center;color:#49697f;font-weight:950;font-size:12px;letter-spacing:.01em}.offline{position:absolute;left:6px;bottom:6px;background:rgba(30,45,38,.75);color:#fff;border-radius:999px;font-size:8px;padding:3px 6px}
+.toast-stack{position:fixed;right:14px;top:70px;z-index:60;display:flex;flex-direction:column;gap:8px;width:min(330px,calc(100vw - 28px))}.toast{background:#fff;border:1px solid #e5d38f;border-left:5px solid #d4a629;border-radius:13px;box-shadow:0 14px 34px rgba(20,40,30,.16);padding:11px}.toast strong{display:block;font-size:12px}.toast p{font-size:10px;color:var(--muted);margin:3px 0 8px}.toast .row{display:flex;gap:6px}
+.modal{position:fixed;inset:0;background:rgba(12,38,29,.62);display:none;place-items:center;padding:18px;z-index:70}.modal.on{display:grid}.zoom-card{width:min(1100px,96vw);height:min(820px,92vh);background:#fff;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.25)}.zoom-head{height:52px;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line);gap:8px}.zoom-head strong{font-size:14px}.zoom-actions{display:flex;gap:6px}.zoom-body{flex:1;min-height:0;position:relative;padding:10px;background:#e9efeb}#zoomCanvas{width:100%;height:100%;background:#fff;border-radius:10px;display:block}.zoom-frost{position:absolute;inset:10px;background:linear-gradient(135deg,#e8f0f6,#d6e4ef);border-radius:10px;display:grid;place-items:center;text-align:center;font-size:20px;font-weight:950;color:#49697f}
+.count{font-size:11px;color:var(--muted);font-weight:800}
+@media(max-width:700px){body{overflow:auto}.app{height:auto;min-height:100vh}.grid{overflow:visible;grid-template-columns:1fr!important;grid-auto-rows:260px!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><div class="logo">LH</div><div class="title"><strong>Student Whiteboards</strong><span>Live classroom view</span></div></div>
+    <div class="top-actions"><span class="count" id="countText"></span><div class="code" id="joinCode" style="display:none"></div><button class="btn" onclick="location.href='../teacher/'">⌂ Hub</button></div>
+  </div>
+
+  <section class="empty" id="emptyState"><div class="empty-card"><div class="ico">✎</div><h1>Start a whiteboard session</h1><p>Students in your class can join from their Student Hub. Anyone from another class can also join by entering the code shown here.</p><div class="start-options"><button class="btn primary" id="startNormal">Start session</button><button class="btn frost-on" id="startFrost">❄️ Start frosted</button></div></div></section>
+
+  <section class="session" id="session">
+    <div class="sessionbar">
+      <button class="btn" id="frostBtn">❄️ Frost all</button>
+      <button class="btn" id="evidenceBtn">Save class evidence</button>
+      <button class="btn danger" id="clearAllBtn">Clear all boards</button>
+      <div class="spacer"></div>
+      <span class="count" id="sessionHint">Students join with the code above.</span>
+      <button class="btn danger" id="endBtn">End session</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+</div>
+
+<div class="toast-stack" id="toasts"></div>
+
+<div class="modal" id="zoomModal"><div class="zoom-card">
+  <div class="zoom-head"><strong id="zoomName">Student</strong><div class="zoom-actions"><button class="btn" id="revealOne">Reveal this board</button><button class="btn" id="saveOne">Save image</button><button class="btn" id="prevBoard">←</button><button class="btn" id="nextBoard">→</button><button class="btn dark" id="closeZoom">Close</button></div></div>
+  <div class="zoom-body"><canvas id="zoomCanvas"></canvas><div class="zoom-frost" id="zoomFrost">❄️ Answer hidden<br><small>Reveal when you're ready.</small></div></div>
+</div></div>
+
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev";
+const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
+const $=id=>document.getElementById(id);
+
+function blankBoard(){return {version:1,strokes:[]}}
+function cloneBoard(b){return JSON.parse(JSON.stringify(b||blankBoard()))}
+function drawBoardToCanvas(canvas,board){
+  const ctx=canvas.getContext("2d");
+  const r=canvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,r.width,r.height);
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,r.width,r.height);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  for(const s of (board?.strokes||[])){
+    const pts=s.points||[];if(!pts.length)continue;
+    ctx.save();
+    ctx.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over";
+    ctx.strokeStyle=s.color||"#17352b";
+    ctx.lineWidth=Number(s.width)||4;
+    ctx.beginPath();
+    const p0=pts[0];ctx.moveTo(p0.x*r.width,p0.y*r.height);
+    if(pts.length===1){ctx.lineTo(p0.x*r.width+.01,p0.y*r.height+.01)}
+    else for(let i=1;i<pts.length;i++){const p=pts[i];ctx.lineTo(p.x*r.width,p.y*r.height)}
+    ctx.stroke();ctx.restore();
+  }
+}
+function attachDrawingCanvas(canvas,getBoard,onCommit){
+  let drawing=false,current=null,tool="pen",color="#17352b",width=4,enabled=true;
+  function point(e){
+    const r=canvas.getBoundingClientRect();
+    return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}
+  }
+  function start(e){
+    if(!enabled)return;e.preventDefault();drawing=true;canvas.setPointerCapture?.(e.pointerId);
+    current={tool,color,width,points:[point(e)]};getBoard().strokes.push(current);drawBoardToCanvas(canvas,getBoard());
+  }
+  function move(e){
+    if(!drawing||!enabled)return;e.preventDefault();
+    const p=point(e),last=current.points[current.points.length-1];
+    if(!last||Math.hypot(p.x-last.x,p.y-last.y)>.0015)current.points.push(p);
+    drawBoardToCanvas(canvas,getBoard());
+  }
+  function end(e){if(!drawing)return;drawing=false;current=null;onCommit?.()}
+  canvas.addEventListener("pointerdown",start);
+  canvas.addEventListener("pointermove",move);
+  canvas.addEventListener("pointerup",end);
+  canvas.addEventListener("pointercancel",end);
+  canvas.addEventListener("contextmenu",e=>e.preventDefault());
+  return{
+    setTool(v){tool=v},
+    setColor(v){color=v},
+    setWidth(v){width=Number(v)||4},
+    setEnabled(v){enabled=!!v},
+    redraw(){drawBoardToCanvas(canvas,getBoard())}
+  };
+}
+
+let session=null,participants=[],boards={},revs={},pollTimer=null,zoomId=0,seenRequests=new Set();
+
+async function post(p){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d}
+async function init(){
+  if(!teacherCode){location.href="../teacher/";return}
+  try{const d=await post({action:"teacher_whiteboard_home",teacher_code:teacherCode});if(d.session){session=d.session;enterSession();await refresh()}}
+  catch(e){alert(e.message);location.href="../teacher/"}
+}
+async function start(frost){
+  try{const d=await post({action:"teacher_whiteboard_start_session",teacher_code:teacherCode,frost_mode:frost?1:0});session=d.session;participants=[];boards={};revs={};seenRequests.clear();enterSession();await refresh()}
+  catch(e){alert(e.message)}
+}
+$("startNormal").onclick=()=>start(false);$("startFrost").onclick=()=>start(true);
+function enterSession(){
+  $("emptyState").style.display="none";$("session").classList.add("on");$("joinCode").style.display="";$("joinCode").textContent=session.join_code;
+  updateFrostButton();clearInterval(pollTimer);pollTimer=setInterval(refresh,1000);
+}
+function updateFrostButton(){
+  const on=Number(session?.frost_mode)===1;
+  $("frostBtn").classList.toggle("frost-on",on);
+  $("frostBtn").textContent=on?"☀️ Reveal all":"❄️ Frost all";
+}
+function online(p){if(!p.last_seen)return false;const t=Date.parse(String(p.last_seen).replace(" ","T")+"Z");return Date.now()-t<20000}
+async function refresh(){
+  if(!session)return;
+  try{
+    const d=await post({action:"teacher_whiteboard_state",teacher_code:teacherCode,session_id:session.id,revs});
+    session=d.session;participants=d.participants||[];
+    for(const p of participants){if(p.board)boards[p.id]=p.board;revs[p.id]=p.board_rev}
+    renderGrid();renderRequests();updateFrostButton();
+    if(zoomId)renderZoom();
+  }catch(e){console.warn(e)}
+}
+function gridShape(n){
+  if(n<=1)return [1,1];if(n===2)return [2,1];if(n<=4)return [2,2];if(n<=6)return [3,2];
+  const cols=Math.ceil(Math.sqrt(n*1.55));return [cols,Math.ceil(n/cols)];
+}
+function renderGrid(){
+  const n=participants.length;const [cols,rows]=gridShape(Math.max(1,n));
+  $("grid").style.gridTemplateColumns=`repeat(${cols},minmax(0,1fr))`;
+  $("grid").style.gridTemplateRows=`repeat(${rows},minmax(0,1fr))`;
+  $("countText").textContent=n?`${n} joined · ${participants.filter(online).length} online`:"Waiting for students…";
+  $("grid").innerHTML=participants.map(p=>{
+    const hidden=Number(session.frost_mode)===1&&Number(p.revealed)!==1;
+    return `<article class="board-card ${p.ask_share?"request":""}" data-id="${p.id}"><div class="card-head"><strong>${escapeHtml(p.display_name)}</strong><div class="badges">${p.ask_share?'<span class="badge ask">WANTS TO SHARE</span>':""}${p.revealed&&session.frost_mode?'<span class="badge">REVEALED</span>':""}</div></div><div class="thumb-wrap"><canvas class="thumb" data-id="${p.id}"></canvas>${hidden?'<div class="frost">❄️ FROSTED</div>':""}${online(p)?"":'<span class="offline">offline</span>'}</div></article>`;
+  }).join("")||'<div style="grid-column:1/-1;display:grid;place-items:center;color:var(--muted);font-weight:800">Waiting for students to join…</div>';
+  document.querySelectorAll(".board-card").forEach(c=>c.onclick=()=>openZoom(Number(c.dataset.id)));
+  requestAnimationFrame(()=>document.querySelectorAll(".thumb").forEach(c=>{const p=participants.find(x=>x.id===Number(c.dataset.id));if(p&&!(session.frost_mode&& !p.revealed))drawBoardToCanvas(c,boards[p.id]||blankBoard())}));
+}
+function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function renderRequests(){
+  const asks=participants.filter(p=>Number(p.ask_share)===1);
+  $("toasts").innerHTML=asks.map(p=>`<div class="toast"><strong>🙋 ${escapeHtml(p.display_name)} wants to share</strong><p>Open their whiteboard without hunting through the grid.</p><div class="row"><button class="btn primary toastView" data-id="${p.id}">View</button><button class="btn toastDismiss" data-id="${p.id}">Dismiss</button></div></div>`).join("");
+  document.querySelectorAll(".toastView").forEach(b=>b.onclick=async()=>{const id=Number(b.dataset.id);openZoom(id);await dismissShare(id)});
+  document.querySelectorAll(".toastDismiss").forEach(b=>b.onclick=()=>dismissShare(Number(b.dataset.id)));
+}
+async function dismissShare(id){try{await post({action:"teacher_whiteboard_dismiss_share",teacher_code:teacherCode,session_id:session.id,participant_id:id});await refresh()}catch(e){console.warn(e)}}
+$("frostBtn").onclick=async()=>{
+  const newFrost=Number(session.frost_mode)===1?0:1;
+  try{await post({action:"teacher_whiteboard_set_frost",teacher_code:teacherCode,session_id:session.id,frost_mode:newFrost});session.frost_mode=newFrost;await refresh()}catch(e){alert(e.message)}
+};
+async function revealOne(id){try{await post({action:"teacher_whiteboard_reveal_one",teacher_code:teacherCode,session_id:session.id,participant_id:id});const p=participants.find(x=>x.id===id);if(p)p.revealed=1;renderGrid();renderZoom()}catch(e){alert(e.message)}}
+$("revealOne").onclick=()=>revealOne(zoomId);
+function openZoom(id){zoomId=id;$("zoomModal").classList.add("on");renderZoom()}
+function renderZoom(){
+  const p=participants.find(x=>x.id===zoomId);if(!p)return;
+  $("zoomName").textContent=p.display_name;$("revealOne").style.display=session.frost_mode&&!p.revealed?"":"none";
+  const hidden=Number(session.frost_mode)===1&&Number(p.revealed)!==1;$("zoomFrost").style.display=hidden?"grid":"none";
+  if(!hidden)requestAnimationFrame(()=>drawBoardToCanvas($("zoomCanvas"),boards[p.id]||blankBoard()));
+}
+$("closeZoom").onclick=()=>{$("zoomModal").classList.remove("on");zoomId=0};
+$("zoomModal").onclick=e=>{if(e.target===$("zoomModal")){$("zoomModal").classList.remove("on");zoomId=0}};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("zoomModal").classList.remove("on");zoomId=0}});
+function stepZoom(dir){if(!participants.length)return;let i=participants.findIndex(x=>x.id===zoomId);i=(i+dir+participants.length)%participants.length;zoomId=participants[i].id;renderZoom()}
+$("prevBoard").onclick=()=>stepZoom(-1);$("nextBoard").onclick=()=>stepZoom(1);
+
+function boardImage(board,name,w=1400,h=900){
+  const c=document.createElement("canvas");c.width=w;c.height=h;const ctx=c.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,w,h);
+  const temp=document.createElement("canvas");temp.style.width=w+"px";temp.style.height=(h-64)+"px";document.body.appendChild(temp);temp.getBoundingClientRect=()=>({width:w,height:h-64,left:0,top:0,right:w,bottom:h-64});
+  drawBoardToCanvas(temp,board);ctx.drawImage(temp,0,0,w,h-64);temp.remove();
+  ctx.fillStyle="#17352b";ctx.font="bold 28px system-ui";ctx.fillText(name,24,h-22);ctx.font="18px system-ui";ctx.fillStyle="#718078";ctx.textAlign="right";ctx.fillText(new Date().toLocaleString("en-AU"),w-24,h-22);ctx.textAlign="left";return c;
+}
+function downloadCanvas(c,name){const a=document.createElement("a");a.download=name;a.href=c.toDataURL("image/png");a.click()}
+$("saveOne").onclick=()=>{const p=participants.find(x=>x.id===zoomId);if(!p)return;if(session.frost_mode&&!p.revealed){alert("Reveal this board before saving it.");return}downloadCanvas(boardImage(boards[p.id]||blankBoard(),p.display_name),`whiteboard-${p.display_name.replace(/[^a-z0-9]+/gi,"-")}.png`)};
+
+$("evidenceBtn").onclick=()=>{
+  const visible=participants.filter(p=>!session.frost_mode||p.revealed);
+  if(!visible.length){alert("Reveal at least one whiteboard before saving evidence.");return}
+  const [cols,rows]=gridShape(visible.length),cellW=560,cellH=360,pad=18,head=70;
+  const c=document.createElement("canvas");c.width=cols*cellW+(cols+1)*pad;c.height=head+rows*cellH+(rows+1)*pad;const ctx=c.getContext("2d");
+  ctx.fillStyle="#eef3ef";ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle="#17352b";ctx.font="bold 28px system-ui";ctx.fillText("Class Whiteboards",pad,42);ctx.font="16px system-ui";ctx.fillStyle="#718078";ctx.textAlign="right";ctx.fillText(new Date().toLocaleString("en-AU"),c.width-pad,40);ctx.textAlign="left";
+  visible.forEach((p,i)=>{const col=i%cols,row=Math.floor(i/cols),x=pad+col*(cellW+pad),y=head+pad+row*(cellH+pad);ctx.fillStyle="#fff";ctx.fillRect(x,y,cellW,cellH);const im=boardImage(boards[p.id]||blankBoard(),p.display_name,cellW,cellH);ctx.drawImage(im,x,y,cellW,cellH)});
+  downloadCanvas(c,`class-whiteboards-${new Date().toISOString().slice(0,10)}.png`);
+};
+$("clearAllBtn").onclick=async()=>{if(!confirm("Clear every student's live whiteboard? This cannot be undone."))return;try{await post({action:"teacher_whiteboard_clear_all",teacher_code:teacherCode,session_id:session.id});boards={};revs={};await refresh()}catch(e){alert(e.message)}};
+$("endBtn").onclick=async()=>{if(!confirm("End this whiteboard session?"))return;try{await post({action:"teacher_whiteboard_end_session",teacher_code:teacherCode,session_id:session.id});clearInterval(pollTimer);location.reload()}catch(e){alert(e.message)}};
+window.addEventListener("resize",()=>{if(zoomId)renderZoom();document.querySelectorAll(".thumb").forEach(c=>{const p=participants.find(x=>x.id===Number(c.dataset.id));if(p&&!(session.frost_mode&&!p.revealed))drawBoardToCanvas(c,boards[p.id]||blankBoard())})});
+init();
+</script>
+</body></html>
