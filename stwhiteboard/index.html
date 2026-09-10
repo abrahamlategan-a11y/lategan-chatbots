@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Whiteboard · Learning Hub</title>
+<style>
+
+:root{--ink:#17352b;--muted:#6f7f77;--line:#d9e4de;--green:#176147;--deep:#104636;--bg:#f3f6f3;--panel:#fff;--sage:#e5f0e4;--lav:#ebe3f4;--gold:#f1dfa0;--red:#a74842;--shadow:0 14px 34px rgba(23,53,43,.10)}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--bg)}
+button,input{font:inherit}.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:11px;padding:9px 12px;font-size:12px;font-weight:900;cursor:pointer}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.btn.dark{background:var(--deep);color:#fff;border-color:var(--deep)}.btn.danger{color:var(--red)}.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.home{min-height:100%;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 15% 10%,#e1eee5 0,transparent 34%),var(--bg)}
+.home-card{width:min(820px,96vw);background:#fff;border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:var(--shadow)}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}.brand strong{font-size:14px}.brand a{text-decoration:none;color:var(--ink);font-size:12px;font-weight:900}
+.home h1{font-size:40px;margin:0 0 5px;letter-spacing:-.04em}.home p{color:var(--muted);margin:0 0 20px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.mode{border:1px solid var(--line);border-radius:18px;padding:20px;background:#fafcfb;cursor:pointer}.mode:hover{border-color:#9fb9aa}.mode .ico{width:48px;height:48px;border-radius:14px;background:var(--sage);display:grid;place-items:center;font-size:24px;margin-bottom:12px}.mode h3{margin:0 0 5px}.mode p{font-size:12px;line-height:1.45;margin:0;color:var(--muted)}.joinline{display:flex;gap:8px;margin-top:12px}.joinline input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-transform:uppercase;font-weight:950;letter-spacing:.12em}
+.active-class{margin-top:13px;padding:11px 12px;border-radius:12px;background:#eef5ef;font-size:12px;display:none;align-items:center;justify-content:space-between;gap:10px}
+.board-app{height:100%;display:none;flex-direction:column;background:#e9efeb}.board-app.on{display:flex}
+.board-top{height:58px;flex:0 0 58px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px}.board-top .left,.board-top .right{display:flex;align-items:center;gap:8px}.student-name{font-weight:950;font-size:13px}.session-pill{border-radius:999px;background:var(--sage);padding:6px 9px;font-size:11px;font-weight:900}
+.frost-note{display:none;background:#dce8f4;border-bottom:1px solid #c8d9e8;color:#244a66;text-align:center;padding:7px 12px;font-size:12px;font-weight:850}.frost-note.on{display:block}
+.toolbar{background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px}.toolset{display:flex;align-items:center;gap:5px;padding-right:8px;border-right:1px solid var(--line)}.tool{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;cursor:pointer;font-size:11px;font-weight:900}.tool.on{outline:2px solid var(--green);outline-offset:1px}.color{width:25px;height:25px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);cursor:pointer}.color.on{box-shadow:0 0 0 3px #80a695}
+.canvas-wrap{flex:1;min-height:0;padding:10px;position:relative}#boardCanvas{width:100%;height:100%;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(20,50,40,.06);touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;display:block}
+.corner-name{position:absolute;right:20px;bottom:17px;font-size:11px;font-weight:900;color:#809087;pointer-events:none}
+.save-drawer{position:fixed;right:14px;top:70px;width:min(360px,calc(100vw - 28px));max-height:calc(100vh - 84px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:0 18px 50px rgba(20,50,40,.18);padding:14px;display:none;z-index:50}.save-drawer.on{display:block}.saved-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding:9px 0}.saved-row:first-of-type{border-top:0}.saved-row strong{font-size:12px}.saved-row small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.saved-actions{display:flex;gap:5px}
+.modal{position:fixed;inset:0;background:rgba(14,42,33,.52);display:none;place-items:center;padding:20px;z-index:80}.modal.on{display:grid}.modal-card{background:#fff;border-radius:18px;width:min(420px,94vw);padding:19px;box-shadow:0 20px 60px rgba(0,0,0,.2)}.modal-card h2{margin:0 0 5px}.modal-card p{font-size:12px;color:var(--muted)}.modal-card input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:9px 0 14px}.actions{display:flex;justify-content:flex-end;gap:7px}
+@media(max-width:650px){.mode-grid{grid-template-columns:1fr}.board-top{height:auto;flex-wrap:wrap}.toolset{border-right:0}}
+</style>
+</head>
+<body>
+<section class="home" id="home">
+  <div class="home-card">
+    <div class="brand"><strong>LH · Student Whiteboard</strong><a href="../student/">⌂ Student Hub</a></div>
+    <h1>Your whiteboard</h1>
+    <p>Use a private slate whenever you need one, or join a live whiteboard session with your teacher.</p>
+    <div class="mode-grid">
+      <div class="mode" id="privateMode"><div class="ico">✎</div><h3>Private Slate</h3><p>A full-screen whiteboard just for you. Your teacher cannot see it unless you join a live session.</p></div>
+      <div class="mode">
+        <div class="ico">▦</div><h3>Join Live Session</h3><p>Enter the code on your teacher's screen. Students from another class can join with the same code.</p>
+        <div class="joinline"><input id="joinCode" maxlength="5" placeholder="CODE"><button class="btn primary" id="joinBtn">Join</button></div>
+        <div class="active-class" id="activeClass"><span id="activeClassText">Your class has a session open.</span><button class="btn primary" id="joinOwn">Join</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="board-app" id="boardApp">
+  <div class="board-top">
+    <div class="left"><button class="btn" id="leaveBoard">← Back</button><span class="student-name" id="studentName">Student</span><span class="session-pill" id="modePill">Private Slate</span></div>
+    <div class="right"><button class="btn" id="savedBtn">Saved boards</button><button class="btn primary" id="saveBtn">Save</button><button class="btn dark" id="shareBtn" style="display:none">🙋 Ask to share</button></div>
+  </div>
+  <div class="frost-note" id="frostNote">❄️ Your answer is hidden on the teacher screen until your teacher reveals it.</div>
+  <div class="toolbar">
+    <div class="toolset"><button class="tool on" data-tool="pen">Pen</button><button class="tool" data-tool="eraser">Eraser</button></div>
+    <div class="toolset" id="colors">
+      <button class="color on" data-color="#17352b" style="background:#17352b"></button><button class="color" data-color="#000000" style="background:#000"></button><button class="color" data-color="#245da8" style="background:#245da8"></button><button class="color" data-color="#b73d38" style="background:#b73d38"></button><button class="color" data-color="#754aa3" style="background:#754aa3"></button><button class="color" data-color="#c69824" style="background:#c69824"></button>
+    </div>
+    <div class="toolset"><button class="tool" data-width="2">Thin</button><button class="tool on" data-width="4">Medium</button><button class="tool" data-width="8">Thick</button></div>
+    <div class="toolset"><button class="tool" id="undoBtn">Undo</button><button class="tool" id="clearBtn">Clear</button></div>
+    <div style="margin-left:auto;font-size:10px;color:var(--muted);font-weight:800" id="syncState">Ready</div>
+  </div>
+  <div class="canvas-wrap"><canvas id="boardCanvas"></canvas><div class="corner-name" id="cornerName"></div></div>
+</section>
+
+<aside class="save-drawer" id="saveDrawer"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">Saved boards</h3><button class="btn" id="closeSaved">×</button></div><div id="savedList" style="margin-top:9px"></div></aside>
+
+<div class="modal" id="saveModal"><div class="modal-card"><h2>Save whiteboard</h2><p>Give this board a name so you can open it again later.</p><input id="saveTitle" placeholder="e.g. Fractions practice"><div class="actions"><button class="btn" id="cancelSave">Cancel</button><button class="btn primary" id="confirmSave">Save board</button></div></div></div>
+
+<script>
+const API="https://lategan-chatbot.abrahamlategan.workers.dev";
+const studentCode=localStorage.getItem("lategan_student_code")||"";
+const $=id=>document.getElementById(id);
+
+function blankBoard(){return {version:1,strokes:[]}}
+function cloneBoard(b){return JSON.parse(JSON.stringify(b||blankBoard()))}
+function fitCanvas(canvas){
+  const ctx=canvas.getContext("2d");
+  const r=canvas.getBoundingClientRect(),dpr=Math.max(1,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(r.width*dpr)),h=Math.max(1,Math.round(r.height*dpr));
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.lineCap="round";ctx.lineJoin="round";
+  return {ctx,r};
+}
+function drawBoardToCanvas(canvas,board){
+  const {ctx,r}=fitCanvas(canvas);
+  ctx.clearRect(0,0,r.width,r.height);
+  ctx.fillStyle="#ffffff";ctx.fillRect(0,0,r.width,r.height);
+  for(const s of (board?.strokes||[])){
+    const pts=s.points||[];if(!pts.length)continue;
+    ctx.save();
+    ctx.globalCompositeOperation=s.tool==="eraser"?"destination-out":"source-over";
+    ctx.strokeStyle=s.color||"#17352b";
+    ctx.lineWidth=Number(s.width)||4;
+    ctx.beginPath();
+    const p0=pts[0];ctx.moveTo(p0.x*r.width,p0.y*r.height);
+    if(pts.length===1){ctx.lineTo(p0.x*r.width+.01,p0.y*r.height+.01)}
+    else for(let i=1;i<pts.length;i++){const p=pts[i];ctx.lineTo(p.x*r.width,p.y*r.height)}
+    ctx.stroke();ctx.restore();
+  }
+}
+function attachDrawingCanvas(canvas,getBoard,onCommit){
+  let drawing=false,current=null,tool="pen",color="#17352b",width=4,enabled=true;
+  function point(e){
+    const r=canvas.getBoundingClientRect();
+    return{x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))}
+  }
+  function drawSegment(a,b,stroke,r){
+    const ctx=canvas.getContext("2d");
+    ctx.save();
+    ctx.lineCap="round";
+    ctx.lineJoin="round";
+    ctx.globalCompositeOperation=stroke.tool==="eraser"?"destination-out":"source-over";
+    ctx.strokeStyle=stroke.color||"#17352b";
+    ctx.lineWidth=Number(stroke.width)||4;
+    ctx.beginPath();
+    ctx.moveTo(a.x*r.width,a.y*r.height);
+    ctx.lineTo(b.x*r.width,b.y*r.height);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function start(e){
+    if(!enabled)return;
+    e.preventDefault();
+    drawing=true;
+    canvas.setPointerCapture?.(e.pointerId);
+    const r=canvas.getBoundingClientRect();
+    const p={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
+    current={tool,color,width,points:[p]};
+    getBoard().strokes.push(current);
+    drawSegment(p,{x:p.x+.00001,y:p.y+.00001},current,r);
+  }
+  function move(e){
+    if(!drawing||!enabled)return;
+    e.preventDefault();
+    const r=canvas.getBoundingClientRect();
+    const evs=e.getCoalescedEvents?e.getCoalescedEvents():[e];
+    for(const ev of evs){
+      const p={x:Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height))};
+      const last=current.points[current.points.length-1];
+      if(!last||Math.hypot(p.x-last.x,p.y-last.y)>.00018){
+        current.points.push(p);
+        drawSegment(last||p,p,current,r);
+      }
+    }
+  }
+  function end(e){
+    if(!drawing)return;
+    e.preventDefault();
+    drawing=false;
+    current=null;
+    onCommit?.();
+  }
+  canvas.addEventListener("pointerdown",start,{passive:false});
+  canvas.addEventListener("pointermove",move,{passive:false});
+  canvas.addEventListener("pointerup",end,{passive:false});
+  canvas.addEventListener("pointercancel",end,{passive:false});
+  canvas.addEventListener("contextmenu",e=>e.preventDefault());
+  return{
+    setTool(v){tool=v},
+    setColor(v){color=v},
+    setWidth(v){width=Number(v)||4},
+    setEnabled(v){enabled=!!v},
+    redraw(){drawBoardToCanvas(canvas,getBoard())}
+  };
+}
+
+let student=null,mode="home",board=blankBoard(),drawer=null,participantId=0,sessionId=0,sessionCode="",stateTimer=null,syncInFlight=false,syncDirty=false,syncTimer=null,currentSavedId=0;
+let engine=null;
+
+async function post(p){const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d}
+function showBoard(){
+  $("home").style.display="none";$("boardApp").classList.add("on");
+  setTimeout(()=>{engine.redraw()},50);
+}
+function showHome(){
+  clearInterval(stateTimer);stateTimer=null;$("boardApp").classList.remove("on");$("home").style.display="grid";mode="home";participantId=0;sessionId=0;sessionCode="";
+}
+function persistPrivate(){if(mode==="private")localStorage.setItem("lh_private_whiteboard_"+studentCode,JSON.stringify(board))}
+function commit(){
+  if(mode==="private"){persistPrivate();$("syncState").textContent="Saved on this device";return}
+  if(mode!=="live"||!participantId)return;
+
+  // IMPORTANT FOR iPAD/APPLE PENCIL:
+  // Never start network/JSON work immediately after a stroke.
+  // Wait until the student pauses, so handwriting always gets the main thread first.
+  syncDirty=true;
+  clearTimeout(syncTimer);
+  $("syncState").textContent="Writing…";
+  syncTimer=setTimeout(flushSync,850);
+}
+async function flushSync(){
+  if(syncInFlight||mode!=="live"||!participantId||!syncDirty)return;
+
+  syncInFlight=true;
+  syncDirty=false;
+
+  // Let Safari paint any remaining Pencil input before cloning/stringifying the board.
+  await new Promise(resolve=>{
+    if("requestIdleCallback" in window){
+      requestIdleCallback(()=>resolve(),{timeout:250});
+    }else{
+      setTimeout(resolve,40);
+    }
+  });
+
+  const snapshot=cloneBoard(board);
+
+  try{
+    $("syncState").textContent="Syncing…";
+    await post({action:"student_whiteboard_update",student_code:studentCode,participant_id:participantId,board:snapshot});
+    $("syncState").textContent="Live";
+  }catch(e){
+    syncDirty=true;
+    $("syncState").textContent="Retrying…";
+    clearTimeout(syncTimer);
+    syncTimer=setTimeout(flushSync,1200);
+  }finally{
+    syncInFlight=false;
+
+    // If more strokes were added while the previous snapshot was uploading,
+    // wait for another pause rather than immediately doing more work.
+    if(syncDirty){
+      clearTimeout(syncTimer);
+      syncTimer=setTimeout(flushSync,850);
+    }
+  }
+}
+async function init(){
+  if(!studentCode){location.href="../student/";return}
+  try{
+    const login=await post({action:"student_login",student_code:studentCode});student=login.student;
+    $("studentName").textContent=student.display_name||"Student";$("cornerName").textContent=student.display_name||"Student";
+    const h=await post({action:"student_whiteboard_home",student_code:studentCode});
+    if(h.session){
+      $("activeClass").style.display="flex";$("activeClassText").textContent=`Your class has a live session · ${h.session.join_code}`;
+      $("joinOwn").dataset.code=h.session.join_code;
+    }
+  }catch(e){alert(e.message);location.href="../student/"}
+}
+engine=attachDrawingCanvas($("boardCanvas"),()=>board,commit);
+window.addEventListener("resize",()=>engine.redraw());
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"&&mode==="live"&&syncDirty){
+    clearTimeout(syncTimer);
+    flushSync();
+  }
+});
+
+document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-tool]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setTool(b.dataset.tool)});
+document.querySelectorAll("[data-color]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-color]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setColor(b.dataset.color);engine.setTool("pen");document.querySelectorAll("[data-tool]").forEach(x=>x.classList.toggle("on",x.dataset.tool==="pen"))});
+document.querySelectorAll("[data-width]").forEach(b=>b.onclick=()=>{document.querySelectorAll("[data-width]").forEach(x=>x.classList.remove("on"));b.classList.add("on");engine.setWidth(b.dataset.width)});
+$("undoBtn").onclick=()=>{board.strokes.pop();engine.redraw();commit()};
+$("clearBtn").onclick=()=>{if(confirm("Clear this whiteboard?")){board=blankBoard();engine.redraw();commit()}};
+
+$("privateMode").onclick=()=>{
+  mode="private";$("modePill").textContent="Private Slate";$("shareBtn").style.display="none";$("frostNote").classList.remove("on");
+  currentSavedId=0;
+  try{board=JSON.parse(localStorage.getItem("lh_private_whiteboard_"+studentCode)||"null")||blankBoard()}catch{board=blankBoard()}
+  showBoard();
+};
+async function join(code){
+  code=String(code||"").trim().toUpperCase();if(!code)return;
+  try{
+    const d=await post({action:"student_whiteboard_join",student_code:studentCode,join_code:code});
+    mode="live";sessionId=d.session.id;sessionCode=d.session.join_code;participantId=d.participant.id;board=d.participant.board||blankBoard();currentSavedId=0;
+    $("modePill").textContent=`Live · ${sessionCode}`;$("shareBtn").style.display="";
+    updateFrost(d.session.frost_mode,d.participant.revealed);
+    showBoard();startStatePolling();$("syncState").textContent="Live";
+  }catch(e){alert(e.message)}
+}
+$("joinBtn").onclick=()=>join($("joinCode").value);
+$("joinCode").onkeydown=e=>{if(e.key==="Enter")join($("joinCode").value)};
+$("joinOwn").onclick=()=>join($("joinOwn").dataset.code);
+$("leaveBoard").onclick=()=>showHome();
+function updateFrost(frost,revealed){$("frostNote").classList.toggle("on",Number(frost)===1&&Number(revealed)!==1)}
+function startStatePolling(){
+  clearInterval(stateTimer);
+  stateTimer=setInterval(async()=>{
+    if(mode!=="live"||!participantId)return;
+    try{
+      const d=await post({action:"student_whiteboard_state",student_code:studentCode,participant_id:participantId});
+      if(d.session.status!=="active"){alert("Your teacher has ended this whiteboard session.");showHome();return}
+      updateFrost(d.session.frost_mode,d.participant.revealed);
+      if(Number(d.participant.ask_share)===0){$("shareBtn").textContent="🙋 Ask to share";$("shareBtn").disabled=false}
+    }catch(e){console.warn(e)}
+  },1500);
+}
+$("shareBtn").onclick=async()=>{
+  if(mode!=="live")return;
+  $("shareBtn").disabled=true;$("shareBtn").textContent="Request sent ✓";
+  try{await post({action:"student_whiteboard_ask_share",student_code:studentCode,participant_id:participantId})}catch(e){$("shareBtn").disabled=false;$("shareBtn").textContent="🙋 Ask to share";alert(e.message)}
+};
+
+async function refreshSaved(){
+  try{
+    const d=await post({action:"student_whiteboard_list_saved",student_code:studentCode});
+    const arr=d.boards||[];
+    $("savedList").innerHTML=arr.length?arr.map(x=>`<div class="saved-row"><div><strong>${escapeHtml(x.title)}</strong><small>${new Date((x.updated_at||"").replace(" ","T")+"Z").toLocaleDateString("en-AU")}</small></div><div class="saved-actions"><button class="btn openSaved" data-id="${x.id}">Open</button><button class="btn danger delSaved" data-id="${x.id}">Delete</button></div></div>`).join(""):'<div style="color:var(--muted);font-size:12px;padding:14px 0">No saved boards yet.</div>';
+    document.querySelectorAll(".openSaved").forEach(b=>b.onclick=()=>loadSaved(Number(b.dataset.id)));
+    document.querySelectorAll(".delSaved").forEach(b=>b.onclick=()=>deleteSaved(Number(b.dataset.id)));
+  }catch(e){$("savedList").textContent=e.message}
+}
+function escapeHtml(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+$("savedBtn").onclick=()=>{$("saveDrawer").classList.add("on");refreshSaved()};
+$("closeSaved").onclick=()=>$("saveDrawer").classList.remove("on");
+$("saveBtn").onclick=()=>{$("saveTitle").value=currentSavedId?"":"My whiteboard";$("saveModal").classList.add("on");setTimeout(()=>$("saveTitle").select(),20)};
+$("cancelSave").onclick=()=>$("saveModal").classList.remove("on");
+$("saveModal").onclick=e=>{if(e.target===$("saveModal"))$("saveModal").classList.remove("on")};
+$("confirmSave").onclick=async()=>{
+  const title=$("saveTitle").value.trim()||"My whiteboard";
+  try{
+    const d=await post({action:"student_whiteboard_save_saved",student_code:studentCode,saved_id:currentSavedId||0,title,board});
+    currentSavedId=d.id;$("saveModal").classList.remove("on");$("syncState").textContent="Saved";refreshSaved();
+  }catch(e){alert(e.message)}
+};
+async function loadSaved(id){
+  try{
+    const d=await post({action:"student_whiteboard_load_saved",student_code:studentCode,saved_id:id});
+    board=d.board.board||blankBoard();currentSavedId=id;engine.redraw();$("saveDrawer").classList.remove("on");
+    if(mode==="private")persistPrivate();else if(mode==="live")commit();
+  }catch(e){alert(e.message)}
+}
+async function deleteSaved(id){if(!confirm("Delete this saved whiteboard?"))return;try{await post({action:"student_whiteboard_delete_saved",student_code:studentCode,saved_id:id});if(currentSavedId===id)currentSavedId=0;refreshSaved()}catch(e){alert(e.message)}}
+
+init();
+</script>
+</body></html>
