@@ -166,6 +166,25 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 .player-money b{color:var(--ink)}
 .player-money .total{background:#e5f0e8;color:var(--deep)}
 
+
+.student-score-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.student-score-grid>div{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fafcfb}
+.student-score-grid>div.total{grid-column:1/-1;background:#e7f1e9}
+.student-score-grid span{display:block;font-size:9px;font-weight:950;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.student-score-grid strong{display:block;font-size:22px;margin:2px 0;color:var(--deep)}
+.student-score-grid small{font-size:9px;color:var(--muted)}
+.cell.locateable{
+  cursor:pointer!important;position:relative;touch-action:manipulation!important;
+  outline:3px solid rgba(23,97,71,.22)!important;outline-offset:-3px!important
+}
+.cell.locateable:before{
+  content:attr(data-coord);position:absolute;left:5px;top:4px;
+  background:rgba(255,255,255,.92);color:#17352b;border-radius:6px;
+  padding:2px 4px;font-size:9px;font-weight:950;line-height:1;z-index:5
+}
+.cell.locateable:hover,.cell.locateable:active{outline-color:#176147!important;transform:scale(.98)}
+.player-board.locating{outline:4px solid rgba(23,97,71,.16);border-radius:14px}
+
 </style>
 </head>
 <body>
@@ -262,7 +281,16 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
         <div class="boardwrap"><div id="chooseBanner" class="choose-banner">🎯 Choose the next square — tap any unused square on your grid.</div><div class="board" id="playerBoard"></div></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:18px">
-        <div class="panel"><div class="ph"><h3>Public events</h3></div><div class="pb"><div class="feed" id="studentFeed"></div></div></div>
+        <div class="panel">
+          <div class="ph"><h3>Your treasure</h3></div>
+          <div class="pb">
+            <div class="student-score-grid">
+              <div><span>Cash</span><strong id="sideCash">$0</strong><small>At risk</small></div>
+              <div><span>Bank</span><strong id="sideBank">$0</strong><small>Safe</small></div>
+              <div class="total"><span>Total</span><strong id="sideTotal">$0</strong><small>Cash + bank</small></div>
+            </div>
+          </div>
+        </div>
         <div class="panel" id="tileGuidePanel">
           <div class="ph"><h3>Special tile guide</h3></div>
           <div class="pb">
@@ -299,9 +327,9 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 
 <div class="final-overlay" id="finalOverlay">
   <div class="final-card">
-    <button class="final-x" id="closeFinal">×</button>
+    <button class="final-x" id="closeFinal" title="Close and end game for everyone">×</button>
     <h1>🏆 Final Leaderboard</h1>
-    <div class="final-sub">The game stays here until you close it.</div>
+    <div class="final-sub">This stays on screen until you press ×. Closing it ends the game for everyone.</div>
     <div id="finalLeaderboard"></div>
   </div>
 </div>
@@ -312,7 +340,7 @@ const params=new URLSearchParams(location.search);
 const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0;
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false;
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -341,6 +369,16 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
   const size=Number(state?.game?.board_size||7),cols="ABCDEFGHIJ".slice(0,size),cellMin=size>=9?40:size>=7?48:58;
   el.classList.toggle("teacher-board",teacherMode);
   el.classList.toggle("player-board",!teacherMode);
+  el.classList.toggle("locating",!!locateMode);
+  el.onpointerup=null;
+  if(locateMode&&!teacherMode){
+    el.onpointerup=(e)=>{
+      const cell=e.target.closest(".cell.locateable");
+      if(!cell||!el.contains(cell))return;
+      e.preventDefault();
+      clickRoundCoord(cell.dataset.coord,cell);
+    };
+  }
   el.style.gridTemplateColumns=`34px repeat(${size},minmax(${teacherMode?0:cellMin}px,1fr))`;
   el.style.minWidth=teacherMode?"0":`${34+size*(cellMin+6)}px`;
   el.innerHTML='<div></div>'+[...cols].map(x=>`<div class="hdr">${x}</div>`).join("");
@@ -348,6 +386,7 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
     el.insertAdjacentHTML("beforeend",`<div class="hdr">${r}</div>`);
     for(let c=0;c<size;c++){
       const i=(r-1)*size+c,coord=cols[c]+r,d=document.createElement("div"),rev=revealed.includes(coord),tile=board?.[i]||null;
+      d.dataset.coord=coord;
       d.className="cell "+(setup?"setup":board?"revealed":rev?"revealed":"hidden");
       if(!setup&&board&&rev&&coord!==current)d.classList.add("used");
       if(!setup&&board&&coord===current)d.classList.add("active");
@@ -362,7 +401,6 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
         d.innerHTML=`<span style="font-size:${size>=9?9:11}px;text-align:center">${tile?.label||"?"}</span>`;
         if(locateMode){
           d.classList.add("locateable");
-          d.onclick=()=>clickRoundCoord(coord,d);
         }else if(chooseMode && !rev && !choosingNow){
           d.classList.add("chooseable");
           d.onclick=()=>chooseCoord(coord,d);
@@ -549,6 +587,7 @@ function renderPlayer(){
   updateGameBadge();
   $("playerTitle").textContent=p.name+"'s treasure map";
   $("cash").textContent=money(p.cash);$("bank").textContent=money(p.bank);
+  $("sideCash").textContent=money(p.cash);$("sideBank").textContent=money(p.bank);$("sideTotal").textContent=money(p.total);
   $("shield").textContent=p.shields;$("mirror").textContent=p.mirrors;
 
   const setup=g.status==="lobby"&&!p.board_locked;
@@ -583,7 +622,6 @@ function renderPlayer(){
   );
 
   if(setup)renderTray();
-  feed($("studentFeed"),g.public_feed);
   renderAction();
 
   if(g.status==="finished"){
@@ -730,6 +768,16 @@ function renderAction(){
   }
 }
 
+function clearStudentGame(message=""){
+  token="";
+  sessionStorage.removeItem("pirate_join_token");
+  state=null;lastFeedback=null;clearMathTimer();hideModal();
+  $("playerView").style.display="none";
+  $("joinView").style.display="block";
+  $("joinError").textContent=message;
+  history.replaceState({}, "", location.pathname);
+}
+
 async function load(){
   try{
     if(teacherMode){
@@ -739,18 +787,28 @@ async function load(){
         const staleReady=["ready","ready_chosen"].includes(fresh.game.status) &&
           Number(fresh.game.round_number)<=Number(advanceFromRound);
         if(!staleReady)state=fresh;
-      }else{
+      }else if(fresh?.game){
+        state=fresh;
+      }else if(state?.game?.status!=="finished"){
         state=fresh;
       }
       renderTeacher();
     }
     else if(token){
       const fresh=await post({action:"pirate_player_state",join_token:token});
+      if(fresh?.ended||!fresh?.game){
+        clearStudentGame("That Pirate Game has ended.");
+        return;
+      }
       const typing=document.activeElement&&document.activeElement.id==="ans";
       state=fresh;
       if(!typing)renderPlayer();
     }
-  }catch(e){console.error(e)}
+  }catch(e){
+    if(!teacherMode&&token&&/Player session not found|Game not found/i.test(String(e.message||""))){
+      clearStudentGame("That Pirate Game has ended.");
+    }else console.error(e)
+  }
 }
 
 $("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;renderTeacher()};
@@ -865,15 +923,23 @@ async function mathTimeout(){
   lastFeedback=state.feedback||null;lastMathKey="";renderPlayer();
 }
 async function clickRoundCoord(coord,cell){
+  if(coordSubmitting)return;
+  coordSubmitting=true;
   if(cell)cell.classList.add("choice-pending");
   try{
     state=await post({action:"pirate_click_coord",join_token:token,coord});
     lastFeedback=state.feedback||null;
     renderPlayer();
     if(lastFeedback?.kind==="coord"&&!lastFeedback.correct){
-      setTimeout(()=>{if(lastFeedback?.kind==="coord"){lastFeedback=null;renderPlayer()}},850);
+      setTimeout(()=>{if(lastFeedback?.kind==="coord"){lastFeedback=null;renderPlayer()}},900);
     }
-  }catch(e){console.error(e)}
+  }catch(e){
+    console.error(e);
+    lastFeedback={correct:false,kind:"coord",message:e.message||"That tap did not register. Try again."};
+    renderPlayer();
+  }finally{
+    coordSubmitting=false;
+  }
 }
 $("leaveGame").onclick=async()=>{
   if(!confirm("Leave this Pirate Game? You can rejoin later with the same game code and the same name."))return;
