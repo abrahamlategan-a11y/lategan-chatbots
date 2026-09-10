@@ -18,13 +18,63 @@ body{overflow:hidden}.app{height:100vh;display:flex;flex-direction:column}.top{b
 .modal{position:fixed;inset:0;background:rgba(12,38,29,.62);display:none;place-items:center;padding:18px;z-index:70}.modal.on{display:grid}.zoom-card{width:min(1100px,96vw);height:min(820px,92vh);background:#fff;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.25)}.zoom-head{height:52px;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--line);gap:8px}.zoom-head strong{font-size:14px}.zoom-actions{display:flex;gap:6px}.zoom-body{flex:1;min-height:0;position:relative;padding:10px;background:#e9efeb}#zoomCanvas{width:100%;height:100%;background:#fff;border-radius:10px;display:block}.zoom-frost{position:absolute;inset:10px;background:linear-gradient(135deg,#e8f0f6,#d6e4ef);border-radius:10px;display:grid;place-items:center;text-align:center;font-size:20px;font-weight:950;color:#49697f}
 .count{font-size:11px;color:var(--muted);font-weight:800}
 @media(max-width:700px){body{overflow:auto}.app{height:auto;min-height:100vh}.grid{overflow:visible;grid-template-columns:1fr!important;grid-auto-rows:260px!important}}
+
+.guest-float{
+  position:fixed;right:14px;top:68px;width:360px;z-index:55;
+  background:#fff;border:1px solid var(--line);border-radius:16px;
+  box-shadow:0 18px 44px rgba(18,48,37,.18);display:none;overflow:hidden
+}
+.guest-float.on{display:block}
+.guest-float.min .guest-float-body{display:none}
+.guest-float-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 11px;border-bottom:1px solid var(--line);background:#fafcfb
+}
+.guest-float.min .guest-float-head{border-bottom:0}
+.guest-float-head strong{display:block;font-size:12px}
+.guest-float-head span{display:block;font-size:9px;color:var(--muted);margin-top:1px}
+.guest-float-actions{display:flex;gap:4px}
+.mini-btn{
+  width:28px;height:28px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;color:var(--ink);font-weight:950;cursor:pointer;padding:0
+}
+.guest-float-body{display:grid;grid-template-columns:132px 1fr;gap:12px;padding:12px}
+.guest-qr-wrap{
+  width:132px;height:132px;border-radius:12px;border:1px solid var(--line);
+  background:#fff;display:grid;place-items:center;overflow:hidden
+}
+.guest-qr-wrap img{width:124px;height:124px;display:block}
+.guest-details{min-width:0}
+.guest-label{font-size:8px;font-weight:950;color:var(--muted);letter-spacing:.08em;margin-top:2px}
+.guest-code{font-size:26px;font-weight:950;letter-spacing:.13em;margin:2px 0 9px}
+.guest-url{font-size:10px;font-weight:800;word-break:break-all;line-height:1.25}
+.guest-tip{font-size:9px;color:var(--muted);line-height:1.35;margin-top:8px}
+.guest-projector{
+  position:fixed;inset:0;z-index:95;background:rgba(13,38,30,.84);
+  display:none;place-items:center;padding:24px
+}
+.guest-projector.on{display:grid}
+.guest-projector-card{
+  width:min(760px,92vw);background:#fff;border-radius:26px;padding:34px;
+  text-align:center;position:relative;box-shadow:0 30px 90px rgba(0,0,0,.35)
+}
+.project-close{
+  position:absolute;right:16px;top:14px;width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--line);background:#fff;font-size:24px;font-weight:900;cursor:pointer
+}
+.project-title{font-size:34px;font-weight:950;letter-spacing:-.035em;margin-bottom:18px}
+.guest-projector-card img{width:min(350px,60vw);height:min(350px,60vw);object-fit:contain}
+.project-code{font-size:50px;font-weight:950;letter-spacing:.16em;margin-top:8px}
+.project-url{font-size:16px;font-weight:850;margin-top:7px;word-break:break-all}
+.project-note{font-size:13px;color:var(--muted);margin-top:10px}
+
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
     <div class="brand"><div class="logo">LH</div><div class="title"><strong>Student Whiteboards</strong><span>Live classroom view</span></div></div>
-    <div class="top-actions"><span class="count" id="countText"></span><div class="code" id="joinCode" style="display:none"></div><button class="btn" id="guestJoinInfo" style="display:none">Guest join</button><button class="btn" onclick="location.href='../teacher/'">⌂ Hub</button></div>
+    <div class="top-actions"><span class="count" id="countText"></span><div class="code" id="joinCode" style="display:none"></div><button class="btn" id="guestJoinInfo" style="display:none">▣ Guest Join</button><button class="btn" onclick="location.href='../teacher/'">⌂ Hub</button></div>
   </div>
 
   <section class="empty" id="emptyState"><div class="empty-card"><div class="ico">✎</div><h1>Start a whiteboard session</h1><p>Students in your class can join from their Student Hub. Anyone from another class can also join by entering the code shown here.</p><div class="start-options"><button class="btn primary" id="startNormal">Start session</button><button class="btn frost-on" id="startFrost">❄️ Start frosted</button></div></div></section>
@@ -44,14 +94,41 @@ body{overflow:hidden}.app{height:100vh;display:flex;flex-direction:column}.top{b
 
 <div class="toast-stack" id="toasts"></div>
 
-<div class="modal" id="guestModal"><div class="zoom-card" style="width:min(620px,94vw);height:auto">
-  <div class="zoom-head"><strong>Guest join</strong><button class="btn dark" id="closeGuestModal">Close</button></div>
-  <div style="padding:20px">
-    <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Students without a Learning Hub account can join this session as a guest.</p>
-    <div style="background:#f3f7f4;border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:10px"><strong style="display:block;font-size:11px;margin-bottom:4px">Guest page</strong><span id="guestUrl" style="font-size:13px;word-break:break-all"></span></div>
-    <div style="background:#f3f7f4;border:1px solid var(--line);border-radius:12px;padding:13px"><strong style="display:block;font-size:11px;margin-bottom:4px">Session code</strong><span id="guestCode" style="font-size:24px;font-weight:950;letter-spacing:.14em"></span></div>
+
+<div class="guest-float" id="guestFloat">
+  <div class="guest-float-head">
+    <div>
+      <strong>Guest Join</strong>
+      <span>For students without a Learning Hub account</span>
+    </div>
+    <div class="guest-float-actions">
+      <button class="mini-btn" id="guestProject" title="Project large">⛶</button>
+      <button class="mini-btn" id="guestMinimise" title="Minimise">−</button>
+      <button class="mini-btn" id="guestClose" title="Close">×</button>
+    </div>
   </div>
-</div></div>
+  <div class="guest-float-body">
+    <div class="guest-qr-wrap"><img id="guestQr" alt="Guest join QR code"></div>
+    <div class="guest-details">
+      <div class="guest-label">JOIN CODE</div>
+      <div class="guest-code" id="guestCode"></div>
+      <div class="guest-label">GUEST PAGE</div>
+      <div class="guest-url" id="guestUrl"></div>
+      <div class="guest-tip">Scan the QR or open the guest page and enter the code.</div>
+    </div>
+  </div>
+</div>
+
+<div class="guest-projector" id="guestProjector">
+  <div class="guest-projector-card">
+    <button class="project-close" id="guestProjectClose">×</button>
+    <div class="project-title">Join our whiteboard</div>
+    <img id="guestProjectQr" alt="Guest join QR code">
+    <div class="project-code" id="guestProjectCode"></div>
+    <div class="project-url" id="guestProjectUrl"></div>
+    <div class="project-note">No account needed · Enter your name and this code</div>
+  </div>
+</div>
 
 <div class="modal" id="zoomModal"><div class="zoom-card">
   <div class="zoom-head"><strong id="zoomName">Student</strong><div class="zoom-actions"><button class="btn" id="revealOne">Reveal this board</button><button class="btn" id="saveOne">Save image</button><button class="btn" id="prevBoard">←</button><button class="btn" id="nextBoard">→</button><button class="btn dark" id="closeZoom">Close</button></div></div>
@@ -135,13 +212,36 @@ function enterSession(){
   $("emptyState").style.display="none";$("session").classList.add("on");$("joinCode").style.display="";$("joinCode").textContent=session.join_code;$("guestJoinInfo").style.display="";
   updateFrostButton();clearInterval(pollTimer);pollTimer=setInterval(refresh,1000);
 }
+function guestJoinUrl(){
+  return location.origin+location.pathname.replace(/\/tewhiteboard\/$/,"/wbjoin/");
+}
+function guestQrUrl(){
+  const target=guestJoinUrl();
+  return "https://quickchart.io/qr?size=360&margin=1&text="+encodeURIComponent(target);
+}
+function refreshGuestJoinPanel(){
+  if(!session)return;
+  const url=guestJoinUrl(),qr=guestQrUrl();
+  $("guestCode").textContent=session.join_code||"";
+  $("guestUrl").textContent=url;
+  $("guestQr").src=qr;
+  $("guestProjectCode").textContent=session.join_code||"";
+  $("guestProjectUrl").textContent=url;
+  $("guestProjectQr").src=qr;
+}
 $("guestJoinInfo").onclick=()=>{
-  $("guestUrl").textContent=location.origin+location.pathname.replace(/\/tewhiteboard\/$/,"/wbjoin/");
-  $("guestCode").textContent=session?.join_code||"";
-  $("guestModal").classList.add("on");
+  refreshGuestJoinPanel();
+  $("guestFloat").classList.add("on");
+  $("guestFloat").classList.remove("min");
 };
-$("closeGuestModal").onclick=()=>$("guestModal").classList.remove("on");
-$("guestModal").onclick=e=>{if(e.target===$("guestModal"))$("guestModal").classList.remove("on")};
+$("guestMinimise").onclick=()=>$("guestFloat").classList.toggle("min");
+$("guestClose").onclick=()=>$("guestFloat").classList.remove("on");
+$("guestProject").onclick=()=>{
+  refreshGuestJoinPanel();
+  $("guestProjector").classList.add("on");
+};
+$("guestProjectClose").onclick=()=>$("guestProjector").classList.remove("on");
+$("guestProjector").onclick=e=>{if(e.target===$("guestProjector"))$("guestProjector").classList.remove("on")};
 
 function updateFrostButton(){
   const on=Number(session?.frost_mode)===1;
@@ -194,7 +294,11 @@ $("frostBtn").onclick=async()=>{
 };
 async function revealOne(id){try{await post({action:"teacher_whiteboard_reveal_one",teacher_code:teacherCode,session_id:session.id,participant_id:id});const p=participants.find(x=>x.id===id);if(p)p.revealed=1;renderGrid();renderZoom()}catch(e){alert(e.message)}}
 $("revealOne").onclick=()=>revealOne(zoomId);
-function openZoom(id){zoomId=id;$("zoomModal").classList.add("on");renderZoom()}
+function openZoom(id){
+  $("guestFloat").classList.remove("on");
+  $("guestProjector").classList.remove("on");
+  zoomId=id;$("zoomModal").classList.add("on");renderZoom()
+}
 function renderZoom(){
   const p=participants.find(x=>x.id===zoomId);if(!p)return;
   $("zoomName").textContent=p.display_name;$("revealOne").style.display=session.frost_mode&&!p.revealed?"":"none";
@@ -203,7 +307,14 @@ function renderZoom(){
 }
 $("closeZoom").onclick=()=>{$("zoomModal").classList.remove("on");zoomId=0};
 $("zoomModal").onclick=e=>{if(e.target===$("zoomModal")){$("zoomModal").classList.remove("on");zoomId=0}};
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("zoomModal").classList.remove("on");zoomId=0}});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"){
+    $("guestProjector").classList.remove("on");
+    $("guestFloat").classList.remove("on");
+    $("zoomModal").classList.remove("on");
+    zoomId=0
+  }
+});
 function stepZoom(dir){if(!participants.length)return;let i=participants.findIndex(x=>x.id===zoomId);i=(i+dir+participants.length)%participants.length;zoomId=participants[i].id;renderZoom()}
 $("prevBoard").onclick=()=>stepZoom(-1);$("nextBoard").onclick=()=>stepZoom(1);
 
