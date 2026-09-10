@@ -27,6 +27,16 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 .job-layout{display:grid;grid-template-columns:260px 1fr;gap:14px}.pool{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);padding:13px;min-height:300px}.pool h3{margin:0 0 4px}.pool p{margin:0 0 10px;font-size:11px;color:var(--muted)}.pool-list{display:flex;flex-direction:column;gap:6px}.pool-student{display:flex;justify-content:space-between;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:7px 8px;font-size:12px;font-weight:800}.pool-student select{min-width:105px;border:1px solid var(--line);border-radius:8px;padding:5px;font-size:11px}
 .job-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.job-card{background:#fff;border:1px solid var(--line);border-radius:17px;box-shadow:var(--shadow);overflow:hidden;min-height:180px}.job-head{padding:11px 12px;background:#e5eee7;display:grid;grid-template-columns:1fr auto;gap:8px}.job-head input{border:0;background:transparent;font-weight:950;font-size:16px;color:var(--ink);outline:none;min-width:0}.job-members{padding:11px;display:flex;gap:7px;flex-wrap:wrap}.remove-group{border:0;background:transparent;color:#9a554f;cursor:pointer;font-weight:900}
 .saved{font-size:11px;color:var(--muted);margin-left:auto}@media(max-width:850px){.groups-grid,.job-grid{grid-template-columns:1fr}.job-layout{grid-template-columns:1fr}.pool-list{display:grid;grid-template-columns:repeat(2,1fr)}}@media print{.top,.hero,.tabs,.toolbar,.pool{display:none!important}.shell{max-width:none;padding:0}.view{display:none!important}.view.on{display:block!important}.groups-grid,.job-grid{grid-template-columns:repeat(2,1fr)}body{background:#fff}.group-card,.job-card{box-shadow:none;break-inside:avoid}}
+
+.points-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.point-card{border:1px solid var(--line);border-radius:14px;padding:11px;background:#fafcfb}
+.point-card h4{margin:0 0 7px;font-size:13px}
+.point-score-row{display:flex;align-items:center;gap:7px}
+.point-score-row input{width:72px;border:1px solid var(--line);border-radius:9px;padding:8px 9px;font-weight:900;text-align:center}
+.point-total{margin-top:8px;font-size:11px;color:var(--muted)}
+.point-total strong{color:var(--ink);font-size:16px}
+#pointsPanel.off{opacity:.55}
+@media(max-width:850px){.points-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -70,6 +80,23 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
       <div class="saved" id="saveState">Saved automatically</div>
     </div>
 
+    <div class="panel" id="pointsPanel" style="margin-bottom:14px">
+      <div class="ph">
+        <div><h2>Group Points</h2><div style="font-size:11px;color:var(--muted);margin-top:2px">Score each group out of 10 each day. Totals continue until you reset them.</div></div>
+        <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:11px;font-weight:900;display:flex;align-items:center;gap:6px"><input type="checkbox" id="pointsEnabled" checked> On</label>
+          <button class="btn danger" id="resetPoints">Reset totals</button>
+        </div>
+      </div>
+      <div class="pb">
+        <div class="points-grid" id="pointsGrid"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:12px">
+          <span id="pointsSaved" style="font-size:11px;color:var(--muted)"></span>
+          <button class="btn primary" id="savePoints">Save today's points</button>
+        </div>
+      </div>
+    </div>
+
     <div class="job-layout">
       <aside class="pool">
         <h3>Assign students</h3>
@@ -85,7 +112,7 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const $=id=>document.getElementById(id);
-let students=[],jobGroups=[],quickGroups=[],saveTimer=null;
+let students=[],jobGroups=[],quickGroups=[],saveTimer=null,pointsState=null;
 
 async function post(p){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
@@ -165,6 +192,58 @@ $("toggleAll").onclick=()=>{
   boxes.forEach(x=>x.checked=!all);$("toggleAll").textContent=all?"Select all":"Deselect all";updateQuickSummary();
 };
 
+
+function todayKey(){
+  return new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Perth",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+}
+async function loadPoints(){
+  try{
+    pointsState=await post({action:"teacher_job_points_state",teacher_code:teacherCode,date_key:todayKey()});
+    renderPoints();
+  }catch(e){console.warn(e)}
+}
+function renderPoints(){
+  if(!pointsState)return;
+  $("pointsEnabled").checked=!!pointsState.enabled;
+  $("pointsPanel").classList.toggle("off",!pointsState.enabled);
+  $("savePoints").disabled=!pointsState.enabled;
+  const todayMap=new Map((pointsState.today||[]).map(x=>[String(x.group_id),Number(x.score)]));
+  const totalMap=new Map((pointsState.totals||[]).map(x=>[String(x.group_id),Number(x.total)||0]));
+  $("pointsGrid").innerHTML=jobGroups.map(g=>{
+    const score=todayMap.has(String(g.id))?todayMap.get(String(g.id)):"";
+    const total=totalMap.get(String(g.id))||0;
+    return `<div class="point-card"><h4>${esc(g.name)}</h4><div class="point-score-row"><input class="point-input" data-id="${esc(g.id)}" type="number" min="0" max="10" step="0.1" value="${score}"><span>/ 10</span></div><div class="point-total">Running total: <strong>${total.toFixed(1)}</strong></div></div>`;
+  }).join("")||'<div class="empty">Create job groups first.</div>';
+  document.querySelectorAll(".point-input").forEach(i=>i.disabled=!pointsState.enabled);
+}
+$("pointsEnabled").onchange=async()=>{
+  try{
+    await post({action:"teacher_job_points_toggle",teacher_code:teacherCode,enabled:$("pointsEnabled").checked?1:0});
+    pointsState.enabled=$("pointsEnabled").checked;renderPoints();
+  }catch(e){alert(e.message)}
+};
+$("savePoints").onclick=async()=>{
+  const scores=[...document.querySelectorAll(".point-input")].map(i=>({group_id:i.dataset.id,score:i.value})).filter(x=>x.score!=="");
+  for(const x of scores){
+    const n=Number(x.score);
+    if(!Number.isFinite(n)||n<0||n>10||Math.round(n*10)!==n*10){alert("Points must be from 0 to 10, with at most one decimal place.");return}
+    x.score=n;
+  }
+  try{
+    await post({action:"teacher_job_points_save",teacher_code:teacherCode,date_key:todayKey(),scores});
+    $("pointsSaved").textContent="Saved";
+    await loadPoints();
+  }catch(e){alert(e.message)}
+};
+$("resetPoints").onclick=async()=>{
+  if(!confirm("Reset all running Group Points totals? This starts a fresh scoring cycle but keeps your job groups."))return;
+  try{
+    await post({action:"teacher_job_points_reset",teacher_code:teacherCode});
+    $("pointsSaved").textContent="Totals reset";
+    await loadPoints();
+  }catch(e){alert(e.message)}
+};
+
 function sanitiseJobGroups(){
   const valid=new Set(activeStudents().map(s=>Number(s.id))),seen=new Set();
   jobGroups.forEach(g=>{
@@ -205,7 +284,7 @@ function renderJobs(){
   });
   document.querySelectorAll(".member-chip").forEach(ch=>ch.onclick=()=>{
     const id=Number(ch.dataset.id);jobGroups.forEach(g=>g.student_ids=(g.student_ids||[]).filter(x=>Number(x)!==id));renderJobs();queueSave();
-  });
+  });  if(pointsState)renderPoints();
 }
 function queueSave(){
   $("saveState").textContent="Saving…";
@@ -247,6 +326,7 @@ async function load(){
     renderQuickStudentChecks();
     renderQuickGroups();
     renderJobs();
+    await loadPoints();
   }catch(e){alert(e.message);location.href="../teacher/"}
 }
 load();
