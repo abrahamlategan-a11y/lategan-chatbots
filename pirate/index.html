@@ -177,13 +177,40 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   cursor:pointer!important;position:relative;touch-action:manipulation!important;
   outline:3px solid rgba(23,97,71,.22)!important;outline-offset:-3px!important
 }
-.cell.locateable:before{
-  content:attr(data-coord);position:absolute;left:5px;top:4px;
-  background:rgba(255,255,255,.92);color:#17352b;border-radius:6px;
-  padding:2px 4px;font-size:9px;font-weight:950;line-height:1;z-index:5
-}
 .cell.locateable:hover,.cell.locateable:active{outline-color:#176147!important;transform:scale(.98)}
 .player-board.locating{outline:4px solid rgba(23,97,71,.16);border-radius:14px}
+
+
+.player-board .cell.hidden{
+  background:linear-gradient(145deg,#275247,#183f35);
+  color:#fff;
+  font-size:clamp(12px,2.2vw,18px);
+  font-weight:950;
+  letter-spacing:.03em;
+}
+.player-board .cell.locateable{
+  cursor:pointer!important;
+  outline:3px solid rgba(232,201,108,.55)!important;
+  outline-offset:-3px!important;
+}
+.player-board .cell.locateable:hover,
+.player-board .cell.locateable:active{
+  background:linear-gradient(145deg,#356c5d,#1f5143)!important;
+  outline-color:#f0cf6c!important;
+}
+.player-board.locating::before{
+  content:"Tap the square that matches the grid reference above";
+  display:block;
+  grid-column:1/-1;
+  background:#fff4cf;
+  color:#5d4913;
+  border:1px solid #ead28a;
+  border-radius:9px;
+  padding:6px 9px;
+  font-size:10px;
+  font-weight:900;
+  text-align:center;
+}
 
 </style>
 </head>
@@ -398,8 +425,18 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
         d.ondrop=async e=>{e.preventDefault();if(!dragInfo)return;const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
         d.onclick=async()=>{if(!dragInfo){if(tile){dragInfo={from_type:"slot",from_index:i};d.classList.add("selected")}return}const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
       }else if(board){
-        d.innerHTML=`<span style="font-size:${size>=9?9:11}px;text-align:center">${tile?.label||"?"}</span>`;
-        if(locateMode){
+        // During gameplay the treasure layout stays hidden.
+        // Students identify the announced grid reference first.
+        // Only completed/revealed coordinates show their actual tile.
+        if(rev){
+          d.className="cell revealed";
+          d.innerHTML=`<span style="font-size:${size>=9?9:11}px;text-align:center">${tile?.label||"?"}</span>`;
+        }else{
+          d.className="cell hidden";
+          d.textContent=coord;
+        }
+
+        if(locateMode && !rev){
           d.classList.add("locateable");
         }else if(chooseMode && !rev && !choosingNow){
           d.classList.add("chooseable");
@@ -705,7 +742,7 @@ function renderAction(){
 
   if(lastFeedback&&lastFeedback.kind==="coord"&&!lastFeedback.correct){
     hideModal();
-    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${g.current_coord}</span><div class="coord-error">${lastFeedback.message}</div><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the matching square on your map. Every wrong tap costs Pirate Tax.</div></div>`;
+    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${g.current_coord}</span><div class="coord-error">${lastFeedback.message}</div><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the square with this grid reference. Every wrong tap costs Pirate Tax.</div></div>`;
     return;
   }
 
@@ -731,7 +768,7 @@ function renderAction(){
 
   if(t.type==="locate"){
     clearMathTimer();hideModal();
-    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${t.coord}</span><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the matching square on your map. Every wrong tap costs Pirate Tax.</div></div>`;
+    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${t.coord}</span><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the square with this grid reference. Every wrong tap costs Pirate Tax.</div></div>`;
     return
   }
 
@@ -925,7 +962,10 @@ async function mathTimeout(){
 async function clickRoundCoord(coord,cell){
   if(coordSubmitting)return;
   coordSubmitting=true;
-  if(cell)cell.classList.add("choice-pending");
+  if(cell){
+    cell.classList.add("choice-pending");
+    cell.style.opacity=".65";
+  }
   try{
     state=await post({action:"pirate_click_coord",join_token:token,coord});
     lastFeedback=state.feedback||null;
