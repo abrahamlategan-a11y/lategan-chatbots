@@ -246,7 +246,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 <div class="modal" id="botModal">
   <div class="modal-card">
     <div class="modal-head">
-      <div><h2 id="botModalTitle">Create chatbot</h2><p>Tell Chatty what the task is and how you want it to behave.</p></div>
+      <div><h2 id="botModalTitle">Create chatbot</h2><p>Set the student-facing description first, then define the project, coaching behaviour, guardrails, steps and opening message.</p></div>
       <button class="close" id="closeBotModal">×</button>
     </div>
     <div class="formgrid">
@@ -254,12 +254,12 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
       <div class="field"><label>Subject</label><input id="botSubject"></div>
       <div class="field"><label>Year level</label><input id="botYear"></div>
       <div class="field"><label>Icon</label><input id="botIcon"></div>
-      <div class="field full"><label>Student-facing description</label><textarea id="botDescription"></textarea></div>
-      <div class="field full"><label>What are students doing?</label><textarea id="botTask" class="tall"></textarea></div>
-      <div class="field full"><label>How should Chatty help?</label><textarea id="botHelp" class="tall"></textarea></div>
-      <div class="field full"><label>What must Chatty NOT do?</label><textarea id="botDont" class="tall"></textarea></div>
-      <div class="field full"><label>Suggested task steps</label><textarea id="botSteps"></textarea></div>
-      <div class="field full"><label>Opening message</label><textarea id="botOpening"></textarea></div>
+      <div class="field full"><label>Student-facing description</label><textarea id="botDescription"></textarea><div class="help">Short, friendly explanation for kids.</div></div>
+      <div class="field full"><label>1. What are students doing?</label><textarea id="botTask" class="tall"></textarea><div class="help">The full project context and non-negotiables.</div></div>
+      <div class="field full"><label>2. How should Chatty help?</label><textarea id="botHelp" class="tall"></textarea><div class="help">The core coaching behaviour and the important learning principles.</div></div>
+      <div class="field full"><label>3. What must Chatty NOT do?</label><textarea id="botDont" class="tall"></textarea><div class="help">Guardrails — especially what Chatty must never do for the student.</div></div>
+      <div class="field full"><label>4. Suggested task steps</label><textarea id="botSteps"></textarea><div class="help">The project sequence and checkpoints.</div></div>
+      <div class="field full"><label>5. Opening message</label><textarea id="botOpening"></textarea><div class="help">A simple student entry point that gets them started.</div></div>
       <div class="field full">
         <div class="toggle-row">
           <div><strong style="font-size:13px">Published to students</strong><div class="help" style="margin-top:2px">Students can only see bots that are published.</div></div>
