@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub</title>
+<title>Pirate Game · Learning Hub · v16</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -397,15 +397,9 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
   el.classList.toggle("teacher-board",teacherMode);
   el.classList.toggle("player-board",!teacherMode);
   el.classList.toggle("locating",!!locateMode);
+  // Each playable cell owns its click handler. Avoid delegated pointer/touch
+  // handlers here: on iPad they can double-fire or race against polling.
   el.onpointerup=null;
-  if(locateMode&&!teacherMode){
-    el.onpointerup=(e)=>{
-      const cell=e.target.closest(".cell.locateable");
-      if(!cell||!el.contains(cell))return;
-      e.preventDefault();
-      clickRoundCoord(cell.dataset.coord,cell);
-    };
-  }
   el.style.gridTemplateColumns=`34px repeat(${size},minmax(${teacherMode?0:cellMin}px,1fr))`;
   el.style.minWidth=teacherMode?"0":`${34+size*(cellMin+6)}px`;
   el.innerHTML='<div></div>'+[...cols].map(x=>`<div class="hdr">${x}</div>`).join("");
@@ -438,9 +432,20 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
 
         if(locateMode && !rev){
           d.classList.add("locateable");
+          d.onclick=(e)=>{
+            e.preventDefault();
+            e.stopPropagation();
+            clickRoundCoord(coord,d);
+          };
+          d.onpointerup=null;
+          d.ontouchend=null;
         }else if(chooseMode && !rev && !choosingNow){
           d.classList.add("chooseable");
-          d.onclick=()=>chooseCoord(coord,d);
+          d.onclick=(e)=>{
+            e.preventDefault();
+            e.stopPropagation();
+            chooseCoord(coord,d);
+          };
         }
       } else d.textContent=coord;
       el.appendChild(d);
@@ -742,7 +747,7 @@ function renderAction(){
 
   if(lastFeedback&&lastFeedback.kind==="coord"&&!lastFeedback.correct){
     hideModal();
-    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${g.current_coord}</span><div class="coord-error">${lastFeedback.message}</div><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the square with this grid reference. Every wrong tap costs Pirate Tax.</div></div>`;
+    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${g.current_coord}</span><div class="coord-error">${lastFeedback.message}</div><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the matching square on YOUR grid. Nothing is selected for you. Every wrong tap costs Pirate Tax.</div></div>`;
     return;
   }
 
@@ -768,7 +773,7 @@ function renderAction(){
 
   if(t.type==="locate"){
     clearMathTimer();hideModal();
-    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${t.coord}</span><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the square with this grid reference. Every wrong tap costs Pirate Tax.</div></div>`;
+    a.innerHTML=`<div class="locate-banner">Find this grid reference<span class="coord">${t.coord}</span><div style="font-size:11px;margin-top:6px;color:var(--muted)">Tap the matching square on YOUR grid. Nothing is selected for you. Every wrong tap costs Pirate Tax.</div></div>`;
     return
   }
 
@@ -832,6 +837,9 @@ async function load(){
       renderTeacher();
     }
     else if(token){
+      // Never let the background poll overwrite a coordinate/choose submission.
+      // That race was what made a square appear selected but then do nothing.
+      if(coordSubmitting||choosingNow)return;
       const fresh=await post({action:"pirate_player_state",join_token:token});
       if(fresh?.ended||!fresh?.game){
         clearStudentGame("That Pirate Game has ended.");
@@ -849,7 +857,20 @@ async function load(){
 }
 
 $("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;renderTeacher()};
-$("startGame").onclick=async()=>{state=await post({action:"pirate_teacher_start",teacher_code:teacherCode,game_id:state.game.id});renderTeacher()};
+$("startGame").onclick=async()=>{
+  if($("startGame").disabled||!state?.game)return;
+  $("startGame").disabled=true;
+  $("startGame").textContent="Starting…";
+  try{
+    state=await post({action:"pirate_teacher_start",teacher_code:teacherCode,game_id:state.game.id});
+    renderTeacher();
+  }catch(e){
+    alert(e.message);
+  }finally{
+    $("startGame").disabled=false;
+    $("startGame").textContent="Start game";
+  }
+};
 
 
 
@@ -960,19 +981,39 @@ async function mathTimeout(){
   lastFeedback=state.feedback||null;lastMathKey="";renderPlayer();
 }
 async function clickRoundCoord(coord,cell){
-  if(coordSubmitting)return;
+  if(coordSubmitting||state?.player?.task?.type!=="locate")return;
   coordSubmitting=true;
+
+  document.querySelectorAll("#playerBoard .cell.locateable").forEach(c=>{
+    c.style.pointerEvents="none";
+  });
   if(cell){
     cell.classList.add("choice-pending");
-    cell.style.opacity=".65";
+    cell.style.opacity=".72";
   }
+
   try{
-    state=await post({action:"pirate_click_coord",join_token:token,coord});
-    lastFeedback=state.feedback||null;
-    renderPlayer();
+    const fresh=await post({action:"pirate_click_coord",join_token:token,coord});
+    state=fresh;
+    lastFeedback=fresh.feedback||null;
+
+    // Wrong coordinate: keep the same round live and let them try again.
     if(lastFeedback?.kind==="coord"&&!lastFeedback.correct){
-      setTimeout(()=>{if(lastFeedback?.kind==="coord"){lastFeedback=null;renderPlayer()}},900);
+      renderPlayer();
+      setTimeout(()=>{
+        if(lastFeedback?.kind==="coord"&&!lastFeedback.correct){
+          lastFeedback=null;
+          renderPlayer();
+        }
+      },850);
+      return;
     }
+
+    // Correct coordinate: clear coordinate feedback immediately.
+    // The backend has already revealed/appended the real tile action, so show
+    // maths/special action straight away instead of leaving a selected square.
+    if(lastFeedback?.kind==="coord"&&lastFeedback.correct)lastFeedback=null;
+    renderPlayer();
   }catch(e){
     console.error(e);
     lastFeedback={correct:false,kind:"coord",message:e.message||"That tap did not register. Try again."};
