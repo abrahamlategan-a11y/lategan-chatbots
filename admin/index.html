@@ -3,541 +3,231 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<title>Admin · Learning Hub</title>
 <style>
-:root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#e8f0ec,#f7f8f6 58%);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
-button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}.brand{display:flex;align-items:center;gap:10px;font-weight:900}.logo{width:42px;height:42px;border-radius:13px;background:var(--deep);color:#fff;display:grid;place-items:center}.back{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;text-decoration:none;color:var(--ink);font-size:12px;font-weight:800}
-.hero{background:var(--deep);color:#fff;border-radius:22px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}.hero h1{margin:0 0 5px;font-size:34px}.hero p{margin:0;color:#c9d9d2;font-size:13px}.gamebadge{font-size:13px;font-weight:900;background:rgba(255,255,255,.1);border-radius:14px;padding:10px 14px;text-align:center;white-space:nowrap}
-.grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(310px,.75fr);gap:18px}.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.ph{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.ph h2,.ph h3{margin:0;font-size:16px}.pb{padding:17px}
-.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 11px;font-size:12px;font-weight:850}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.danger{color:var(--red)}.controls{display:flex;gap:8px;flex-wrap:wrap}
-.boardwrap{overflow:auto;padding:8px}.board{display:grid;gap:6px}.board.teacher-board .cell{min-width:42px}.board.player-board .cell{min-width:42px}.hdr{display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--muted)}.cell{aspect-ratio:1;border:1px solid #ccd8d2;border-radius:11px;background:#f7faf8;display:grid;place-items:center;font-weight:900;user-select:none}.cell.hidden{background:linear-gradient(145deg,#275247,#183f35);color:#fff}.cell.revealed{background:var(--gold);border-color:#d5be72}.cell.current{outline:3px solid var(--green)}.cell.setup{cursor:pointer;font-size:11px;text-align:center;padding:4px}.cell.selected{outline:3px solid #b27b22}
-.lobby{display:grid;grid-template-columns:1fr 210px;gap:20px;align-items:center}.joincode{text-align:center;font-size:50px;font-weight:950;letter-spacing:.12em;margin:5px 0}.qrbox{display:grid;place-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px}.qrbox img,.qrbox canvas{max-width:180px!important;max-height:180px!important}.players{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:8px 10px;background:#edf4f0;border-radius:999px;font-size:12px;font-weight:850}.setupbox{background:#fff8df;border:1px solid #ead99a;border-radius:14px;padding:13px;font-size:12px;line-height:1.45;margin-bottom:13px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}.stat{background:var(--soft);border:1px solid var(--line);border-radius:13px;padding:11px}.lab{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:850}.val{font-size:21px;font-weight:900;margin-top:4px}.feed{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}.feeditem{border-left:3px solid var(--green);background:var(--soft);border-radius:8px;padding:9px 10px;font-size:12px}.actionbox{border:2px solid var(--green);border-radius:16px;padding:16px;margin-bottom:14px}.actionbox h3{margin:0 0 7px}.actionbox p{margin:0 0 12px;color:var(--muted);font-size:13px}.answerrow{display:flex;gap:8px}.answerrow input{flex:1;border:1px solid var(--line);border-radius:10px;padding:11px;font-size:18px;font-weight:850;color:#17211c;background:#ffffff;caret-color:#17211c}.targets{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.target{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px;font-weight:800;text-align:left}
-.joincard{width:min(480px,100%);margin:50px auto;background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:26px}.joincard h2{font-size:28px;margin:0 0 7px}.joincard p{color:var(--muted);font-size:13px;line-height:1.45}.field{margin-top:13px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px}.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:18px}.waiting{text-align:center;padding:38px}.waiting .big{font-size:52px}.waiting h2{margin:8px 0}.wait{padding:24px;text-align:center;color:var(--muted);font-size:13px}.publictag{display:inline-block;background:#fff0e9;color:#984738;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:900}.pod{display:flex;justify-content:space-between;border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:7px;font-weight:850}
-.cell.used{opacity:.48;position:relative;background:#efe6c7;border-color:#d5be72}.cell.used:after{content:"×";position:absolute;inset:0;display:grid;place-items:center;font-size:54px;line-height:1;color:#7f372f;font-weight:950;text-shadow:0 1px #fff}.cell.active{outline:4px solid #d39a23;box-shadow:0 0 0 5px rgba(211,154,35,.16);transform:scale(1.02);z-index:2}.modalback{position:fixed;inset:0;background:rgba(11,26,21,.58);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modalback.show{display:flex}.eventmodal{width:min(620px,100%);background:#fff;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.28);padding:24px;border:1px solid var(--line);animation:pop .18s ease-out}.eventmodal .eyebrow{font-size:11px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.eventmodal h2{font-size:30px;margin:7px 0 8px}.eventmodal p{font-size:15px;line-height:1.5;color:#53605a}.eventmodal .answerrow input{font-size:24px}.eventmodal .targets{margin-top:10px}.eventmodal .target{padding:13px}.tray{display:flex;flex-wrap:wrap;gap:7px;padding:10px;border:1px dashed #b9c9c1;border-radius:14px;background:#fbfcfb;min-height:62px}.tray-tile{padding:8px 9px;border:1px solid #cbd8d1;background:#fff;border-radius:9px;font-size:11px;font-weight:900;cursor:grab}.tray-tile.selected{outline:3px solid #b27b22}.countdown-banner{background:#fff1cf;border:1px solid #e2c36e;border-radius:14px;padding:12px 14px;font-weight:900;text-align:center;margin-bottom:12px}@keyframes pop{from{transform:scale(.93);opacity:.3}to{transform:scale(1);opacity:1}}
-
-/* v6: action animation from active grid square + strategic choose-next mode */
-.boardwrap{position:relative}
-.choose-banner{
-  display:none;
-  position:sticky;
-  top:8px;
-  z-index:12;
-  margin:0 auto 10px;
-  width:min(520px,calc(100% - 18px));
-  background:rgba(24,63,53,.96);
-  color:#fff;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:14px;
-  padding:11px 14px;
-  text-align:center;
-  font-size:13px;
-  font-weight:900;
-  box-shadow:0 10px 28px rgba(17,43,35,.22);
-  pointer-events:none;
+:root{
+  --bg:#f4f6f3;--panel:#fff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
+  --green:#2f6655;--green-dark:#234d40;--green-soft:#eaf2ee;
+  --red:#93493f;--red-soft:#fff0ed;--shadow:0 12px 34px rgba(29,48,39,.08)
 }
-.choose-banner.show{display:block}
-.cell.chooseable{
-  cursor:pointer!important;
-  outline:2px solid rgba(47,102,85,.32);
-  outline-offset:-2px;
-  transition:transform .12s ease,box-shadow .12s ease,outline-color .12s ease;
-}
-.cell.chooseable:hover,
-.cell.chooseable:active{
-  transform:scale(1.045);
-  outline-color:#2f6655;
-  box-shadow:0 7px 18px rgba(47,102,85,.2);
-  z-index:4;
-}
-.cell.chooseable::before{
-  content:"Tap";
-  position:absolute;
-  left:50%;
-  bottom:4px;
-  transform:translateX(-50%);
-  font-size:8px;
-  font-weight:950;
-  color:#2f6655;
-  background:rgba(255,255,255,.8);
-  border-radius:999px;
-  padding:2px 5px;
-}
-.eventmodal.from-grid{
-  transform-origin:center center;
-}
-.cell.action-source{
-  animation:sourcePulse .55s ease-out 1;
-  z-index:8;
-}
-@keyframes sourcePulse{
-  0%{transform:scale(1)}
-  45%{transform:scale(1.12);box-shadow:0 0 0 8px rgba(220,159,35,.28)}
-  100%{transform:scale(1.025)}
-}
-
-
-.playerrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 2px}
-.playerrow:last-child{border-bottom:0}.playerstatus{font-size:11px;color:var(--muted);text-align:right}.playerbtns{display:flex;gap:5px;margin-top:5px;justify-content:flex-end}.mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 7px;font-size:10px;font-weight:850;cursor:pointer}.mini.danger{color:#a23b37;border-color:#e5c4c0}
-.teacher-event{
-  position:fixed;inset:0;z-index:80;display:none;place-items:center;
-  background:rgba(7,25,20,.74);padding:24px;backdrop-filter:blur(3px)
-}
-.teacher-event.show{display:grid}
-.teacher-event-card{
-  width:min(820px,92vw);background:#fff;border:5px solid #e2bd57;border-radius:28px;
-  padding:34px;text-align:center;box-shadow:0 28px 80px rgba(0,0,0,.35);
-  animation:eventPop .26s cubic-bezier(.2,.9,.2,1)
-}
-.teacher-event-icon{font-size:76px;line-height:1;margin-bottom:10px}
-.teacher-event-text{font-size:clamp(28px,4vw,52px);font-weight:950;line-height:1.04;color:var(--deep)}
-@keyframes eventPop{from{transform:scale(.75) rotate(-2deg);opacity:.2}to{transform:scale(1);opacity:1}}
-.finalboard{display:none}.finalboard.show{display:block}.pod.big{font-size:18px;padding:12px 0}.pod.big:first-child{font-size:24px}
-:fullscreen .top{display:none}:fullscreen .shell{max-width:none;padding:12px}:fullscreen .hero{margin-bottom:10px;padding:13px 18px}:fullscreen .hero h1{font-size:27px}
-:fullscreen .grid2{grid-template-columns:minmax(0,1.4fr) minmax(280px,.6fr);gap:12px}:fullscreen .panel{border-radius:14px}
-:fullscreen #teacherBoard{max-height:calc(100vh - 140px)}
-.choice-pending{outline:4px solid #e2bd57!important;transform:scale(.96)}
-.difficulty-help{font-size:11px;color:var(--muted);margin-top:5px}
-
-@media(max-width:900px){.grid2,.lobby{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input{font:inherit}button{cursor:pointer}
+.shell{max-width:1180px;margin:auto;padding:26px 22px 60px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:22px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900}.logo{width:42px;height:42px;border-radius:13px;background:var(--green);color:#fff;display:grid;place-items:center}
+.back,.btn{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 13px;color:var(--ink);text-decoration:none;font-weight:800;font-size:13px}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.danger{color:var(--red);background:var(--red-soft)}
+.hero{background:var(--green-dark);color:#fff;border-radius:22px;padding:24px;margin-bottom:18px;box-shadow:var(--shadow)}
+.hero h1{margin:0 0 6px;font-size:34px}.hero p{margin:0;color:#cfe0d8}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.ph{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ph h2,.ph h3{margin:0}.pb{padding:18px}
+.field{margin-bottom:13px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px;color:#46504a}.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+.help{font-size:11px;color:var(--muted);line-height:1.45}.status{font-size:12px;color:var(--muted);margin-top:10px}
+.teacher{padding:15px 17px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+.teacher:last-child{border-bottom:0}.teacher h3{margin:0 0 4px;font-size:16px}.meta{font-size:12px;color:var(--muted)}
+.code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--green-soft);padding:4px 7px;border-radius:8px;font-weight:900}
+.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.small{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 9px;font-size:11px;font-weight:800}
+.small.danger{color:var(--red)}.badge{display:inline-block;margin-left:6px;padding:4px 7px;border-radius:999px;background:var(--green-soft);color:var(--green);font-size:9px;font-weight:900;text-transform:uppercase}
+.login{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;padding:20px;z-index:20}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}
+.login-card h2{margin:0 0 7px}.login-card p{color:var(--muted);font-size:13px}.error{color:var(--red);font-size:12px;margin-top:10px}
+.modal{position:fixed;inset:0;background:rgba(20,43,35,.55);display:none;place-items:center;padding:20px;z-index:30}.modal.show{display:grid}.modal-card{width:min(650px,100%);background:#fff;border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.22)}
+.modal-card h2{margin:0 0 8px}.emailbox{white-space:pre-wrap;background:#f8faf8;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px;line-height:1.55;margin-top:14px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.teacher{grid-template-columns:1fr}.actions{justify-content:flex-start}}
 </style>
 </head>
 <body>
+
+<div class="login" id="loginScreen">
+  <div class="login-card">
+    <div class="logo" style="margin-bottom:16px">LH</div>
+    <h2>Learning Hub Admin</h2>
+    <p>Admin access only.</p>
+    <div class="field"><label>Teacher code</label><input id="loginCode" placeholder="Enter admin teacher code"></div>
+    <button class="btn primary" id="loginBtn" style="width:100%">Sign in</button>
+    <div class="error" id="loginError"></div>
+  </div>
+</div>
+
 <div class="shell">
-  <div class="top"><div class="brand"><div class="logo">🏴‍☠️</div><div>Learning Hub · Class Games</div></div><a class="back" id="backLink" href="../">← Learning Hub</a></div>
-  <div class="hero"><div><h1>The Pirate Game</h1><p id="heroText">Hidden treasure. Public chaos. Do your own maths.</p></div><div class="gamebadge" id="gameBadge">Choose your game</div></div>
-
-  <div id="joinView" style="display:none">
-    <div class="joincard">
-      <h2>Join Pirate Game</h2>
-      <p>Enter the game code from your teacher, then your first name.</p>
-      <div class="field"><label>Game code</label><input id="joinCode" inputmode="numeric" maxlength="6" placeholder="482731"></div>
-      <div class="field"><label>First name</label><input id="joinName" maxlength="30" placeholder="Mia"></div>
-      <button class="btn primary" id="joinBtn" style="width:100%;margin-top:15px;padding:12px">Join game</button>
-      <div id="joinError" style="font-size:12px;color:var(--red);margin-top:10px"></div>
-    </div>
+  <div class="top">
+    <div class="brand"><div class="logo">LH</div><div>Learning Hub · Admin</div></div>
+    <a class="back" href="../teacher/">← Teacher Hub</a>
   </div>
 
-  <div id="teacherView" style="display:none">
-    <div id="teacherNoGame" class="panel"><div class="pb">
-      <div class="setupbox"><strong>Start a Pirate Game</strong><br>Students can join from any device with the QR code or 6-digit game code.</div>
-      <div class="controls" style="margin-bottom:14px;align-items:flex-end">
-        <label style="font-size:12px;font-weight:800">Board size
-          <select id="boardSize">
-            <option value="3">3 × 3 · very quick</option>
-            <option value="4">4 × 4</option>
-            <option value="5">5 × 5</option>
-            <option value="6">6 × 6</option>
-            <option value="7" selected>7 × 7 · classic</option>
-            <option value="8">8 × 8</option>
-            <option value="9">9 × 9</option>
-            <option value="10">10 × 10 · epic</option>
-          </select>
-        </label>
-        <label style="font-size:12px;font-weight:800">Maths difficulty
-          <select id="difficulty">
-            <option value="easy">Easy · friendly multiples</option>
-            <option value="medium" selected>Medium · classic values</option>
-            <option value="hard">Hard · awkward 2–3 digit values</option>
-            <option value="super">Super hard · large numbers</option>
-          </select>
-        </label>
-        <button class="btn primary" id="createGame">Create game</button>
-      </div>
-      <div class="difficulty-help">Board size controls how long the game lasts. There is no game timer. Cash values are varied and unique on every board.</div>
-    </div></div>
-
-    <div id="teacherGame" style="display:none">
-      <div class="grid2">
-        <div>
-          <div class="panel" id="lobbyPanel">
-            <div class="ph"><h2>Game lobby</h2><div class="controls"><button class="btn primary" id="startGame">Start game</button><button class="btn" id="teacherFullLobby">Full screen</button></div></div>
-            <div class="pb">
-              
-              <div class="lobby">
-                <div>
-                  <div class="lab">Game code</div>
-                  <div class="joincode" id="bigCode"></div>
-                  <div class="setupbox">Students scan the QR code, enter their first name, and appear here automatically.</div>
-                  <div class="players" id="lobbyPlayers"></div>
-                </div>
-                <div class="qrbox"><div id="joinQR"></div></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" id="boardPanel" style="display:none">
-            <div class="ph"><h2>Captain's board</h2><div class="controls"><button class="btn" id="teacherFull">Full screen</button><button class="btn primary" id="nextGame">Reveal next tile</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
-            <div class="boardwrap"><div class="board" id="teacherBoard"></div></div>
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:18px">
-          <div class="panel"><div class="ph"><h3>Players</h3><span id="roundStatus" class="publictag">Lobby</span></div><div class="pb"><div id="teacherPlayers"></div></div></div>
-          <div class="panel"><div class="ph"><h3>Public events</h3></div><div class="pb"><div class="feed" id="teacherFeed"></div></div></div><div class="panel finalboard" id="teacherFinish"><div class="ph"><h3>🏆 Final standings</h3></div><div class="pb" id="teacherPodium"></div></div>
-        </div>
-      </div>
-    </div>
+  <div class="hero">
+    <h1>Teacher administration</h1>
+    <p>Create colleague accounts, manage classes and control teacher access.</p>
   </div>
 
-  <div id="playerView" style="display:none">
-    <div class="grid2">
-      <div class="panel">
-        <div class="ph"><h2 id="playerTitle">Your treasure map</h2><div class="controls" id="setupControls"><button class="btn" id="fillRandom">🎲 Fill randomly</button><button class="btn primary" id="lockBoard">🔒 Lock board</button></div></div>
-        <div class="pb">
-          <div class="stats">
-            <div class="stat"><div class="lab">Cash</div><div class="val" id="cash">$0</div></div>
-            <div class="stat"><div class="lab">Bank</div><div class="val" id="bank">$0</div></div>
-            <div class="stat"><div class="lab">Shield</div><div class="val" id="shield">0</div></div>
-            <div class="stat"><div class="lab">Mirror</div><div class="val" id="mirror">0</div></div>
-          </div>
-          <div id="studentNotice" class="setupbox"></div>
-          <div id="actionArea"></div><div id="trayWrap" style="display:none"><div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 7px"><strong style="font-size:12px">Tile tray</strong><span id="placedCount" style="font-size:11px;color:var(--muted);font-weight:850">0 placed</span></div><div class="tray" id="tileTray"></div></div>
-        </div>
-        <div class="boardwrap"><div id="chooseBanner" class="choose-banner">🎯 Choose the next square — tap any unused square on your grid.</div><div class="board" id="playerBoard"></div></div>
+  <div class="grid">
+    <div class="panel">
+      <div class="ph"><h2>Add colleague</h2></div>
+      <div class="pb">
+        <div class="field"><label>Teacher name</label><input id="newName" placeholder="e.g. Sarah"></div>
+        <div class="field"><label>Class</label><input id="newClass" placeholder="e.g. 4M"></div>
+        <div class="field"><label>Year level</label><input id="newYear" placeholder="e.g. Year 4"></div>
+        <div class="field"><label>Teacher code (optional)</label><input id="newCode" placeholder="Leave blank to generate"></div>
+        <button class="btn primary" id="createBtn" style="width:100%">+ Create teacher account</button>
+        <div class="status" id="createStatus"></div>
+        <div class="help" style="margin-top:12px">New colleagues are created as normal teachers, not admins.</div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:18px">
-        <div class="panel"><div class="ph"><h3>Public events</h3></div><div class="pb"><div class="feed" id="studentFeed"></div></div></div>
-        <div class="panel" id="finishPanel" style="display:none"><div class="ph"><h3>Final standings</h3></div><div class="pb" id="podium"></div></div>
-      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><h2>Teachers</h2><button class="btn" id="refreshBtn">Refresh</button></div>
+      <div id="teacherList"><div class="pb help">Loading…</div></div>
     </div>
   </div>
 </div>
-<div class="teacher-event" id="teacherEvent"><div class="teacher-event-card"><div class="teacher-event-icon" id="teacherEventIcon">🏴‍☠️</div><div class="teacher-event-text" id="teacherEventText"></div></div></div><div class="modalback" id="eventModal"><div class="eventmodal" id="eventModalCard"></div></div>
+
+<div class="modal" id="emailModal">
+  <div class="modal-card">
+    <h2>Onboarding message</h2>
+    <div class="help">Copy this into an email or Teams message.</div>
+    <div class="emailbox" id="emailText"></div>
+    <div class="modal-actions">
+      <button class="btn" id="copyEmail">Copy message</button>
+      <button class="btn primary" id="closeEmail">Done</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
-const params=new URLSearchParams(location.search);
-const teacherMode=params.get("role")==="teacher";
-const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
-let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false;
-const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+let adminCode="",teachers=[];
 
-$("backLink").href=teacherMode?"../teacher/":"../student/";
-if(teacherMode)$("teacherView").style.display="block";
-else if(token)$("playerView").style.display="block";
-else $("joinView").style.display="block";
-
-const prefill=params.get("code");if(prefill)$("joinCode").value=prefill;
-
-async function post(p){
-  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
-  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d;
+async function post(payload){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||"Something went wrong.");
+  return d;
 }
 
-$("joinBtn").onclick=async()=>{
-  $("joinError").textContent="";
+async function login(){
+  $("loginError").textContent="";
+  const code=$("loginCode").value.trim();
+  if(!code)return;
   try{
-    const d=await post({action:"pirate_join_game",join_code:$("joinCode").value,display_name:$("joinName").value});
-    token=d.join_token;sessionStorage.setItem("pirate_join_token",token);
-    history.replaceState({}, "", location.pathname+"?code="+$("joinCode").value.replace(/\D/g,""));
-    $("joinView").style.display="none";$("playerView").style.display="block";await load();
-  }catch(e){$("joinError").textContent=e.message}
+    const d=await post({action:"teacher_login",teacher_code:code});
+    if(Number(d.teacher?.is_admin)!==1)throw new Error("This teacher account does not have admin access.");
+    adminCode=code;
+    localStorage.setItem("lategan_teacher_code",code);
+    $("loginScreen").style.display="none";
+    await loadTeachers();
+  }catch(e){$("loginError").textContent=e.message}
+}
+$("loginBtn").onclick=login;
+$("loginCode").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+
+async function loadTeachers(){
+  try{
+    const d=await post({action:"admin_list_teachers",teacher_code:adminCode});
+    teachers=d.teachers||[];
+    renderTeachers();
+  }catch(e){
+    $("teacherList").innerHTML=`<div class="pb error">${esc(e.message)}</div>`;
+  }
+}
+
+function renderTeachers(){
+  const box=$("teacherList");
+  if(!teachers.length){box.innerHTML='<div class="pb help">No teachers yet.</div>';return}
+  box.innerHTML=teachers.map(t=>`
+    <div class="teacher">
+      <div>
+        <h3>${esc(t.display_name)} ${t.active?'<span class="badge">Active</span>':'<span class="badge" style="background:#eee;color:#777">Inactive</span>'}</h3>
+        <div class="meta">${esc(t.year_level||"")} · ${esc(t.class_name||"")} · <span class="code">${esc(t.teacher_code)}</span></div>
+      </div>
+      <div class="actions">
+        <button class="small email" data-id="${t.id}">Onboarding</button>
+        <button class="small edit" data-id="${t.id}">Edit</button>
+        <button class="small ${t.active?"danger":""} toggle" data-id="${t.id}">${t.active?"Deactivate":"Restore"}</button>
+      </div>
+    </div>`).join("");
+
+  document.querySelectorAll(".email").forEach(b=>b.onclick=()=>showEmail(Number(b.dataset.id)));
+  document.querySelectorAll(".edit").forEach(b=>b.onclick=()=>editTeacher(Number(b.dataset.id)));
+  document.querySelectorAll(".toggle").forEach(b=>b.onclick=()=>toggleTeacher(Number(b.dataset.id)));
+}
+
+async function createTeacher(){
+  $("createStatus").textContent="";
+  const display_name=$("newName").value.trim(),class_name=$("newClass").value.trim(),year_level=$("newYear").value.trim(),new_teacher_code=$("newCode").value.trim();
+  if(!display_name||!class_name){$("createStatus").textContent="Teacher name and class are required.";return}
+  try{
+    const d=await post({action:"admin_create_teacher",teacher_code:adminCode,display_name,class_name,year_level,new_teacher_code});
+    $("createStatus").textContent=`Created ${display_name} · code ${d.teacher_code}`;
+    $("newName").value="";$("newClass").value="";$("newYear").value="";$("newCode").value="";
+    await loadTeachers();
+    const t=teachers.find(x=>x.teacher_code===d.teacher_code);
+    if(t)showEmail(t.id);
+  }catch(e){$("createStatus").textContent=e.message}
+}
+$("createBtn").onclick=createTeacher;
+$("refreshBtn").onclick=loadTeachers;
+
+async function toggleTeacher(id){
+  const t=teachers.find(x=>Number(x.id)===id);if(!t)return;
+  const active=Number(t.active)!==0;
+  if(active&&!confirm(`Deactivate ${t.display_name}?`))return;
+  try{
+    await post({action:"admin_update_teacher",teacher_code:adminCode,teacher_id:id,active:active?0:1});
+    await loadTeachers();
+  }catch(e){alert(e.message)}
+}
+
+async function editTeacher(id){
+  const t=teachers.find(x=>Number(x.id)===id);if(!t)return;
+  const name=prompt("Teacher name",t.display_name);if(name===null)return;
+  const cls=prompt("Class",t.class_name||"");if(cls===null)return;
+  const year=prompt("Year level",t.year_level||"");if(year===null)return;
+  try{
+    await post({action:"admin_update_teacher",teacher_code:adminCode,teacher_id:id,display_name:name,class_name:cls,year_level:year,active:Number(t.active)!==0?1:0});
+    await loadTeachers();
+  }catch(e){alert(e.message)}
+}
+
+function showEmail(id){
+  const t=teachers.find(x=>Number(x.id)===id);if(!t)return;
+  const text=`Hi ${t.display_name},
+
+Your Learning Hub teacher account is ready.
+
+Teacher Hub:
+https://abrahamlategan-a11y.github.io/lategan-chatbots/teacher/
+
+Your teacher code:
+${t.teacher_code}
+
+Your class:
+${t.class_name||""}
+
+Use the Teacher Hub to manage your own students, class tools, chatbots, groups, morning screen and whiteboards.
+
+Your account is a standard teacher account, so it does not include platform Admin access.
+
+Braam`;
+  $("emailText").textContent=text;
+  $("emailModal").classList.add("show");
+}
+$("closeEmail").onclick=()=>$("emailModal").classList.remove("show");
+$("copyEmail").onclick=async()=>{
+  await navigator.clipboard.writeText($("emailText").textContent);
+  $("copyEmail").textContent="Copied ✓";
+  setTimeout(()=>$("copyEmail").textContent="Copy message",1200);
 };
 
-function makeBoard(el,revealed,current,board,setup,chooseMode=false){
-  const size=Number(state?.game?.board_size||7),cols="ABCDEFGHIJ".slice(0,size),cellMin=size>=9?40:size>=7?48:58;
-  el.classList.toggle("teacher-board",teacherMode);
-  el.classList.toggle("player-board",!teacherMode);
-  el.style.gridTemplateColumns=`34px repeat(${size},minmax(${cellMin}px,1fr))`;
-  el.style.minWidth=`${34+size*(cellMin+6)}px`;
-  el.innerHTML='<div></div>'+[...cols].map(x=>`<div class="hdr">${x}</div>`).join("");
-  for(let r=1;r<=size;r++){
-    el.insertAdjacentHTML("beforeend",`<div class="hdr">${r}</div>`);
-    for(let c=0;c<size;c++){
-      const i=(r-1)*size+c,coord=cols[c]+r,d=document.createElement("div"),rev=revealed.includes(coord),tile=board?.[i]||null;
-      d.className="cell "+(setup?"setup":board?"revealed":rev?"revealed":"hidden");
-      if(!setup&&board&&rev&&coord!==current)d.classList.add("used");
-      if(!setup&&board&&coord===current)d.classList.add("active");
-      if(!setup&&!board&&coord===current)d.classList.add("current");
-      if(setup){
-        if(tile){d.textContent=tile.label;d.draggable=true;d.ondragstart=e=>{dragInfo={from_type:"slot",from_index:i};e.dataTransfer.effectAllowed="move"}}
-        else d.innerHTML='<span style="font-size:10px;color:#9aa49f">empty</span>';
-        d.ondragover=e=>e.preventDefault();
-        d.ondrop=async e=>{e.preventDefault();if(!dragInfo)return;const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
-        d.onclick=async()=>{if(!dragInfo){if(tile){dragInfo={from_type:"slot",from_index:i};d.classList.add("selected")}return}const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
-      }else if(board){
-        d.innerHTML=`<span style="font-size:${size>=9?9:11}px;text-align:center">${tile?.label||"?"}</span>`;
-        if(chooseMode && !rev && !choosingNow){
-          d.classList.add("chooseable");
-          d.onclick=()=>chooseCoord(coord,d);
-        }
-      } else d.textContent=coord;
-      el.appendChild(d);
-    }
-  }
-}
-function renderTray(){const tray=$("tileTray"),items=state?.player?.tray||[];tray.innerHTML="";const total=(state?.game?.board_size||7)**2;$("placedCount").textContent=`${state?.player?.placed_count||0} / ${total} placed`;items.forEach((tile,i)=>{const b=document.createElement("div");b.className="tray-tile";b.textContent=tile.label;b.draggable=true;b.ondragstart=e=>{dragInfo={from_type:"tray",from_index:i};e.dataTransfer.effectAllowed="move"};b.onclick=()=>{dragInfo={from_type:"tray",from_index:i};document.querySelectorAll(".tray-tile").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")};tray.appendChild(b)});tray.ondragover=e=>e.preventDefault();tray.ondrop=async e=>{e.preventDefault();if(!dragInfo||dragInfo.from_type!=="slot")return;const move={...dragInfo,to_type:"tray",to_index:-1};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()}}
-
-function feed(el,f){const a=[...(f||[])].reverse().slice(0,12);el.innerHTML=a.length?a.map(x=>`<div class="feeditem">${x.text}</div>`).join(""):'<div class="wait">No public events yet.</div>'}
-function updateGameBadge(){
-  const g=state?.game;if(!g){$("gameBadge").textContent="Choose your game";return}
-  const labels={easy:"Easy",medium:"Medium",hard:"Hard",super:"Super hard"};
-  $("gameBadge").textContent=`${g.board_size} × ${g.board_size} · ${labels[g.difficulty]||g.difficulty}`;
-}
-
-
-
-function eventIcon(text){
-  const t=String(text||"").toLowerCase();
-  if(t.includes("rob"))return "🏴‍☠️";
-  if(t.includes("sink")||t.includes("sank"))return "🌊";
-  if(t.includes("raid"))return "☠️";
-  if(t.includes("mirror"))return "🪞";
-  if(t.includes("shield"))return "🛡️";
-  if(t.includes("swap"))return "🔁";
-  if(t.includes("present")||t.includes("gave"))return "🎁";
-  if(t.includes("chose"))return "🎯";
-  if(t.includes("left"))return "👋";
-  return "💥";
-}
-function queueTeacherEvents(feedItems){
-  if(!teacherMode||!Array.isArray(feedItems)||!feedItems.length)return;
-  const ordered=[...feedItems].sort((a,b)=>String(a.at).localeCompare(String(b.at)));
-  if(lastTeacherFeedAt===null){lastTeacherFeedAt=ordered[ordered.length-1]?.at||"";return}
-  const fresh=ordered.filter(x=>String(x.at)>String(lastTeacherFeedAt));
-  if(fresh.length){
-    lastTeacherFeedAt=fresh[fresh.length-1].at;
-    eventQueue.push(...fresh);
-    playNextTeacherEvent();
-  }
-}
-function playNextTeacherEvent(){
-  if(eventShowing||!eventQueue.length)return;
-  eventShowing=true;
-  const ev=eventQueue.shift();
-  $("teacherEventIcon").textContent=eventIcon(ev.text);
-  $("teacherEventText").textContent=ev.text;
-  $("teacherEvent").classList.add("show");
-  setTimeout(()=>{
-    $("teacherEvent").classList.remove("show");
-    eventShowing=false;
-    setTimeout(playNextTeacherEvent,180);
-  },2300);
-}
-async function toggleTeacherFullscreen(){
-  try{
-    if(!document.fullscreenElement)await document.documentElement.requestFullscreen();
-    else await document.exitFullscreen();
-  }catch(e){console.error(e)}
-}
-function renderTeacher(){
-  if(!state?.game){$("teacherNoGame").style.display="block";$("teacherGame").style.display="none";updateGameBadge();return}
-  $("teacherNoGame").style.display="none";$("teacherGame").style.display="block";
-  const g=state.game,players=state.players||[],totalCells=g.board_size*g.board_size;
-  updateGameBadge();
-  $("lobbyPanel").style.display=g.status==="lobby"?"block":"none";
-  $("boardPanel").style.display=g.status==="lobby"?"none":"block";
-  $("bigCode").textContent=g.join_code.slice(0,3)+" "+g.join_code.slice(3);
-
-  const joinUrl=location.origin+location.pathname+"?code="+g.join_code;
-  if(qrMadeFor!==joinUrl&&typeof QRCode!=="undefined"){qrMadeFor=joinUrl;$("joinQR").innerHTML="";new QRCode($("joinQR"),{text:joinUrl,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})}
-
-  $("lobbyPlayers").innerHTML=players.length
-    ?players.map(p=>`<span class="chip">${p.name} · ${p.locked?"Ready ✓":`${p.placed}/${totalCells}`}</span>`).join("")
-    :'<span class="wait">Waiting for players…</span>';
-
-  const done=players.filter(p=>!p.busy).length,total=players.length,chooser=players.find(p=>p.id===g.chooser_player_id);
-  let headline="Lobby";
-  if(g.status==="running")headline=`${done}/${total} complete · Round ${g.round_number} · ${g.current_coord}`;
-  if(g.status==="ready")headline=`${done}/${total} complete · Ready to reveal`;
-  if(g.status==="ready_chosen")headline=`${done}/${total} complete · ${g.current_coord} chosen`;
-  if(g.status==="choosing")headline=`🎯 ${chooser?.name||"A pirate"} is choosing the next tile`;
-  if(g.status==="finished")headline="🏆 Game finished";
-  $("roundStatus").textContent=headline;
-
-  $("teacherPlayers").innerHTML=players.length?players.map(p=>{
-    const status=g.status==="lobby"?(p.locked?"ready ✓":`${p.placed}/${totalCells} placed`):(p.busy?`⏳ ${p.waiting_on}`:"✅ complete");
-    return `<div class="playerrow"><div><strong>${p.name}</strong><div class="playerstatus" style="text-align:left">${status}</div></div>
-      <div class="playerbtns">
-        ${g.status!=="lobby"&&g.status!=="finished"?`<button class="mini skip-player" data-id="${p.id}" data-name="${p.name}">Skip round</button>`:""}
-        <button class="mini danger remove-player" data-id="${p.id}" data-name="${p.name}">Remove</button>
-      </div></div>`;
-  }).join(""):'<div class="wait">No players yet.</div>';
-
-  document.querySelectorAll(".skip-player").forEach(b=>b.onclick=()=>skipPlayer(Number(b.dataset.id),b.dataset.name));
-  document.querySelectorAll(".remove-player").forEach(b=>b.onclick=()=>removePlayer(Number(b.dataset.id),b.dataset.name));
-
-  if(g.status!=="lobby")makeBoard($("teacherBoard"),g.revealed||[],g.status==="running"?g.current_coord:null,null,false);
-  feed($("teacherFeed"),g.public_feed);
-  queueTeacherEvents(g.public_feed);
-
-  const canReveal=["ready","ready_chosen"].includes(g.status);
-  $("nextGame").disabled=!canReveal;
-  $("nextGame").textContent=g.status==="ready_chosen"?`Reveal ${g.current_coord}`:"Reveal next tile";
-  $("forceGame").disabled=g.status!=="running"||players.every(p=>!p.busy);
-
-  const finished=g.status==="finished";
-  $("teacherFinish").classList.toggle("show",finished);
-  if(finished){
-    const rank=state.ranking||[];
-    $("teacherPodium").innerHTML=rank.map((x,i)=>`<div class="pod big"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.name}</span><span>${money(x.total)}</span></div>`).join("");
-    if(!teacherFinishedShown&&rank.length){
-      teacherFinishedShown=true;
-      eventQueue.push({text:`${rank[0].name} wins The Pirate Game with ${money(rank[0].total)}!`,at:new Date().toISOString()});
-      playNextTeacherEvent();
-    }
-  }
-}
-function renderPlayer(){
-  if(!state?.game)return;const g=state.game,p=state.player;updateGameBadge();$("playerTitle").textContent=p.name+"'s treasure map";$("cash").textContent=money(p.cash);$("bank").textContent=money(p.bank);$("shield").textContent=p.shields;$("mirror").textContent=p.mirrors;
-  const setup=g.status==="lobby"&&!p.board_locked;$("setupControls").style.display=setup?"flex":"none";$("trayWrap").style.display=setup?"block":"none";$("studentNotice").style.display=g.status==="lobby"?"block":"none";
-  if(g.status==="lobby")$("studentNotice").textContent=p.board_locked?"Board locked. You're ready — waiting for the teacher.":"Arrange your treasure map, or use Fill randomly. When every square is filled, lock your board.";
-  $("lockBoard").disabled=(p.placed_count||0)!==(g.board_size*g.board_size);
-  const studentRevealed=[...(g.revealed||[])];
-  if(g.status==="running"&&!p.task&&g.current_coord&&!studentRevealed.includes(g.current_coord))studentRevealed.push(g.current_coord);
-  const chooseMode=g.status==="choosing"&&p.can_choose_coord;
-  $("chooseBanner").classList.toggle("show",chooseMode);
-  makeBoard(
-    $("playerBoard"),
-    studentRevealed,
-    g.status==="running"&&p.task?g.current_coord:null,
-    p.board,
-    setup,
-    chooseMode
-  );
-  if(setup)renderTray();
-  feed($("studentFeed"),g.public_feed);
-  renderAction();
-  if(g.status==="finished"){$("finishPanel").style.display="block";$("podium").innerHTML=(state.ranking||[]).slice(0,10).map((x,i)=>`<div class="pod"><span>${["🥇","🥈","🥉"][i]||i+1+"."} ${x.display_name}</span><span>${money(x.total)}</span></div>`).join("")}else $("finishPanel").style.display="none";
-}
-function showModal(content,animateFromGrid=true){
-  const back=$("eventModal"),card=$("eventModalCard");
-  card.innerHTML=content;
-  back.classList.add("show");
-
-  if(!animateFromGrid)return;
-
-  const source=document.querySelector("#playerBoard .cell.active");
-  if(!source)return;
-
-  source.classList.remove("action-source");
-  void source.offsetWidth;
-  source.classList.add("action-source");
-
-  requestAnimationFrame(()=>{
-    const sr=source.getBoundingClientRect();
-    const cr=card.getBoundingClientRect();
-    const sx=sr.left+sr.width/2;
-    const sy=sr.top+sr.height/2;
-    const cx=cr.left+cr.width/2;
-    const cy=cr.top+cr.height/2;
-    const scale=Math.max(.16,Math.min(.38,sr.width/Math.max(cr.width,1)));
-
-    card.classList.add("from-grid");
-    card.animate(
-      [
-        {
-          transform:`translate(${sx-cx}px,${sy-cy}px) scale(${scale})`,
-          opacity:.15
-        },
-        {
-          transform:"translate(0,0) scale(1)",
-          opacity:1
-        }
-      ],
-      {
-        duration:320,
-        easing:"cubic-bezier(.2,.8,.2,1)"
-      }
-    );
-  });
-}
-function hideModal(){$("eventModal").classList.remove("show")}
-function renderAction(){const a=$("actionArea"),g=state.game,p=state.player,t=p.task;a.innerHTML="";
-  if(lastFeedback){showModal(`<div class="eyebrow">Maths result</div><h2>${lastFeedback.correct?"✅ Correct!":"🏴‍☠️ Pirate Tax!"}</h2><p>${lastFeedback.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="dismissFeedback()">Continue</button>`,false);return}
-  if(g.status==="choosing"&&p.can_choose_coord){
-    hideModal();
-    a.innerHTML='<div class="actionbox"><h3>🎯 Choose the next square</h3><p>Your grid is still active. Look at what remains and tap the unused square you want the teacher to reveal next.</p></div>';
-    return
-  }
-  if(!t){hideModal();if(g.status==="running")a.innerHTML='<div class="wait">✅ You are finished for this round. Waiting for the class…</div>';else if(g.status==="choosing")a.innerHTML='<div class="wait">Waiting for the chooser…</div>';else if(["ready","ready_chosen"].includes(g.status))a.innerHTML='<div class="wait">Round complete. Waiting for your teacher to reveal the next tile…</div>';return}
-  if(t.type==="math"){const title=t.kind==="raid"?"☠️ DEFEND YOUR TREASURE!":t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";const desc=t.kind==="raid"?"Get the subtraction correct to defend your treasure.":"Do the maths yourself. The game will check it and update your score.";showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>${desc}</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="answerrow"><input id="ans" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false" autofocus><button class="btn primary" onclick="answer()">Check</button></div>`);return}
-  if(t.type==="target"){
-    const info={rob:["🏴‍☠️ YOU FOUND ROB!","Choose a pirate to steal from."],sink:["🌊 SINK A PIRATE!","Choose whose unbanked treasure you want to sink."],present:["🎁 PRESENT!","Choose a pirate to receive 1,000 points."],swap:["🔁 SWAP SCORES!","Choose a pirate to swap unbanked scores with."]}[t.action];
-    const opts=p.target_options||[];
-    if(!opts.length){
-      showModal(`<div class="eyebrow">Public action</div><h2>${info[0]}</h2><p>There are no other pirates available, so this action is skipped.</p><button class="btn primary" style="width:100%;padding:13px" onclick="skipImpossibleTarget()">Continue</button>`);
-    }else{
-      showModal(`<div class="eyebrow">Public action</div><h2>${info[0]}</h2><p>${info[1]} Scores are hidden — choose strategically.</p><div class="targets">${opts.map(x=>`<button class="target" onclick="target(${x.id})">${x.display_name}</button>`).join("")}</div>`);
-    }
-    return
-  }
-  if(t.type==="defend"){showModal(`<div class="eyebrow">Under attack</div><h2>⚔️ ${t.attacker_name} is trying to ${t.action==="rob"?"ROB":"SINK"} you!</h2><p>Use a Shield to block it, a Mirror to bounce it back, or take the hit. A reflected attack can be mirrored again.</p><div class="controls"><button class="btn" ${p.shields<1?"disabled":""} onclick="defend('shield')">🛡 Shield (${p.shields})</button><button class="btn" ${p.mirrors<1?"disabled":""} onclick="defend('mirror')">🪞 Mirror (${p.mirrors})</button><button class="btn danger" onclick="defend('take')">Take the hit</button></div>`);return}
-  if(t.type==="ack"){showModal(`<div class="eyebrow">${g.current_coord||"Special tile"}</div><h2>${t.title}</h2><p>${t.message}</p><button class="btn primary" style="width:100%;padding:13px" onclick="ackEvent()">Continue</button>`);return}
-}
-
-async function load(){
-  try{
-    // On iPhone/iPad, don't rebuild the maths modal while the student is typing.
-    // Re-rendering the input every 1.2 seconds causes Safari to drop focus/keyboard.
-    if(!teacherMode && document.activeElement && document.activeElement.id==="ans"){
-      return;
-    }
-
-    if(teacherMode){
-      state=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
-      renderTeacher();
-    }
-    else if(token){
-      state=await post({action:"pirate_player_state",join_token:token});
-      renderPlayer();
-    }
-  }catch(e){console.error(e)}
-}
-
-$("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;renderTeacher()};
-$("startGame").onclick=async()=>{state=await post({action:"pirate_teacher_start",teacher_code:teacherCode,game_id:state.game.id});renderTeacher()};
-
-
-
-
-$("teacherFull").onclick=toggleTeacherFullscreen;
-$("teacherFullLobby").onclick=toggleTeacherFullscreen;
-async function skipPlayer(id,name){
-  if(!confirm(`Skip ${name} for this round? Their unfinished action will be cleared, but they stay in the game.`))return;
-  state=await post({action:"pirate_teacher_skip_player",teacher_code:teacherCode,game_id:state.game.id,player_id:id,player_name:name});
-  renderTeacher();
-}
-async function removePlayer(id,name){
-  if(!confirm(`Remove ${name} from this game? Use this if they have left or their device is unavailable.`))return;
-  state=await post({action:"pirate_teacher_remove_player",teacher_code:teacherCode,game_id:state.game.id,player_id:id,player_name:name});
-  renderTeacher();
-}
-
-$("nextGame").onclick=async()=>{state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"next"});renderTeacher()};
-$("forceGame").onclick=async()=>{if(confirm("Force unfinished actions to resolve and finish this round?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"force"});renderTeacher()}};
-$("endGame").onclick=async()=>{if(confirm("End game now and show final standings?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"end"});renderTeacher()}};
-$("fillRandom").onclick=async()=>{state=await post({action:"pirate_fill_random",join_token:token});renderPlayer()};
-$("lockBoard").onclick=async()=>{state=await post({action:"pirate_lock_board",join_token:token});renderPlayer()};
-
-async function answer(){state=await post({action:"pirate_math_answer",join_token:token,answer:$("ans").value});lastFeedback=state.feedback||null;renderPlayer()}
-function dismissFeedback(){lastFeedback=null;hideModal();renderPlayer()}
-async function ackEvent(){state=await post({action:"pirate_ack",join_token:token});renderPlayer()}
-async function target(id){state=await post({action:"pirate_choose_target",join_token:token,target_player_id:id});renderPlayer()}
-async function skipImpossibleTarget(){
-  hideModal();
-  state=await post({action:"pirate_player_state",join_token:token});
-  renderPlayer();
-}
-async function defend(choice){state=await post({action:"pirate_defence",join_token:token,choice});renderPlayer()}
-async function chooseCoord(coord,cell){
-  if(choosingNow)return;
-  choosingNow=true;
-  if(cell)cell.classList.add("choice-pending");
-  $("chooseBanner").textContent=`🎯 You chose ${coord}. Sending it to the captain…`;
-  try{
-    state=await post({action:"pirate_choose_coord",join_token:token,coord});
-  }finally{
-    choosingNow=false;
-    $("chooseBanner").textContent="🎯 Choose the next square — tap any unused square on your grid.";
-    renderPlayer();
-  }
-}
-
-load();setInterval(load,teacherMode?650:900);
+(async()=>{
+  const saved=localStorage.getItem("lategan_teacher_code");
+  if(saved){$("loginCode").value=saved;await login()}
+})();
 </script>
 </body>
 </html>
