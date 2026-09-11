@@ -76,6 +76,10 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 .history-row:last-child{border-bottom:0}.history-date{font-size:10px;color:var(--muted);font-weight:800}.history-copy strong{display:block;font-size:12px}.history-copy small{display:block;color:var(--muted);font-size:10px;margin-top:2px}.history-amount{font-size:16px;font-weight:950}.history-amount.plus{color:#177047}.history-amount.minus{color:#a7433e}.delete-adjust{font-size:9px;padding:5px 7px;margin-left:6px}
 @media(max-width:850px){.leaderboard{grid-template-columns:repeat(2,1fr)}.points-entry-grid{grid-template-columns:1fr}.point-main-row{grid-template-columns:1fr}}
 
+
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:7px 9px;font-size:10px;font-weight:950}
+.live-badge.flash{animation:liveFlash .8s ease}
+@keyframes liveFlash{0%{transform:scale(1);background:rgba(255,255,255,.14)}40%{transform:scale(1.08);background:rgba(255,255,255,.28)}100%{transform:scale(1);background:rgba(255,255,255,.14)}}
 </style>
 </head>
 <body>
@@ -127,6 +131,7 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
           <p>Score each group out of 10. Add catch-up or bonus points anytime. Totals continue until you reset them.</p>
         </div>
         <div class="points-controls">
+          <span class="live-badge" id="livePointsBadge">● Live</span>
           <label class="switch-row"><input type="checkbox" id="pointsEnabled" checked><span>Points on</span></label>
           <button class="btn danger" id="resetPoints">Reset totals</button>
         </div>
@@ -167,7 +172,7 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const $=id=>document.getElementById(id);
-let students=[],jobGroups=[],quickGroups=[],saveTimer=null,pointsState=null;
+let students=[],jobGroups=[],quickGroups=[],saveTimer=null,pointsState=null,pointsAutoRefresh=null,lastPointsSignature="";
 
 async function post(p){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
@@ -251,12 +256,53 @@ $("toggleAll").onclick=()=>{
 function todayKey(){
   return new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Perth",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 }
-async function loadPoints(){
+async function loadPoints({silent=false}={}){
+  const active=document.activeElement;
+  if(silent && active && (
+    active.classList?.contains("point-input") ||
+    active.classList?.contains("adjustment-amount") ||
+    active.classList?.contains("adjustment-note")
+  )) return;
+
   try{
-    pointsState=await post({action:"teacher_job_points_state",teacher_code:teacherCode,date_key:todayKey()});
+    const next=await post({action:"teacher_job_points_state",teacher_code:teacherCode,date_key:todayKey()});
+    const sig=JSON.stringify({
+      enabled:next.enabled,
+      cycle:next.cycle,
+      today:next.today||[],
+      totals:next.totals||[],
+      history:next.history||[]
+    });
+    const changed=lastPointsSignature && sig!==lastPointsSignature;
+    lastPointsSignature=sig;
+    pointsState=next;
     renderPoints();
-  }catch(e){console.warn(e)}
+
+    if(changed && silent){
+      const badge=$("livePointsBadge");
+      if(badge){
+        badge.textContent="● Updated";
+        badge.classList.remove("flash");
+        void badge.offsetWidth;
+        badge.classList.add("flash");
+        setTimeout(()=>{
+          const b=$("livePointsBadge");
+          if(b){b.textContent="● Live";b.classList.remove("flash")}
+        },1200);
+      }
+    }
+  }catch(e){
+    if(!silent)console.warn(e);
+  }
 }
+function startPointsAutoRefresh(){
+  if(pointsAutoRefresh)clearInterval(pointsAutoRefresh);
+  pointsAutoRefresh=setInterval(()=>loadPoints({silent:true}),3000);
+}
+function stopPointsAutoRefresh(){
+  if(pointsAutoRefresh){clearInterval(pointsAutoRefresh);pointsAutoRefresh=null}
+}
+
 function renderPoints(){
   if(!pointsState)return;
   $("pointsEnabled").checked=!!pointsState.enabled;
@@ -479,6 +525,13 @@ async function load(){
   }catch(e){alert(e.message);location.href="../teacher/"}
 }
 load();
+window.addEventListener("focus",()=>loadPoints({silent:true}));
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden)stopPointsAutoRefresh();
+  else{loadPoints({silent:true});startPointsAutoRefresh()}
+});
+startPointsAutoRefresh();
+
 </script>
 </body>
 </html>
