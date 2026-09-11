@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Group Points · Learning Hub</title>
+<title>Group Points · Learning Hub · v2</title>
 <style>
 :root{--bg:#f3f6f3;--panel:#fff;--ink:#17352b;--muted:#718078;--line:#d9e4de;--green:#176147;--deep:#104636;--sage:#e5f0e4;--shadow:0 14px 34px rgba(23,53,43,.10)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink)}
@@ -35,9 +35,43 @@ function render(){
   $("save").onclick=save;
 }
 async function save(){
-  const scores=[...document.querySelectorAll(".scoreInput")].map(i=>({group_id:i.dataset.id,score:i.value})).filter(x=>x.score!=="");
-  for(const x of scores){const n=Number(x.score);if(!Number.isFinite(n)||n<0||n>10||Math.round(n*10)!==n*10){alert("Use a score from 0 to 10, with at most one decimal place.");return}x.score=n}
-  try{await post({action:"student_job_points_save",student_code:code,scores});$("saved").textContent="Saved ✓";await load()}catch(e){alert(e.message)}
+  const saveBtn=$("save"),status=$("saved");
+  const scores=[...document.querySelectorAll(".scoreInput")]
+    .map(i=>({group_id:i.dataset.id,score:i.value}))
+    .filter(x=>x.score!=="");
+
+  if(!scores.length){
+    status.textContent="Enter at least one score.";
+    return;
+  }
+
+  for(const x of scores){
+    const n=Number(x.score);
+    if(!Number.isFinite(n)||n<0||n>10||Math.round(n*10)!==n*10){
+      status.textContent="Use 0–10 with at most one decimal place.";
+      return;
+    }
+    x.score=n;
+  }
+
+  saveBtn.disabled=true;
+  saveBtn.textContent="Saving…";
+  status.textContent="";
+
+  try{
+    await post({action:"student_job_points_save",student_code:code,scores});
+    await load();
+    const refreshedStatus=$("saved");
+    if(refreshedStatus)refreshedStatus.textContent="Saved ✓";
+  }catch(e){
+    status.textContent=e.message||"Could not save.";
+  }finally{
+    const freshBtn=$("save");
+    if(freshBtn){
+      freshBtn.disabled=false;
+      freshBtn.textContent="Save today’s points";
+    }
+  }
 }
 load();
 </script></body></html>
