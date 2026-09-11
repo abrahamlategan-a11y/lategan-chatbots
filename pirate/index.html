@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v16</title>
+<title>Pirate Game · Learning Hub · v17</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -328,7 +328,6 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
               <div><span>🌊</span><strong>Sink</strong><small>Wipe out another pirate's unbanked cash.</small></div>
               <div><span>🎁</span><strong>Present</strong><small>Give treasure to another pirate.</small></div>
               <div><span>🔁</span><strong>Swap</strong><small>Swap unbanked cash with another pirate.</small></div>
-              <div><span>🎯</span><strong>Choose</strong><small>Pick the next grid reference.</small></div>
               <div><span>💣</span><strong>Bomb</strong><small>Lose all unbanked cash.</small></div>
               <div><span>×2</span><strong>Double</strong><small>Double your unbanked cash.</small></div>
               <div><span>🏦</span><strong>Bank</strong><small>Move cash into your safe total.</small></div>
@@ -650,8 +649,8 @@ function renderPlayer(){
   const studentRevealed=[...(g.revealed||[])];
   const locateMode=g.status==="running"&&p.task?.type==="locate";
   if(g.status==="running"&&!locateMode&&g.current_coord&&!studentRevealed.includes(g.current_coord))studentRevealed.push(g.current_coord);
-  const chooseMode=g.status==="choosing"&&p.can_choose_coord;
-  $("chooseBanner").classList.toggle("show",chooseMode);
+  const chooseMode=false;
+  $("chooseBanner").classList.remove("show");
 
   makeBoard(
     $("playerBoard"),
