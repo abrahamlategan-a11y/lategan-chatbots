@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v18</title>
+<title>Pirate Game · Learning Hub · v20</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -212,6 +212,17 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   text-align:center;
 }
 
+
+.action-now{border:2px solid #d5b04c;background:#fff8df;border-radius:15px;padding:14px;margin-bottom:10px}
+.action-now .who{font-size:18px;font-weight:950}.action-now .what{font-size:30px;font-weight:950;margin-top:4px}
+.action-now .result{margin-top:9px;font-size:13px;line-height:1.45;color:#4f5a54}
+.action-queued{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:12px}
+.action-queued:last-child{border-bottom:0}.action-queued strong{font-weight:900}
+.private-wait{background:#f4f7f5;border:1px solid var(--line);border-radius:12px;padding:10px;margin:9px 0;font-size:11px}
+.private-wait strong{display:block;margin-bottom:4px}
+.playerrow.private-stall{background:#fff8df;border-radius:10px;padding-left:7px;padding-right:7px}
+.queue-note{color:var(--muted);font-size:11px;text-align:center;padding:8px}
+
 </style>
 </head>
 <body>
@@ -285,7 +296,16 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
         </div>
         <div style="display:flex;flex-direction:column;gap:18px">
           <div class="panel"><div class="ph"><h3>Players</h3><span id="roundStatus" class="publictag">Lobby</span></div><div class="pb"><div id="teacherPlayers"></div></div></div>
-          <div class="panel"><div class="ph"><h3>Public events</h3></div><div class="pb"><div class="feed" id="teacherFeed"></div></div></div><div class="panel finalboard" id="teacherFinish"><div class="ph"><h3>🏆 Final standings</h3></div><div class="pb" id="teacherPodium"></div></div>
+          <div class="panel" id="actionQueuePanel">
+            <div class="ph"><h3>Action Queue</h3><span class="publictag" id="queueCount">0 waiting</span></div>
+            <div class="pb">
+              <div id="currentActionBox"></div>
+              <div id="privateWaitingBox"></div>
+              <div id="actionQueueList"></div>
+              <button class="btn primary" id="advanceAction" style="width:100%;margin-top:10px;display:none">Next action</button>
+            </div>
+          </div>
+          <div class="panel finalboard" id="teacherFinish"><div class="ph"><h3>🏆 Final standings</h3></div><div class="pb" id="teacherPodium"></div></div>
         </div>
       </div>
     </div>
@@ -328,6 +348,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
               <div><span>🌊</span><strong>Sink</strong><small>Wipe out another pirate's unbanked cash.</small></div>
               <div><span>🎁</span><strong>Present</strong><small>Give treasure to another pirate.</small></div>
               <div><span>🔁</span><strong>Swap</strong><small>Swap unbanked cash with another pirate.</small></div>
+              <div><span>🎯</span><strong>Choose</strong><small>Choose the next grid reference for the class.</small></div>
               <div><span>💣</span><strong>Bomb</strong><small>Lose all unbanked cash.</small></div>
               <div><span>×2</span><strong>Double</strong><small>Double your unbanked cash.</small></div>
               <div><span>🏦</span><strong>Bank</strong><small>Move cash into your safe total.</small></div>
@@ -366,7 +387,7 @@ const params=new URLSearchParams(location.search);
 const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false;
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="";
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -418,16 +439,11 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
         d.ondrop=async e=>{e.preventDefault();if(!dragInfo)return;const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
         d.onclick=async()=>{if(!dragInfo){if(tile){dragInfo={from_type:"slot",from_index:i};d.classList.add("selected")}return}const move={...dragInfo,to_type:"slot",to_index:i};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()};
       }else if(board){
-        // During gameplay the treasure layout stays hidden.
-        // Students identify the announced grid reference first.
-        // Only completed/revealed coordinates show their actual tile.
-        if(rev){
-          d.className="cell revealed";
-          d.innerHTML=`<span style="font-size:${size>=9?9:11}px;text-align:center">${tile?.label||"?"}</span>`;
-        }else{
-          d.className="cell hidden";
-          d.textContent=coord;
-        }
+        // Students always see THEIR OWN stored tile. The skill is using the
+        // row/column headers to find the announced grid reference.
+        d.className="cell "+(rev?"revealed":"hidden");
+        d.innerHTML=`<span style="font-size:${size>=9?8:11}px;text-align:center">${tile?.label||"?"}</span>`;
+        if(rev)d.classList.add("used");
 
         if(locateMode && !rev){
           d.classList.add("locateable");
@@ -497,18 +513,29 @@ function playSound(kind="event"){
     if(!AudioCtx)return;
     const ctx=playSound.ctx||(playSound.ctx=new AudioCtx());
     const now=ctx.currentTime;
-    const notes=kind==="winner"?[523,659,784,1047]:
-      kind==="bad"?[180,140]:
-      kind==="bank"?[440,660,880]:
-      kind==="special"?[392,523,659]:
-      [330,440];
+
+    const patterns={
+      bomb:[95,62,45],
+      rob:[330,247,165],
+      sink:[260,196,130],
+      mirror:[520,760,1040],
+      shield:[180,360],
+      present:[523,659,784],
+      swap:[300,520,300,620],
+      choose:[392,494,587],
+      winner:[523,659,784,1047],
+      event:[330,440]
+    };
+    const notes=patterns[kind]||patterns.event;
     notes.forEach((freq,i)=>{
       const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type="triangle";o.frequency.value=freq;
-      g.gain.setValueAtTime(.0001,now+i*.09);
-      g.gain.exponentialRampToValueAtTime(.09,now+i*.09+.015);
-      g.gain.exponentialRampToValueAtTime(.0001,now+i*.09+.12);
-      o.connect(g);g.connect(ctx.destination);o.start(now+i*.09);o.stop(now+i*.09+.14);
+      o.type=kind==="bomb"?"sawtooth":"triangle";
+      o.frequency.value=freq;
+      const t=now+i*(kind==="bomb"?.07:.09);
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(kind==="bomb"?.14:.08,t+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.16);
+      o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.18);
     });
   }catch(e){}
 }
@@ -539,6 +566,39 @@ async function toggleTeacherFullscreen(){
     else await document.exitFullscreen();
   }catch(e){console.error(e)}
 }
+
+function actionLabel(type){
+  return ({rob:"🏴‍☠️ ROB",sink:"🌊 SINK",present:"🎁 PRESENT",swap:"🔁 SWAP",bomb:"💣 BOMB",choose:"🎯 CHOOSE"})[type]||String(type||"ACTION").toUpperCase();
+}
+function actionSound(type,result=""){
+  const r=String(result||"").toLowerCase();
+  if(r.includes("mirror"))return "mirror";
+  if(r.includes("shield"))return "shield";
+  if(type==="bomb")return "bomb";
+  if(type==="rob")return "rob";
+  if(type==="sink")return "sink";
+  if(type==="present")return "present";
+  if(type==="swap")return "swap";
+  if(type==="choose")return "choose";
+  return "event";
+}
+function showActionMoment(current){
+  if(!teacherMode||!current)return;
+  const key=`${current.id}|${current.status}|${current.result_text||""}`;
+  if(key===lastActionMomentKey)return;
+  lastActionMomentKey=key;
+
+  const text=current.result_text
+    ?current.result_text
+    :`${current.player_name} — ${actionLabel(current.action_type)}`;
+
+  $("teacherEventIcon").textContent=actionLabel(current.action_type).split(" ")[0];
+  $("teacherEventText").textContent=text;
+  playSound(actionSound(current.action_type,current.result_text));
+  $("teacherEvent").classList.add("show");
+  setTimeout(()=>$("teacherEvent").classList.remove("show"),current.result_text?2300:1500);
+}
+
 function renderTeacher(){
   if(!state?.game){
     $("teacherNoGame").style.display="block";$("teacherGame").style.display="none";
@@ -573,22 +633,46 @@ function renderTeacher(){
   if(g.status==="finished")headline="🏆 Game finished";
   $("roundStatus").textContent=headline;
   const rankedPlayers=[...players].sort((a,b)=>(Number(b.cash)||0)-(Number(a.cash)||0)||String(a.name).localeCompare(String(b.name)));
-  $("teacherPlayers").innerHTML=rankedPlayers.length?rankedPlayers.map((p,i)=>{
+  $("teacherPlayers").innerHTML=rankedPlayers.length?rankedPlayers.map((pl,i)=>{
     const lobbyStatus=g.status==="lobby"
-      ?`<small style="color:var(--muted)">${p.locked?"Ready ✓":`${p.placed}/${totalCells} placed`}</small>`
+      ?`<small style="color:var(--muted)">${pl.locked?"Ready ✓":`${pl.placed}/${totalCells} placed`}</small>`
       :"";
-    return `<div class="playerrow">
+    return `<div class="playerrow ${pl.private_waiting?"private-stall":""}">
       <div style="display:flex;align-items:center;gap:9px;min-width:0">
         <span style="width:24px;font-weight:950">${i===0&&g.status!=="lobby"?"🥇":(i+1)+"."}</span>
-        <div><strong>${p.name}</strong>${lobbyStatus}</div>
+        <div><strong>${pl.name}</strong>${lobbyStatus}</div>
       </div>
-      <div style="font-size:18px;font-weight:950;white-space:nowrap">${money(p.cash)}</div>
+      <div style="font-size:18px;font-weight:950;white-space:nowrap">${money(pl.cash)}</div>
     </div>`;
   }).join(""):'<div class="wait">No players yet.</div>';
 
+  const aq=state.action_queue||{current:null,queued:[]};
+  const current=aq.current;
+  $("queueCount").textContent=`${(aq.queued||[]).length}${current?"+1":""} in queue`;
+
+  $("currentActionBox").innerHTML=current
+    ?`<div class="action-now">
+        <div class="who">${current.player_name}</div>
+        <div class="what">${actionLabel(current.action_type)}</div>
+        ${current.result_text?`<div class="result">${current.result_text}</div>`:
+          `<div class="result">Playing now…</div>`}
+      </div>`
+    :'<div class="queue-note">No public action playing right now.</div>';
+
+  $("actionQueueList").innerHTML=(aq.queued||[]).length
+    ?(aq.queued||[]).map((x,i)=>`<div class="action-queued"><span><strong>${i+1}. ${x.player_name}</strong></span><span>${actionLabel(x.action_type)}</span></div>`).join("")
+    :'';
+
+  const privateWaiting=players.filter(pl=>pl.private_waiting);
+  $("privateWaitingBox").innerHTML=privateWaiting.length
+    ?`<div class="private-wait"><strong>Still working privately</strong>${privateWaiting.map(pl=>`${pl.name} — ${pl.waiting_on}`).join("<br>")}</div>`
+    :"";
+
+  $("advanceAction").style.display=current&&current.status==="done_wait"?"block":"none";
+  $("advanceAction").disabled=!(current&&current.status==="done_wait");
+  if(current)showActionMoment(current);
 
   if(g.status!=="lobby")makeBoard($("teacherBoard"),g.revealed||[],g.status==="running"?g.current_coord:null,null,false);
-  feed($("teacherFeed"),g.public_feed);queueTeacherEvents(g.public_feed);
 
   $("forceGame").disabled=g.status!=="running"||players.every(p=>!p.busy);
   $("saveGame").style.display=["running","ready","ready_chosen","choosing"].includes(g.status)?"":"none";
@@ -655,8 +739,9 @@ function renderPlayer(){
   // Do NOT infer that the current square has been selected just because a task
   // is temporarily absent. Only the server's revealed list can reveal a square.
   // This prevents the "computer picked it for me" state during round changes.
-  const chooseMode=false;
-  $("chooseBanner").classList.remove("show");
+  const chooseMode=g.status==="running"&&p.task?.type==="choose_coord";
+  $("chooseBanner").classList.toggle("show",chooseMode);
+  if(chooseMode)$("chooseBanner").textContent="🎯 Choose the NEXT square — tap any unused tile on your map.";
 
   makeBoard(
     $("playerBoard"),
@@ -762,17 +847,26 @@ function renderAction(){
     return
   }
 
-  if(g.status==="choosing"&&p.can_choose_coord){
+  if(t?.type==="choose_coord"){
     clearMathTimer();hideModal();
-    a.innerHTML='<div class="actionbox"><h3>🎯 Choose the next square</h3><p>Tap any unused square on your grid. Your choice becomes the next coordinate for the whole class.</p></div>';
+    a.innerHTML='<div class="actionbox"><h3>🎯 Your turn to choose</h3><p>Use your map strategically. Tap any unused square and that grid reference becomes the next round for the whole class.</p></div>';
     return
   }
 
   if(!t){
     clearMathTimer();hideModal();
-    if(g.status==="running")a.innerHTML='<div class="wait">✅ You are finished for this round. Waiting for the class…</div>';
-    else if(g.status==="choosing")a.innerHTML='<div class="wait">Waiting for the chooser…</div>';
-    else if(["ready","ready_chosen"].includes(g.status))a.innerHTML='<div class="wait">Round complete. Waiting for your teacher to continue…</div>';
+    const own=p.own_action,current=p.current_action;
+    if(own&&own.status==="queued"){
+      a.innerHTML=`<div class="actionbox"><h3>${actionLabel(own.action_type)} is queued</h3><p>You are number ${own.queue_position} in the action queue. Watch the teacher screen — the game state may change before your turn.</p></div>`;
+    }else if(own&&own.status==="done_wait"){
+      a.innerHTML='<div class="wait">✅ Your public action is complete. Watch the teacher screen for the next action.</div>';
+    }else if(current){
+      a.innerHTML=`<div class="wait">👀 Watching ${current.player_name}'s ${actionLabel(current.action_type)}…</div>`;
+    }else if(g.status==="running"){
+      a.innerHTML='<div class="wait">✅ You are done for this round. Waiting for the rest of the class…</div>';
+    }else if(["ready","ready_chosen"].includes(g.status)){
+      a.innerHTML='<div class="wait">✅ Round complete. Waiting for your teacher to continue…</div>';
+    }
     return
   }
 
@@ -801,7 +895,7 @@ function renderAction(){
     if(!opts.length){
       showModal(`<div class="eyebrow">Public action</div><h2>${info[0]}</h2><p>There are no other pirates available, so this action is skipped.</p><button class="btn primary" style="width:100%;padding:13px" onclick="skipImpossibleTarget()">Continue</button>`);
     }else{
-      showModal(`<div class="eyebrow">Public action</div><h2>${info[0]}</h2><p>${info[1]} Scores are hidden — choose strategically.</p><div class="targets">${opts.map(x=>`<button class="target" onclick="target(${x.id})">${x.display_name}</button>`).join("")}</div>`);
+      showModal(`<div class="eyebrow">Public action</div><h2>${info[0]}</h2><p>${info[1]} The live cash leaderboard may have changed — choose carefully.</p><div class="targets">${opts.map(x=>`<button class="target" onclick="target(${x.id})"><strong>${x.display_name}</strong><br><span style="font-size:11px;color:var(--muted)">${money(x.cash)} cash</span></button>`).join("")}</div>`);
     }
     return
   }
@@ -842,21 +936,26 @@ async function load(){
       renderTeacher();
     }
     else if(token){
-      if(coordSubmitting||choosingNow||studentBusy)return;
+      if(coordSubmitting||choosingNow||studentBusy||studentPollBusy)return;
+      studentPollBusy=true;
+      const seq=++studentPollSeq;
       const requestVersion=studentStateVersion;
-      const fresh=await post({action:"pirate_player_state",join_token:token});
+      try{
+        const fresh=await post({action:"pirate_player_state",join_token:token});
+        if(requestVersion!==studentStateVersion)return;
+        if(seq<studentLastAppliedPoll)return;
+        studentLastAppliedPoll=seq;
 
-      // If a click/answer/ack/defence started while this poll was in flight,
-      // this response is stale. Throw it away instead of overwriting the newer UI.
-      if(requestVersion!==studentStateVersion)return;
-
-      if(fresh?.ended||!fresh?.game){
-        clearStudentGame("That Pirate Game has ended.");
-        return;
+        if(fresh?.ended||!fresh?.game){
+          clearStudentGame("That Pirate Game has ended.");
+          return;
+        }
+        const typing=document.activeElement&&document.activeElement.id==="ans";
+        state=fresh;
+        if(!typing)renderPlayer();
+      }finally{
+        studentPollBusy=false;
       }
-      const typing=document.activeElement&&document.activeElement.id==="ans";
-      state=fresh;
-      if(!typing)renderPlayer();
     }
   }catch(e){
     if(!teacherMode&&token&&/Player session not found|Game not found/i.test(String(e.message||""))){
@@ -973,6 +1072,14 @@ $("closeFinal").onclick=async()=>{
   $("finalOverlay").classList.remove("show");
   state={game:null};teacherFinishedShown=false;renderTeacher();
 };
+$("advanceAction").onclick=async()=>{
+  if(!state?.game)return;
+  try{
+    state=await post({action:"pirate_teacher_advance_action",teacher_code:teacherCode,game_id:state.game.id});
+    renderTeacher();
+  }catch(e){alert(e.message)}
+};
+
 $("forceGame").onclick=async()=>{if(confirm("Force unfinished actions to resolve and finish this round?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"force"});renderTeacher()}};
 $("endGame").onclick=async()=>{if(confirm("End game now and show the final leaderboard?")){state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"end"});renderTeacher()}};
 $("fillRandom").onclick=async()=>{state=await studentMutate({action:"pirate_fill_random",join_token:token});renderPlayer()};
@@ -984,6 +1091,7 @@ async function studentMutate(payload){
   try{
     const fresh=await post(payload);
     state=fresh;
+    studentLastAppliedPoll=studentPollSeq;
     return fresh;
   }finally{
     studentStateVersion++;
@@ -1060,15 +1168,19 @@ async function skipImpossibleTarget(){
 }
 async function defend(choice){state=await studentMutate({action:"pirate_defence",join_token:token,choice});renderPlayer()}
 async function chooseCoord(coord,cell){
-  if(choosingNow)return;
+  if(choosingNow||state?.player?.task?.type!=="choose_coord")return;
   choosingNow=true;
+  studentStateVersion++;
   if(cell)cell.classList.add("choice-pending");
   $("chooseBanner").textContent=`🎯 You chose ${coord}. Sending it to the captain…`;
   try{
     state=await post({action:"pirate_choose_coord",join_token:token,coord});
+  }catch(e){
+    alert(e.message);
   }finally{
+    studentStateVersion++;
     choosingNow=false;
-    $("chooseBanner").textContent="🎯 Choose the next square — tap any unused square on your grid.";
+    $("chooseBanner").textContent="🎯 Choose the NEXT square — tap any unused tile on your map.";
     renderPlayer();
   }
 }
