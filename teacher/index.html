@@ -113,6 +113,11 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 
 @media(max-width:1000px){.tilegrid,.botgrid{grid-template-columns:1fr 1fr}.chat-layout{grid-template-columns:1fr}}
 @media(max-width:620px){.sidebar{display:none;position:static;width:auto;height:auto}.main{margin-left:0;padding:20px 16px;width:100%}.tilegrid,.botgrid{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}h1{font-size:32px}.snap-grid{grid-template-columns:1fr}}
+
+.class-switcher{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.class-switcher select{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 34px 10px 12px;font-size:13px;font-weight:850;color:var(--ink)}
+.class-switcher .add-class{white-space:nowrap}
+.class-chip{font-size:11px;color:var(--muted);font-weight:800}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -163,6 +168,11 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
           <div class="eyebrow">Teacher Learning Hub</div>
           <h1 id="welcomeHeading">Good morning.</h1>
           <div class="sub">Everything for your class in one place. Build chatbots, manage students and set up the tools your class sees.</div>
+        </div>
+        <div class="class-switcher">
+          <span class="class-chip">Class</span>
+          <select id="classSwitcher"></select>
+          <button class="btn add-class" id="addClassBtn">+ Add class</button>
         </div>
       </div>
       <div class="tilegrid">
@@ -307,6 +317,32 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
   </div>
 </div>
 
+
+<div class="modal" id="classModal">
+  <div class="modal-card" style="width:min(520px,100%)">
+    <div class="modal-head">
+      <div>
+        <h2>Add class</h2>
+        <p>Create another class or teaching group under your existing teacher login.</p>
+      </div>
+      <button class="close" id="closeClassModal">×</button>
+    </div>
+    <div class="field">
+      <label>Class name</label>
+      <input id="newClassName" placeholder="e.g. 4M or Extension Maths">
+    </div>
+    <div class="field" style="margin-top:14px">
+      <label>Year level</label>
+      <input id="newClassYear" placeholder="e.g. Year 4">
+    </div>
+    <div class="help" style="margin-top:10px">You can switch between classes from the top of the Teacher Hub.</div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelClass">Cancel</button>
+      <button class="btn primary" id="saveClass">Create class</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="printModal">
   <div class="modal-card" style="width:min(980px,100%)">
     <div class="modal-head">
@@ -326,7 +362,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
-let teacherCode="",teacher=null,bots=[],students=[],editingBotId=null,published=false,shared=false,currentStudent=null;
+let teacherCode="",teacher=null,teacherClasses=[],activeClassId=null,bots=[],students=[],editingBotId=null,published=false,shared=false,currentStudent=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
@@ -355,6 +391,32 @@ function setSection(name){
 document.querySelectorAll(".nav button[data-section]").forEach(b=>b.onclick=()=>setSection(b.dataset.section));
 document.querySelectorAll("[data-go]").forEach(t=>t.onclick=()=>setSection(t.dataset.go));
 
+
+function renderClassSwitcher(){
+  const sel=$("classSwitcher");
+  if(!sel)return;
+  sel.innerHTML=(teacherClasses||[]).map(c=>`<option value="${c.id}">${esc(c.name)}${c.year_level?` · ${esc(c.year_level)}`:""}</option>`).join("");
+  if(activeClassId)sel.value=String(activeClassId);
+}
+
+async function switchClass(classId){
+  const id=Number(classId);
+  if(!id||id===Number(activeClassId))return;
+  const d=await post({action:"teacher_set_default_class",teacher_code:teacherCode,class_id:id});
+  teacherClasses=d.classes||teacherClasses;
+  activeClassId=id;
+  const cls=teacherClasses.find(c=>Number(c.id)===id);
+  if(cls){
+    teacher.class_id=id;
+    teacher.class_name=cls.name||"";
+    teacher.year_level=cls.year_level||"";
+    $("teacherClass").textContent=teacher.class_name||"";
+    $("studentClass").value=teacher.class_name||"";
+  }
+  renderClassSwitcher();
+  await Promise.all([loadStudents(),loadBots()]);
+}
+
 async function login(){
   $("loginError").textContent="";
   const code=$("teacherCode").value.trim();
@@ -362,12 +424,15 @@ async function login(){
   try{
     const d=await post({action:"teacher_login",teacher_code:code});
     teacherCode=code;teacher=d.teacher;
+    teacherClasses=d.classes||[];
+    activeClassId=Number(teacher.class_id||teacherClasses.find(c=>Number(c.is_default)===1)?.id||teacherClasses[0]?.id||0)||null;
     localStorage.setItem("lategan_teacher_code",code);
     $("teacherName").textContent=teacher.display_name||"Teacher";
     $("teacherClass").textContent=teacher.class_name||"";
     $("welcomeHeading").textContent=`Good morning, ${teacher.display_name||"Teacher"}.`;
     $("studentClass").value=teacher.class_name||"";
     $("adminNav").style.display=Number(teacher.is_admin)===1?"flex":"none";
+    renderClassSwitcher();
     $("loginScreen").style.display="none";
     await Promise.all([loadBots(),loadStudents()]);
   }catch(e){$("loginError").textContent=e.message}
@@ -378,7 +443,7 @@ $("signOut").onclick=()=>{localStorage.removeItem("lategan_teacher_code");locati
 
 async function loadStudents(){
   try{
-    const d=await post({action:"teacher_list_students",teacher_code:teacherCode});
+    const d=await post({action:"teacher_list_students",teacher_code:teacherCode,class_id:activeClassId});
     students=d.students||[];
     $("homeStudentCount").textContent=students.filter(s=>s.active!==0).length;
     $("studentRows").innerHTML="";
@@ -480,6 +545,7 @@ $("saveStudent").onclick=async()=>{
         teacher_code:teacherCode,
         display_name:names[i],
         class_name:className,
+        class_id:activeClassId,
         student_code:""
       });
       added++;
@@ -498,6 +564,35 @@ $("saveStudent").onclick=async()=>{
     $("studentModal").classList.remove("show");
     openPrintCards();
   }
+};
+
+
+$("classSwitcher").onchange=async()=>{
+  try{await switchClass($("classSwitcher").value)}
+  catch(e){alert(e.message);renderClassSwitcher()}
+};
+
+$("addClassBtn").onclick=()=>{
+  $("newClassName").value="";
+  $("newClassYear").value=teacher?.year_level||"";
+  $("classModal").classList.add("show");
+};
+$("closeClassModal").onclick=()=>$("classModal").classList.remove("show");
+$("cancelClass").onclick=()=>$("classModal").classList.remove("show");
+$("saveClass").onclick=async()=>{
+  const name=$("newClassName").value.trim();
+  const year_level=$("newClassYear").value.trim();
+  if(!name){alert("Give the class a name.");return}
+  $("saveClass").disabled=true;
+  try{
+    const d=await post({action:"teacher_create_class",teacher_code:teacherCode,name,year_level});
+    teacherClasses=d.classes||[];
+    const created=teacherClasses.find(c=>String(c.name).toUpperCase()===name.toUpperCase());
+    $("classModal").classList.remove("show");
+    renderClassSwitcher();
+    if(created)await switchClass(created.id);
+  }catch(e){alert(e.message)}
+  finally{$("saveClass").disabled=false}
 };
 
 const STUDENT_HUB_URL="https://abrahamlategan-a11y.github.io/lategan-chatbots/student/";
