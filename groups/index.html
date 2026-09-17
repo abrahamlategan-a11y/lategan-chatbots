@@ -80,12 +80,25 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 .live-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.18);color:#fff;border-radius:999px;padding:7px 9px;font-size:10px;font-weight:950}
 .live-badge.flash{animation:liveFlash .8s ease}
 @keyframes liveFlash{0%{transform:scale(1);background:rgba(255,255,255,.14)}40%{transform:scale(1.08);background:rgba(255,255,255,.28)}100%{transform:scale(1);background:rgba(255,255,255,.14)}}
+
+.classbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 0}
+.classbar .label{font-size:10px;font-weight:950;letter-spacing:.08em;text-transform:uppercase;color:#d7e3dd}
+.classbar select{border:1px solid rgba(255,255,255,.28);background:#fff;color:var(--ink);border-radius:10px;padding:8px 30px 8px 10px;font-size:12px;font-weight:900}
+.classbar .current{font-size:11px;color:#d7e3dd;font-weight:800}
 </style>
 </head>
 <body>
 <div class="shell">
   <div class="top"><div class="brand"><div class="logo">LH</div><div>Learning Hub · Groups</div></div><a href="../teacher/">⌂ Teacher Hub</a></div>
-  <div class="hero"><h1>Groups</h1><p>Make quick working groups or keep permanent job groups for your class.</p></div>
+  <div class="hero">
+    <h1>Groups</h1>
+    <p>Make quick working groups or keep permanent job groups for your class.</p>
+    <div class="classbar">
+      <span class="label">Class</span>
+      <select id="groupsClassSwitcher"></select>
+      <span class="current" id="groupsClassStatus"></span>
+    </div>
+  </div>
 
   <div class="tabs">
     <button class="tab on" data-view="quick">Quick Group Maker</button>
@@ -172,7 +185,7 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const $=id=>document.getElementById(id);
-let students=[],jobGroups=[],quickGroups=[],saveTimer=null,pointsState=null,pointsAutoRefresh=null,lastPointsSignature="";
+let students=[],jobGroups=[],quickGroups=[],saveTimer=null,pointsState=null,pointsAutoRefresh=null,lastPointsSignature="",teacherClasses=[],activeClassId=null;
 
 async function post(p){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
@@ -508,21 +521,73 @@ $("clearJobs").onclick=()=>{
   jobGroups.forEach(g=>g.student_ids=[]);renderJobs();queueSave();
 };
 
+
+async function loadClassContext(){
+  const d=await post({action:"teacher_login",teacher_code:teacherCode});
+  teacherClasses=d.classes||[];
+  activeClassId=Number(
+    d.teacher?.class_id ||
+    teacherClasses.find(c=>Number(c.is_default)===1)?.id ||
+    teacherClasses[0]?.id ||
+    0
+  )||null;
+
+  const sel=$("groupsClassSwitcher");
+  sel.innerHTML=teacherClasses.map(c=>
+    `<option value="${c.id}">${esc(c.name)}${c.year_level?` · ${esc(c.year_level)}`:""}</option>`
+  ).join("");
+  if(activeClassId)sel.value=String(activeClassId);
+
+  const current=teacherClasses.find(c=>Number(c.id)===Number(activeClassId));
+  $("groupsClassStatus").textContent=current?`Showing ${current.name}`:"";
+}
+
+async function reloadClassData(){
+  const [sr,jr]=await Promise.all([
+    post({action:"teacher_list_students",teacher_code:teacherCode,class_id:activeClassId}),
+    post({action:"teacher_get_job_groups",teacher_code:teacherCode})
+  ]);
+  students=sr.students||[];
+  jobGroups=jr.groups||[];
+  quickGroups=[];
+  lastPointsSignature="";
+  populateQuickOptions();
+  renderQuickStudentChecks();
+  renderQuickGroups();
+  renderJobs();
+  await loadPoints();
+}
+
+$("groupsClassSwitcher").onchange=async()=>{
+  const sel=$("groupsClassSwitcher");
+  const id=Number(sel.value);
+  if(!id||id===Number(activeClassId))return;
+
+  sel.disabled=true;
+  try{
+    await post({action:"teacher_set_default_class",teacher_code:teacherCode,class_id:id});
+    activeClassId=id;
+    teacherClasses=teacherClasses.map(c=>({...c,is_default:Number(c.id)===id?1:0}));
+    const current=teacherClasses.find(c=>Number(c.id)===id);
+    $("groupsClassStatus").textContent=current?`Showing ${current.name}`:"";
+    await reloadClassData();
+  }catch(e){
+    alert(e.message);
+    if(activeClassId)sel.value=String(activeClassId);
+  }finally{
+    sel.disabled=false;
+  }
+};
+
 async function load(){
   if(!teacherCode){location.href="../teacher/";return}
   try{
-    const [sr,jr]=await Promise.all([
-      post({action:"teacher_list_students",teacher_code:teacherCode}),
-      post({action:"teacher_get_job_groups",teacher_code:teacherCode})
-    ]);
-    students=sr.students||[];
-    jobGroups=jr.groups||[];
-    populateQuickOptions();
-    renderQuickStudentChecks();
-    renderQuickGroups();
-    renderJobs();
-    await loadPoints();
-  }catch(e){alert(e.message);location.href="../teacher/"}
+    await loadClassContext();
+    await reloadClassData();
+  }catch(e){
+    alert(e.message);
+    location.href="../teacher/";
+  }
 }
 load();
 window.addEventListener("focus",()=>loadPoints({silent:true}));
