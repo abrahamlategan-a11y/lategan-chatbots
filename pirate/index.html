@@ -213,9 +213,21 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 }
 
 
+.queue-track{display:flex;flex-direction:column;gap:8px}
+.queue-step{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:#fff}
+.queue-step.now{border:2px solid #d5b04c;background:#fff8df}
+.queue-step.next{border-color:#9fbab0;background:#f2f8f5}
+.queue-number{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#edf2ef;font-size:11px;font-weight:950}
+.queue-step.now .queue-number{background:#173f35;color:#fff}
+.queue-step.next .queue-number{background:#dceae4;color:#173f35}
+.queue-person{font-size:13px;font-weight:950}
+.queue-action{font-size:11px;color:var(--muted);margin-top:2px}
+.queue-state{font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.queue-state.live{color:#8b6512}.queue-state.next{color:#285f50}.queue-state.wait{color:var(--muted)}
 .action-now{border:2px solid #d5b04c;background:#fff8df;border-radius:15px;padding:14px;margin-bottom:10px}
 .action-now .who{font-size:18px;font-weight:950}.action-now .what{font-size:30px;font-weight:950;margin-top:4px}
 .action-now .result{margin-top:9px;font-size:13px;line-height:1.45;color:#4f5a54}
+.action-now .phase{display:inline-block;margin-top:8px;padding:5px 8px;border-radius:999px;background:#fff;border:1px solid #ead28a;font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.05em}
 .action-queued{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:12px}
 .action-queued:last-child{border-bottom:0}.action-queued strong{font-weight:900}
 .private-wait{background:#f4f7f5;border:1px solid var(--line);border-radius:12px;padding:10px;margin:9px 0;font-size:11px}
@@ -299,6 +311,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
           <div class="panel" id="actionQueuePanel">
             <div class="ph"><h3>Action Queue</h3><span class="publictag" id="queueCount">0 waiting</span></div>
             <div class="pb">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:9px">Public actions play one at a time, in the order students found them.</div>
               <div id="currentActionBox"></div>
               <div id="privateWaitingBox"></div>
               <div id="actionQueueList"></div>
@@ -570,6 +583,14 @@ async function toggleTeacherFullscreen(){
 function actionLabel(type){
   return ({rob:"🏴‍☠️ ROB",sink:"🌊 SINK",present:"🎁 PRESENT",swap:"🔁 SWAP",bomb:"💣 BOMB",choose:"🎯 CHOOSE"})[type]||String(type||"ACTION").toUpperCase();
 }
+function queuePhaseLabel(status){
+  if(status==="active")return "Choosing now";
+  if(status==="awaiting_defense")return "Waiting for defender";
+  if(status==="resolving")return "Resolving";
+  if(status==="done_wait")return "Complete — teacher continues";
+  return status||"";
+}
+
 function actionSound(type,result=""){
   const r=String(result||"").toLowerCase();
   if(r.includes("mirror"))return "mirror";
@@ -648,19 +669,38 @@ function renderTeacher(){
 
   const aq=state.action_queue||{current:null,queued:[]};
   const current=aq.current;
-  $("queueCount").textContent=`${(aq.queued||[]).length}${current?"+1":""} in queue`;
+  const queued=aq.queued||[];
+  const remaining=(current?1:0)+queued.length;
+  $("queueCount").textContent=`${remaining} remaining`;
 
   $("currentActionBox").innerHTML=current
     ?`<div class="action-now">
-        <div class="who">${current.player_name}</div>
+        <div class="who">NOW · ${current.player_name}</div>
         <div class="what">${actionLabel(current.action_type)}</div>
-        ${current.result_text?`<div class="result">${current.result_text}</div>`:
-          `<div class="result">Playing now…</div>`}
+        <div class="phase">${queuePhaseLabel(current.status)}</div>
+        ${current.result_text
+          ?`<div class="result">${current.result_text}</div>`
+          :`<div class="result">${current.status==="active"?"Waiting for the student to make their choice…":"Action in progress…"}</div>`}
       </div>`
     :'<div class="queue-note">No public action playing right now.</div>';
 
-  $("actionQueueList").innerHTML=(aq.queued||[]).length
-    ?(aq.queued||[]).map((x,i)=>`<div class="action-queued"><span><strong>${i+1}. ${x.player_name}</strong></span><span>${actionLabel(x.action_type)}</span></div>`).join("")
+  const steps=[];
+  if(current){
+    steps.push(`<div class="queue-step now">
+      <div class="queue-number">NOW</div>
+      <div><div class="queue-person">${current.player_name}</div><div class="queue-action">${actionLabel(current.action_type)}</div></div>
+      <div class="queue-state live">${queuePhaseLabel(current.status)}</div>
+    </div>`);
+  }
+  queued.forEach((x,i)=>{
+    steps.push(`<div class="queue-step ${i===0?"next":""}">
+      <div class="queue-number">${current?i+2:i+1}</div>
+      <div><div class="queue-person">${x.player_name}</div><div class="queue-action">${actionLabel(x.action_type)}</div></div>
+      <div class="queue-state ${i===0?"next":"wait"}">${i===0?"NEXT":"WAITING"}</div>
+    </div>`);
+  });
+  $("actionQueueList").innerHTML=steps.length
+    ?`<div class="queue-track">${steps.join("")}</div>`
     :'';
 
   const privateWaiting=players.filter(pl=>pl.private_waiting);
@@ -670,6 +710,7 @@ function renderTeacher(){
 
   $("advanceAction").style.display=current&&current.status==="done_wait"?"block":"none";
   $("advanceAction").disabled=!(current&&current.status==="done_wait");
+  $("advanceAction").textContent=queued.length?"Action complete — play NEXT":"Action complete — finish queue";
   if(current)showActionMoment(current);
 
   if(g.status!=="lobby")makeBoard($("teacherBoard"),g.revealed||[],g.status==="running"?g.current_coord:null,null,false);
