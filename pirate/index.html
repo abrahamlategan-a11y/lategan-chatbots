@@ -245,9 +245,10 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   <div id="joinView" style="display:none">
     <div class="joincard">
       <h2>Join Pirate Game</h2>
-      <p>Enter the game code from your teacher, then your first name. If you get disconnected or leave, use the same code and exactly the same name to rejoin your pirate.</p>
+      <p id="joinHelp">Enter the game code from your teacher. Your Learning Hub name will be used automatically.</p>
       <div class="field"><label>Game code</label><input id="joinCode" inputmode="numeric" maxlength="6" placeholder="482731"></div>
-      <div class="field"><label>First name</label><input id="joinName" maxlength="30" placeholder="Mia"></div>
+      <div class="field" id="joinNameField"><label>First name</label><input id="joinName" maxlength="30" placeholder="Mia"></div>
+      <div class="setupbox" id="registeredNameNote" style="display:none">Using your teacher-registered Learning Hub name.</div>
       <button class="btn primary" id="joinBtn" style="width:100%;margin-top:15px;padding:12px">Join game</button>
       <div id="joinError" style="font-size:12px;color:var(--red);margin-top:10px"></div>
     </div>
@@ -286,14 +287,14 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
       <div class="grid2">
         <div>
           <div class="panel" id="lobbyPanel">
-            <div class="ph"><h2>Game lobby</h2><div class="controls"><button class="btn" id="cancelLobbySetup">← Change setup</button><button class="btn primary" id="startGame">Start game</button><button class="btn" id="teacherFullLobby">Full screen</button></div></div>
+            <div class="ph"><h2>Game lobby <span class="publictag" id="lobbyCount">0 players</span></h2><div class="controls"><button class="btn" id="cancelLobbySetup">← Change setup</button><button class="btn primary" id="startGame">Start game</button><button class="btn" id="teacherFullLobby">Full screen</button></div></div>
             <div class="pb">
               
               <div class="lobby">
                 <div>
                   <div class="lab">Game code</div>
                   <div class="joincode" id="bigCode"></div>
-                  <div class="setupbox">Students scan the QR code, enter their first name, and appear here automatically.</div>
+                  <div class="setupbox">Students scan the QR code and appear here using their Learning Hub name.</div>
                   <div class="players" id="lobbyPlayers"></div>
                 </div>
                 <div class="qrbox"><div id="joinQR"></div></div>
@@ -368,7 +369,13 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
             </div>
           </div>
         </div>
-        <div class="panel" id="finishPanel" style="display:none"><div class="ph"><h3>Final standings</h3></div><div class="pb" id="podium"></div></div>
+        <div class="panel" id="finishPanel" style="display:none">
+          <div class="ph"><h3>Final standings</h3></div>
+          <div class="pb">
+            <div id="podium"></div>
+            <button class="btn primary" id="finishedBack" style="width:100%;margin-top:14px;padding:12px">Back to Learning Hub</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -391,6 +398,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
     <h1>🏆 Final Leaderboard</h1>
     <div class="final-sub">This stays on screen until you press ×. Closing it ends the game for everyone.</div>
     <div id="finalLeaderboard"></div>
+    <button class="btn primary" id="finalNewGame" style="width:100%;margin-top:16px;padding:12px">Close & start another game</button>
   </div>
 </div>
 
@@ -399,6 +407,7 @@ const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const params=new URLSearchParams(location.search);
 const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
+const studentCode=localStorage.getItem("lategan_student_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
 let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="";
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
@@ -409,6 +418,13 @@ else if(token)$("playerView").style.display="block";
 else $("joinView").style.display="block";
 
 const prefill=params.get("code");if(prefill)$("joinCode").value=prefill;
+if(!teacherMode&&studentCode){
+  $("joinNameField").style.display="none";
+  $("registeredNameNote").style.display="block";
+  $("joinHelp").textContent="Enter the game code. Your teacher-registered Learning Hub name will be used automatically.";
+}else if(!teacherMode){
+  $("joinHelp").textContent="Enter the game code and your first name. If you opened Pirate from the Student Hub, your registered name is used automatically.";
+}
 
 async function post(p){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
@@ -418,7 +434,12 @@ async function post(p){
 $("joinBtn").onclick=async()=>{
   $("joinError").textContent="";
   try{
-    const d=await post({action:"pirate_join_game",join_code:$("joinCode").value,display_name:$("joinName").value});
+    const d=await post({
+      action:"pirate_join_game",
+      join_code:$("joinCode").value,
+      student_code:studentCode,
+      display_name:$("joinName").value
+    });
     token=d.join_token;sessionStorage.setItem("pirate_join_token",token);
     history.replaceState({}, "", location.pathname+"?code="+$("joinCode").value.replace(/\D/g,""));
     $("joinView").style.display="none";$("playerView").style.display="block";await load();
@@ -640,6 +661,7 @@ function renderTeacher(){
     new QRCode($("joinQR"),{text:joinUrl,width:180,height:180,correctLevel:QRCode.CorrectLevel.M})
   }
 
+  $("lobbyCount").textContent=`${players.length} ${players.length===1?"player":"players"}`;
   $("lobbyPlayers").innerHTML=players.length
     ?players.map(p=>`<span class="chip">${p.name} · ${p.locked?"Ready ✓":`${p.placed}/${totalCells}`}</span>`).join("")
     :'<span class="wait">Waiting for players…</span>';
@@ -1106,13 +1128,17 @@ $("cancelLobbySetup").onclick=async()=>{
   }catch(e){alert(e.message)}
 };
 
-$("closeFinal").onclick=async()=>{
-  if(!state?.game)return;
-  if(!confirm("Close the leaderboard and finish this game for everyone?"))return;
-  await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"delete"});
+function closeFinishedGame(){
   $("finalOverlay").classList.remove("show");
-  state={game:null};teacherFinishedShown=false;renderTeacher();
-};
+  state={game:null,players:[]};
+  teacherFinishedShown=false;
+  advancingRound=false;
+  advanceFromRound=0;
+  qrMadeFor="";
+  renderTeacher();
+}
+$("closeFinal").onclick=()=>closeFinishedGame();
+$("finalNewGame").onclick=()=>closeFinishedGame();
 $("advanceAction").onclick=async()=>{
   if(!state?.game)return;
   try{
@@ -1193,6 +1219,12 @@ async function clickRoundCoord(coord,cell){
     coordSubmitting=false;
   }
 }
+$("finishedBack").onclick=()=>{
+  token="";
+  sessionStorage.removeItem("pirate_join_token");
+  location.href="../student/";
+};
+
 $("leaveGame").onclick=async()=>{
   if(!confirm("Leave this Pirate Game? You can rejoin later with the same game code and the same name."))return;
   try{await post({action:"pirate_leave_game",join_token:token})}catch(e){}
