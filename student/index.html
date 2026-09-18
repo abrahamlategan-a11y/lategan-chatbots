@@ -16,7 +16,10 @@ button,input{font:inherit}button{cursor:pointer}
 .shell{max-width:1180px;margin:0 auto;padding:22px 24px 54px}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:900}.logo{width:42px;height:42px;border-radius:13px;background:var(--deep);color:#fff;display:grid;place-items:center}
+.student-actions{display:flex;align-items:center;gap:8px}
 .student-chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:9px 12px;font-size:12px;color:var(--muted);font-weight:700}
+.switch-btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:9px 12px;font-size:12px;font-weight:850}
+.switch-btn:hover{background:#f5f8f5}
 
 .today-hero{background:linear-gradient(135deg,#176044,#2d7b5c);color:#fff;border-radius:26px;padding:25px 28px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-bottom:18px;position:relative;overflow:hidden}
 .today-hero:after{content:"";position:absolute;width:230px;height:230px;border-radius:50%;background:rgba(255,255,255,.06);right:-70px;top:-80px}
@@ -45,7 +48,7 @@ button,input{font:inherit}button{cursor:pointer}
 .login{position:fixed;inset:0;background:#f2f6f2;display:grid;place-items:center;padding:20px;z-index:100}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:28px}.login-card h2{font-size:28px;margin:0 0 7px}.login-card p{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 18px}.field label{display:block;font-size:11px;font-weight:850;margin-bottom:6px}.field input{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px}.primary{width:100%;border:0;background:var(--green);color:#fff;border-radius:11px;padding:12px;font-weight:850;margin-top:12px}.error{font-size:12px;color:#95483e;margin-top:10px}
 
 @media(max-width:900px){.action-grid,.botgrid{grid-template-columns:1fr 1fr}.info-strip{grid-template-columns:1fr 1fr}.info.remind{grid-column:1/-1}.today-hero{grid-template-columns:1fr}.datebox{text-align:left;min-width:0}}
-@media(max-width:600px){.shell{padding:15px}.action-grid,.botgrid,.info-strip{grid-template-columns:1fr}.info.remind{grid-column:auto}.greeting{font-size:33px}.student-chip{display:none}.action{min-height:180px}}
+@media(max-width:600px){.shell{padding:15px}.action-grid,.botgrid,.info-strip{grid-template-columns:1fr}.info.remind{grid-column:auto}.greeting{font-size:33px}.student-chip{display:none}.switch-btn{padding:9px 11px}.action{min-height:180px}}
 
 /* Student Hub weekday access gate */
 .access-lock{
@@ -112,6 +115,7 @@ button,input{font:inherit}button{cursor:pointer}
     <h1>Learning Hub is closed</h1>
     <p id="accessMessage">Student access is available during school hours.</p>
     <div class="access-hours">Monday–Friday · 8:00am–3:30pm</div>
+    <button class="switch-btn" id="lockedSwitchStudentBtn" type="button" style="margin-top:16px">Switch student</button>
     <p class="access-note">Times are based on Perth time.</p>
   </div>
 </div>
@@ -131,7 +135,10 @@ button,input{font:inherit}button{cursor:pointer}
 <div class="shell">
   <div class="top">
     <div class="brand"><div class="logo">LH</div><div>Learning Hub</div></div>
-    <div class="student-chip" id="studentChip">Student</div>
+    <div class="student-actions">
+      <div class="student-chip" id="studentChip">Student</div>
+      <button class="switch-btn" id="switchStudentBtn" type="button">Switch student</button>
+    </div>
   </div>
 
   <div id="homeView">
@@ -288,6 +295,36 @@ async function loadDaily(){
     $("studentTodo").textContent=(x.todo||[]).filter(Boolean).length?"Morning: "+x.todo.filter(Boolean).join(" · "):"";
   }catch(e){console.warn(e)}
 }
+
+function switchStudent(){
+  // Clear anything that can identify or reconnect the previous student.
+  localStorage.removeItem("lategan_student_code");
+  sessionStorage.removeItem("pirate_join_token");
+  sessionStorage.removeItem("pirate_game_id");
+  sessionStorage.removeItem("pirate_player_id");
+
+  student=null;
+  bots=[];
+  $("studentCode").value="";
+  $("loginError").textContent="";
+  $("studentChip").textContent="Student";
+  $("greeting").textContent="Good morning.";
+  $("helperName").textContent="—";
+  $("lunchNames").textContent="—";
+  $("studentReminders").textContent="No reminders today.";
+  $("studentTodo").textContent="";
+  $("botCount").textContent="0";
+  $("botGrid").innerHTML="";
+  $("botView").classList.remove("show");
+  $("homeView").style.display="block";
+  $("loginScreen").style.display="grid";
+
+  setTimeout(()=>$("studentCode").focus(),50);
+}
+
+$("switchStudentBtn").onclick=switchStudent;
+$("lockedSwitchStudentBtn").onclick=switchStudent;
+
 async function login(){
   $("loginError").textContent="";
   const code=$("studentCode").value.trim();
