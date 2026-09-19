@@ -235,6 +235,268 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 .playerrow.private-stall{background:#fff8df;border-radius:10px;padding-left:7px;padding-right:7px}
 .queue-note{color:var(--muted);font-size:11px;text-align:center;padding:8px}
 
+
+/* =========================================================
+   v24 teacher screen — sketch-led classroom layout
+   ========================================================= */
+.teacher-stage{
+  grid-template-columns:minmax(0,1fr) 285px !important;
+  gap:14px !important;
+  align-items:start;
+}
+#boardPanel{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+#boardPanel > .panel:first-child{overflow:visible}
+#boardPanel > .panel:first-child .ph{padding:12px 14px}
+#boardPanel > .panel:first-child .ph h2{font-size:15px}
+#boardPanel > .panel:first-child .pb{padding:12px 14px 16px}
+
+.teacher-summary{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:0;
+  margin:0 0 12px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#f8faf9;
+  overflow:hidden;
+}
+.summary-card{
+  padding:9px 12px;
+  border:0;
+  border-right:1px solid var(--line);
+  border-radius:0;
+  background:transparent;
+}
+.summary-card:last-child{border-right:0}
+.summary-big{
+  margin-top:1px;
+  font-size:24px;
+  line-height:1;
+  font-weight:950;
+  color:var(--deep);
+  letter-spacing:.03em;
+}
+.summary-sub{
+  margin-top:4px;
+  font-size:10px;
+  line-height:1.25;
+  color:var(--muted);
+}
+
+.carousel-wrap{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(145px,.62fr) minmax(380px,1.7fr) minmax(145px,.62fr);
+  gap:0;
+  align-items:center;
+  min-height:300px;
+  padding:6px 0 4px;
+}
+.carousel-rail{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:10px;
+  min-width:0;
+}
+#carouselPrev{align-items:flex-end;transform:translateX(18px)}
+#carouselNext{align-items:flex-start;transform:translateX(-18px)}
+.carousel-card{
+  width:88%;
+  min-height:88px;
+  border:1px solid #b9cdc5;
+  border-radius:15px;
+  padding:12px 13px;
+  background:#f3f8f5;
+  box-shadow:0 10px 25px rgba(31,55,46,.08);
+}
+#carouselPrev .carousel-card:nth-child(1){transform:translateX(12px) rotate(-1deg) scale(.96)}
+#carouselPrev .carousel-card:nth-child(2){transform:translateX(-6px) rotate(-2deg) scale(.90);opacity:.55}
+#carouselNext .carousel-card:nth-child(1){transform:translateX(-12px) rotate(1deg) scale(.96)}
+#carouselNext .carousel-card:nth-child(2){transform:translateX(6px) rotate(2deg) scale(.90);opacity:.68}
+#carouselNext .carousel-card:nth-child(3){transform:translateX(18px) rotate(2deg) scale(.84);opacity:.45}
+.carousel-card.past{background:#f5f3ed;border-color:#d8ddd9}
+.carousel-card .cap{
+  font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:950
+}
+.carousel-card .name{
+  margin-top:2px;font-size:17px;line-height:1.05;font-weight:950
+}
+.carousel-card .act{
+  margin-top:4px;font-size:11px;line-height:1.25;color:var(--muted)
+}
+.carousel-empty{
+  width:84%;
+  min-height:88px;
+  border:1px dashed #c8d2cd;
+  border-radius:14px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  padding:12px;
+  color:#8a948e;
+  font-size:10px;
+  line-height:1.35;
+  background:#fbfcfb;
+}
+#carouselPrev .carousel-empty{margin-left:auto}
+#carouselNext .carousel-empty{margin-right:auto}
+
+#carouselCurrentBox{position:relative;z-index:3}
+.carousel-now{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:24px 28px;
+  border:2px solid #d5b04c;
+  border-radius:22px;
+  background:
+    radial-gradient(circle at 85% 12%,rgba(213,176,76,.13),transparent 26%),
+    linear-gradient(135deg,#fff9e8,#fffef9);
+  box-shadow:0 20px 45px rgba(69,57,21,.15);
+  overflow:hidden;
+}
+.carousel-eyebrow{
+  font-size:10px;font-weight:950;text-transform:uppercase;letter-spacing:.14em;color:#8b6a19
+}
+.carousel-name{
+  margin-top:5px;
+  font-size:clamp(34px,3.4vw,52px);
+  line-height:.98;
+  font-weight:950;
+  color:#1c2b25;
+}
+.carousel-action{
+  margin-top:10px;
+  font-size:clamp(18px,1.8vw,27px);
+  line-height:1.15;
+  font-weight:900;
+  color:var(--deep);
+}
+.carousel-result{
+  margin-top:12px;
+  max-width:680px;
+  font-size:13px;
+  line-height:1.4;
+  color:#56615b;
+}
+.carousel-phase{
+  display:inline-block;
+  width:max-content;
+  margin-top:14px;
+  padding:5px 8px;
+  border:1px solid #e7cc7d;
+  border-radius:999px;
+  background:#fff;
+  font-size:9px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+
+#actionQueuePanel .ph{padding:11px 14px}
+#actionQueuePanel .pb{padding:11px 14px 14px}
+#actionQueuePanel .pb > div:first-child{display:none}
+.teacher-status-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+}
+.teacher-status-card{
+  min-width:0;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fafcfb;
+  padding:8px 9px;
+}
+.teacher-status-card.busy{background:#fff8df;border-color:#ead28a}
+.teacher-status-card.private{background:#f1f5f3;border-color:#d5e2dc}
+.teacher-status-top{
+  display:flex;align-items:center;justify-content:space-between;gap:6px
+}
+.teacher-status-name{
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:950
+}
+.teacher-status-badge{
+  flex:0 0 auto;
+  padding:3px 6px;
+  border-radius:999px;
+  background:#edf2ef;
+  color:#5f6d66;
+  font-size:8px;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.teacher-status-card.busy .teacher-status-badge{background:#fff0c6;color:#6b5414}
+.teacher-status-card.private .teacher-status-badge{background:#e6eeea;color:#42665a}
+.teacher-status-note{
+  margin-top:4px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:10px;
+  color:var(--muted);
+}
+
+.teacher-stage > div:last-child .panel:first-child .ph{padding:12px 13px}
+.teacher-stage > div:last-child .panel:first-child .pb{padding:5px 12px 10px}
+#teacherPlayers .leader-row{
+  display:grid;
+  grid-template-columns:26px minmax(0,1fr) auto;
+  gap:7px;
+  align-items:center;
+  padding:8px 0;
+  border-bottom:1px solid var(--line);
+}
+#teacherPlayers .leader-row:last-child{border-bottom:0}
+.leader-rank{
+  width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:#edf2ef;font-size:10px;font-weight:950
+}
+#teacherPlayers .leader-row:nth-child(1) .leader-rank{background:#f4dd91}
+#teacherPlayers .leader-row:nth-child(2) .leader-rank{background:#e4e6e5}
+#teacherPlayers .leader-row:nth-child(3) .leader-rank{background:#e8c8a1}
+.leader-name{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:950
+}
+.leader-sub{
+  margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;color:var(--muted)
+}
+.leader-total{
+  font-size:13px;font-weight:950;color:var(--deep);white-space:nowrap
+}
+
+:fullscreen .teacher-stage{
+  height:calc(100vh - 76px);
+  grid-template-columns:minmax(0,1fr) 275px !important;
+  gap:10px !important;
+}
+:fullscreen #boardPanel{gap:10px}
+:fullscreen .teacher-summary{margin-bottom:8px}
+:fullscreen .carousel-wrap{min-height:280px}
+:fullscreen .carousel-now{min-height:245px}
+:fullscreen .teacher-status-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+:fullscreen .teacher-stage > div:last-child{min-height:0}
+:fullscreen .teacher-stage > div:last-child .panel:first-child{max-height:100%;overflow:auto}
+
+@media(max-width:1180px){
+  .teacher-status-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .carousel-wrap{grid-template-columns:minmax(120px,.55fr) minmax(330px,1.7fr) minmax(120px,.55fr)}
+}
+@media(max-width:900px){
+  .teacher-stage{grid-template-columns:1fr !important}
+  .carousel-wrap{grid-template-columns:1fr}
+  #carouselPrev,#carouselNext{display:none}
+  .teacher-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
 </style>
 </head>
 <body>
@@ -651,16 +913,63 @@ function currentActionSentence(item){
   return map[String(item.action_type||"").toLowerCase()]||`${name} is completing ${label}…`;
 }
 function teacherStatusInfo(pl,g,current){
-  if(g.status==="lobby")return {badge:pl.locked?"Ready":"Setting up",note:pl.locked?"Board locked and ready to play.":`${pl.placed||0}/${g.board_size*g.board_size} tiles placed.`,tone:pl.locked?"":"busy"};
-  if(g.status==="paused")return {badge:"Paused",note:"This saved game is waiting to be resumed.",tone:""};
-  if(g.status==="finished")return {badge:"Finished",note:"Game complete.",tone:""};
-  if(pl.private_waiting)return {badge:"Private",note:pl.waiting_on||"Working privately.",tone:"private"};
-  if(current && !isPublicCarouselAction(current.action_type) && current.player_name===pl.name)return {badge:"Private",note:cleanActionLabel(current.action_type),tone:"private"};
-  if(g.status==="choosing" && pl.id===g.chooser_player_id)return {badge:"Choosing",note:"Choosing the next square privately.",tone:"private"};
-  if(pl.busy)return {badge:"Busy",note:pl.waiting_on||"Working on the current task.",tone:"busy"};
-  if(["ready","ready_chosen"].includes(g.status))return {badge:"Ready",note:g.status==="ready_chosen"?`Next square chosen: ${g.current_coord}.`:"Ready for the next square.",tone:""};
-  if(g.status==="running")return {badge:"Done",note:"Finished for now — waiting for the class.",tone:""};
-  return {badge:"Waiting",note:"Waiting.",tone:""};
+  const raw=String(pl.waiting_on||"").trim();
+  const low=raw.toLowerCase();
+
+  if(g.status==="lobby"){
+    return {
+      badge:pl.locked?"Ready":"Setting up",
+      note:pl.locked?"Board locked":`${pl.placed||0}/${g.board_size*g.board_size} tiles`,
+      tone:pl.locked?"":"busy"
+    };
+  }
+  if(g.status==="paused")return {badge:"Paused",note:"Game saved",tone:""};
+  if(g.status==="finished")return {badge:"Finished",note:"Game complete",tone:""};
+
+  if(current && !isPublicCarouselAction(current.action_type) && current.player_name===pl.name){
+    const t=String(current.action_type||"").toLowerCase();
+    if(t==="bomb")return {badge:"Private",note:"Resolving a private event",tone:"private"};
+    if(t.startsWith("choose"))return {badge:"Choosing",note:"Choosing the next square",tone:"private"};
+    return {badge:"Private",note:"Completing a private action",tone:"private"};
+  }
+
+  if(g.status==="choosing" && pl.id===g.chooser_player_id){
+    return {badge:"Choosing",note:"Choosing the next square",tone:"private"};
+  }
+
+  if(pl.private_waiting || pl.busy){
+    if(low.includes("finding") || low.includes("locat")){
+      const coord=(raw.match(/[A-J]\s*\d+/i)||[])[0]||g.current_coord||"";
+      return {badge:"Finding",note:coord?`Finding ${coord.replace(/\s+/g,"")}`:"Finding the square",tone:"busy"};
+    }
+    if(low.includes("calculat") || low.includes("math")){
+      return {badge:"Calculating",note:"Working out the maths",tone:"busy"};
+    }
+    if(low.includes("defend") || low.includes("attack")){
+      return {badge:"Responding",note:"Responding to an attack",tone:"busy"};
+    }
+    if(low.includes("target")){
+      return {badge:"Choosing",note:"Choosing a target",tone:"busy"};
+    }
+    if(low.includes("ack") || low.includes("continue")){
+      return {badge:"Reading",note:"Finishing an event",tone:"busy"};
+    }
+    if(low.includes("bomb")){
+      return {badge:"Private",note:"Resolving a private event",tone:"private"};
+    }
+    if(raw){
+      return {badge:"Working",note:raw,tone:"busy"};
+    }
+    return {badge:"Working",note:"Completing the current task",tone:"busy"};
+  }
+
+  if(["ready","ready_chosen"].includes(g.status)){
+    return {badge:"Ready",note:"Finished this round",tone:""};
+  }
+  if(g.status==="running"){
+    return {badge:"Done",note:"Waiting for the class",tone:""};
+  }
+  return {badge:"Waiting",note:"Waiting",tone:""};
 }
 
 function actionSound(type,result=""){
@@ -727,7 +1036,7 @@ function renderTeacher(){
   if(g.status==="finished")headline="🏆 Game finished";
   $("roundStatus").textContent=headline;
 
-  $("teacherCurrentCoord").textContent=g.current_coord||"—";
+  $("teacherCurrentCoord").textContent=(g.status==="running"||g.status==="ready_chosen")?(g.current_coord||"—"):"—";
   $("teacherCurrentState").textContent=g.status==="running"?"Class is working on this square.":g.status==="ready"?"Everyone is ready to continue.":g.status==="ready_chosen"?"Next square has already been chosen.":g.status==="choosing"?"A player is choosing the next square privately.":g.status==="paused"?"Saved game — currently paused.":g.status==="finished"?"Game finished.":"Waiting for the round to begin.";
   $("teacherGameCode").textContent=g.join_code||"—";
   $("teacherRoundInfo").textContent=`${g.round_number||0}`;
@@ -753,7 +1062,7 @@ function renderTeacher(){
   if(current){
     $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">${current.player_name}</div><div class="carousel-action">${currentActionSentence(current)}</div><div class="carousel-result">${current.result_text||"Their device is handling the next step."}</div><div class="carousel-phase">${queuePhaseLabel(current.status)}</div></div>`;
   }else if(rawCurrent && !isPublicCarouselAction(rawCurrent.action_type)){
-    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Private action</div><div class="carousel-action">A student is completing something privately.</div><div class="carousel-result">Bombs and choose-next-square steps do not appear as public carousel cards.</div><div class="carousel-phase">Private</div></div>`;
+    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Private action</div><div class="carousel-action">A student is completing something privately.</div><div class="carousel-result">Nothing public needs to be shown right now.</div><div class="carousel-phase">Private</div></div>`;
   }else{
     $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Waiting…</div><div class="carousel-action">No public action is active.</div><div class="carousel-result">When a public action begins, it will appear here and move through the carousel.</div><div class="carousel-phase">Idle</div></div>`;
   }
@@ -1068,7 +1377,7 @@ async function load(){
   }
 }
 
-$("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;renderTeacher()};
+$("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;teacherLastPublicActionId=null;teacherLastPublicSnapshot=null;teacherPublicHistory=[];renderTeacher()};
 $("startGame").onclick=async()=>{
   if($("startGame").disabled||!state?.game)return;
   $("startGame").disabled=true;
