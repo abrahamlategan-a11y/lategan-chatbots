@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v25</title>
+<title>Pirate Game · Learning Hub · v26</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -508,6 +508,89 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   color:#4f5b55 !important;
 }
 
+
+/* =========================================================
+   v26 — automatic public queue + real carousel movement
+   ========================================================= */
+#advanceAction{display:none!important}
+
+.carousel-wrap{
+  overflow:visible;
+}
+#carouselCurrentBox.carousel-shift-in .carousel-now{
+  animation:carouselShiftIn .58s cubic-bezier(.2,.85,.25,1) both;
+}
+#carouselPrev.carousel-shift-left .carousel-card:first-child{
+  animation:carouselPastIn .58s cubic-bezier(.2,.85,.25,1) both;
+}
+#carouselNext.carousel-shift-next .carousel-card:first-child{
+  animation:carouselNextIn .58s cubic-bezier(.2,.85,.25,1) both;
+}
+@keyframes carouselShiftIn{
+  0%{transform:translateX(150px) scale(.80) rotate(1.5deg);opacity:.2}
+  65%{transform:translateX(-8px) scale(1.015) rotate(-.25deg);opacity:1}
+  100%{transform:translateX(0) scale(1) rotate(0);opacity:1}
+}
+@keyframes carouselPastIn{
+  0%{transform:translateX(120px) scale(1.08);opacity:.25}
+  100%{transform:translateX(12px) rotate(-1deg) scale(.96);opacity:.6}
+}
+@keyframes carouselNextIn{
+  0%{transform:translateX(70px) scale(.84);opacity:.3}
+  100%{transform:translateX(-12px) rotate(1deg) scale(.96);opacity:1}
+}
+
+.coord-reveal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:95;
+  display:none;
+  place-items:center;
+  background:rgba(20,52,43,.72);
+  backdrop-filter:blur(7px);
+}
+.coord-reveal-overlay.show{display:grid}
+.coord-reveal-card{
+  width:min(650px,88vw);
+  text-align:center;
+  border:3px solid #dfb94f;
+  border-radius:28px;
+  background:#fffdf7;
+  box-shadow:0 28px 80px rgba(10,30,24,.35);
+  padding:34px 38px 38px;
+  animation:coordPop .48s cubic-bezier(.2,.9,.25,1) both;
+}
+.coord-reveal-kicker{
+  font-size:13px;
+  font-weight:950;
+  letter-spacing:.16em;
+  color:#8b6a19;
+}
+.coord-reveal-value{
+  margin:10px 0 4px;
+  font-size:clamp(100px,14vw,190px);
+  line-height:.86;
+  font-weight:1000;
+  letter-spacing:.02em;
+  color:var(--deep);
+}
+.coord-reveal-sub{
+  margin-top:18px;
+  font-size:18px;
+  font-weight:800;
+  color:#5b6861;
+}
+@keyframes coordPop{
+  from{transform:scale(.70);opacity:0}
+  70%{transform:scale(1.035);opacity:1}
+  to{transform:scale(1);opacity:1}
+}
+
+/* Completed public actions should feel finished, not ask for another click. */
+.carousel-phase{
+  transition:.2s ease;
+}
+
 </style>
 </head>
 <body>
@@ -596,7 +679,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
               <div class="pb">
                 <div style="font-size:11px;color:var(--muted);margin-bottom:9px">This replaces the old grid with a live classroom view of progress and private work.</div>
                 <div id="statusGrid" class="teacher-status-grid"></div>
-                <button class="btn primary" id="advanceAction" style="width:100%;margin-top:12px;display:none">Next action</button>
+                <button class="btn primary" id="advanceAction" style="display:none!important">Next action</button>
               </div>
             </div>
           </div>
@@ -669,10 +752,18 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 
 <div class="round-ready" id="roundReady">
   <div class="round-ready-card">
-    <div class="big">✅</div>
-    <h2>Everyone is ready</h2>
-    <p id="roundReadyText">The round is complete.</p>
-    <button class="btn primary" id="continueRound" style="width:100%;padding:13px">Continue</button>
+    <div class="big">🧭</div>
+    <h2>Choose the next square</h2>
+    <p id="roundReadyText">Everyone is finished. Reveal the next coordinate when you're ready.</p>
+    <button class="btn primary" id="continueRound" style="width:100%;padding:13px">Reveal next square</button>
+  </div>
+</div>
+
+<div class="coord-reveal-overlay" id="coordReveal">
+  <div class="coord-reveal-card">
+    <div class="coord-reveal-kicker">NEXT SQUARE</div>
+    <div class="coord-reveal-value" id="coordRevealValue">A1</div>
+    <div class="coord-reveal-sub">Find this square on your map.</div>
   </div>
 </div>
 
@@ -693,7 +784,7 @@ const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const studentCode=localStorage.getItem("lategan_student_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[];
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[],autoActionTimer=null,autoActionBusy=false,lastCarouselActionId=null,coordRevealActive=false;
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -1095,6 +1186,82 @@ function showActionMoment(current){
   playSound(actionSound(current.action_type,current.result_text));
 }
 
+
+function animateCarouselTo(actionId){
+  const id=actionId==null?null:String(actionId);
+  if(!id || id===lastCarouselActionId)return;
+  lastCarouselActionId=id;
+
+  const currentBox=$("carouselCurrentBox");
+  const prev=$("carouselPrev");
+  const next=$("carouselNext");
+
+  currentBox.classList.remove("carousel-shift-in");
+  prev.classList.remove("carousel-shift-left");
+  next.classList.remove("carousel-shift-next");
+  void currentBox.offsetWidth;
+
+  currentBox.classList.add("carousel-shift-in");
+  prev.classList.add("carousel-shift-left");
+  next.classList.add("carousel-shift-next");
+
+  setTimeout(()=>{
+    currentBox.classList.remove("carousel-shift-in");
+    prev.classList.remove("carousel-shift-left");
+    next.classList.remove("carousel-shift-next");
+  },650);
+}
+
+function cancelAutoActionAdvance(){
+  if(autoActionTimer){
+    clearTimeout(autoActionTimer);
+    autoActionTimer=null;
+  }
+}
+
+function scheduleAutoActionAdvance(current){
+  if(!teacherMode || !current || String(current.status)!=="done_wait" || autoActionBusy)return;
+
+  const actionId=Number(current.id||0);
+  if(!actionId)return;
+
+  cancelAutoActionAdvance();
+  autoActionTimer=setTimeout(async()=>{
+    if(autoActionBusy)return;
+    const live=state?.action_queue?.current;
+    if(!live || Number(live.id)!==actionId || String(live.status)!=="done_wait")return;
+
+    autoActionBusy=true;
+    try{
+      const fresh=await post({
+        action:"pirate_teacher_advance_action",
+        teacher_code:teacherCode,
+        game_id:state.game.id
+      });
+      state=fresh;
+      renderTeacher();
+    }catch(e){
+      console.error("Automatic action advance failed:",e);
+    }finally{
+      autoActionBusy=false;
+      autoActionTimer=null;
+    }
+  },1800);
+}
+
+function showCoordinateReveal(coord){
+  coordRevealActive=true;
+  $("coordRevealValue").textContent=coord||"—";
+  $("coordReveal").classList.add("show");
+  playSound("event");
+
+  setTimeout(()=>{
+    $("coordReveal").classList.remove("show");
+    coordRevealActive=false;
+    renderTeacher();
+  },1900);
+}
+
 function renderTeacher(){
   if(!state?.game){
     $("teacherNoGame").style.display="block";$("teacherGame").style.display="none";
@@ -1150,6 +1317,14 @@ function renderTeacher(){
   const queued=(aq.queued||[]).filter(x=>isPublicCarouselAction(x.action_type));
   updateTeacherPublicHistory(current);
 
+  if(current){
+    animateCarouselTo(current.id);
+    if(String(current.status)==="done_wait")scheduleAutoActionAdvance(current);
+    else cancelAutoActionAdvance();
+  }else{
+    cancelAutoActionAdvance();
+  }
+
   const remaining=(current?1:0)+queued.length;
   $("queueCount").textContent=`${remaining} public ${remaining===1?"item":"items"}`;
 
@@ -1191,10 +1366,7 @@ function renderTeacher(){
     return `<div class="teacher-status-card ${info.tone}"><div class="teacher-status-top"><div class="teacher-status-name">${pl.name}</div><div class="teacher-status-badge">${info.badge}</div></div><div class="teacher-status-note">${info.note}</div></div>`;
   }).join(""):'<div class="wait">No players yet.</div>';
 
-  const advanceCurrent=rawCurrent||current;
-  $("advanceAction").style.display=advanceCurrent&&advanceCurrent.status==="done_wait"?"block":"none";
-  $("advanceAction").disabled=!(advanceCurrent&&advanceCurrent.status==="done_wait");
-  $("advanceAction").textContent=queued.length?"Action complete — play NEXT":"Action complete — finish queue";
+  $("advanceAction").style.display="none";
   if(current)showActionMoment(current);
 
   $("forceGame").disabled=g.status!=="running"||players.every(p=>!p.busy);
@@ -1205,11 +1377,9 @@ function renderTeacher(){
   const showReady=ready&&!advancingRound;
   $("roundReady").classList.toggle("show",showReady);
   if(showReady){
-    $("roundReadyText").textContent=g.status==="ready_chosen"
-      ?`Everyone is done. The next chosen coordinate is ${g.current_coord}.`
-      :"Everyone is done. Continue when you're ready for the next coordinate.";
+    $("roundReadyText").textContent="Everyone is finished. Reveal the next coordinate when you're ready.";
     $("continueRound").disabled=false;
-    $("continueRound").textContent="Continue";
+    $("continueRound").textContent="Reveal next square";
   }else{
     $("roundReady").classList.remove("show");
   }
@@ -1453,7 +1623,7 @@ async function load(){
       }else if(state?.game?.status!=="finished"){
         state=fresh;
       }
-      renderTeacher();
+      if(!coordRevealActive)renderTeacher();
     }
     else if(token){
       if(coordSubmitting||choosingNow||studentBusy||studentPollBusy)return;
@@ -1484,7 +1654,7 @@ async function load(){
   }
 }
 
-$("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;teacherLastPublicActionId=null;teacherLastPublicSnapshot=null;teacherPublicHistory=[];renderTeacher()};
+$("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;teacherLastPublicActionId=null;teacherLastPublicSnapshot=null;teacherPublicHistory=[];lastCarouselActionId=null;cancelAutoActionAdvance();renderTeacher()};
 $("startGame").onclick=async()=>{
   if($("startGame").disabled||!state?.game)return;
   $("startGame").disabled=true;
@@ -1521,7 +1691,7 @@ $("continueRound").onclick=async()=>{
   advancingRound=true;
   advanceFromRound=Number(state.game.round_number||0);
   $("continueRound").disabled=true;
-  $("continueRound").textContent="Starting next round…";
+  $("continueRound").textContent="Choosing…";
   $("roundReady").classList.remove("show");
 
   try{
@@ -1531,22 +1701,20 @@ $("continueRound").onclick=async()=>{
       game_id:state.game.id,
       command:"next"
     });
-    state=nextState;
 
-    // The backend response should already be the new running round.
-    // If it is, release immediately. Otherwise keep the lock until polling
-    // observes a higher round number.
+    state=nextState;
+    const newCoord=state?.game?.current_coord||"—";
+
     if(state?.game?.status==="running" &&
        Number(state.game.round_number)>advanceFromRound){
       advancingRound=false;
     }
 
-    playSound("event");
-    renderTeacher();
+    showCoordinateReveal(newCoord);
   }catch(e){
     advancingRound=false;
     $("continueRound").disabled=false;
-    $("continueRound").textContent="Continue";
+    $("continueRound").textContent="Reveal next square";
     alert(e.message);
   }
 };
