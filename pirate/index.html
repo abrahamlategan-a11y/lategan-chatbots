@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v20</title>
+<title>Pirate Game · Learning Hub · v23</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -284,12 +284,11 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
     </div></div>
 
     <div id="teacherGame" style="display:none">
-      <div class="grid2">
-        <div>
+      <div class="grid2 teacher-stage">
+        <div style="display:flex;flex-direction:column;gap:18px">
           <div class="panel" id="lobbyPanel">
             <div class="ph"><h2>Game lobby <span class="publictag" id="lobbyCount">0 players</span></h2><div class="controls"><button class="btn" id="cancelLobbySetup">← Change setup</button><button class="btn primary" id="startGame">Start game</button><button class="btn" id="teacherFullLobby">Full screen</button></div></div>
             <div class="pb">
-              
               <div class="lobby">
                 <div>
                   <div class="lab">Game code</div>
@@ -302,23 +301,35 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
             </div>
           </div>
 
-          <div class="panel" id="boardPanel" style="display:none">
-            <div class="ph"><h2>Captain's board</h2><div class="controls"><button class="btn" id="teacherFull">Full screen</button><button class="btn sound-on" id="soundToggle">🔊 Sound</button><button class="btn" id="saveGame">Save & Exit</button><button class="btn primary" id="resumeGame" style="display:none">Resume game</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
-            <div class="boardwrap"><div class="board" id="teacherBoard"></div></div>
+          <div id="boardPanel" style="display:none">
+            <div class="panel">
+              <div class="ph"><h2>Classroom carousel</h2><div class="controls"><button class="btn" id="teacherFull">Full screen</button><button class="btn sound-on" id="soundToggle">🔊 Sound</button><button class="btn" id="saveGame">Save & Exit</button><button class="btn primary" id="resumeGame" style="display:none">Resume game</button><button class="btn" id="forceGame">Finish stuck round</button><button class="btn danger" id="endGame">End game</button></div></div>
+              <div class="pb">
+                <div class="teacher-summary">
+                  <div class="summary-card"><div class="lab">Current square</div><div class="summary-big" id="teacherCurrentCoord">—</div><div class="summary-sub" id="teacherCurrentState">Waiting for a round</div></div>
+                  <div class="summary-card"><div class="lab">Game code</div><div class="summary-big" id="teacherGameCode">—</div><div class="summary-sub">Students join using this code</div></div>
+                  <div class="summary-card"><div class="lab">Round</div><div class="summary-big" id="teacherRoundInfo">—</div><div class="summary-sub" id="teacherRoundSub">Classroom flow</div></div>
+                </div>
+                <div class="carousel-wrap">
+                  <div class="carousel-rail" id="carouselPrev"></div>
+                  <div id="carouselCurrentBox"></div>
+                  <div class="carousel-rail" id="carouselNext"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel" id="actionQueuePanel">
+              <div class="ph"><h3>What everyone is doing</h3><span class="publictag" id="queueCount">0 showing</span></div>
+              <div class="pb">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:9px">This replaces the old grid with a live classroom view of progress and private work.</div>
+                <div id="statusGrid" class="teacher-status-grid"></div>
+                <button class="btn primary" id="advanceAction" style="width:100%;margin-top:12px;display:none">Next action</button>
+              </div>
+            </div>
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:18px">
-          <div class="panel"><div class="ph"><h3>Players</h3><span id="roundStatus" class="publictag">Lobby</span></div><div class="pb"><div id="teacherPlayers"></div></div></div>
-          <div class="panel" id="actionQueuePanel">
-            <div class="ph"><h3>Action Queue</h3><span class="publictag" id="queueCount">0 waiting</span></div>
-            <div class="pb">
-              <div style="font-size:11px;color:var(--muted);margin-bottom:9px">Public actions play one at a time, in the order students found them.</div>
-              <div id="currentActionBox"></div>
-              <div id="privateWaitingBox"></div>
-              <div id="actionQueueList"></div>
-              <button class="btn primary" id="advanceAction" style="width:100%;margin-top:10px;display:none">Next action</button>
-            </div>
-          </div>
+          <div class="panel"><div class="ph"><h3>Leaderboard</h3><span id="roundStatus" class="publictag">Lobby</span></div><div class="pb"><div id="teacherPlayers"></div></div></div>
           <div class="panel finalboard" id="teacherFinish"><div class="ph"><h3>🏆 Final standings</h3></div><div class="pb" id="teacherPodium"></div></div>
         </div>
       </div>
@@ -409,7 +420,7 @@ const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const studentCode=localStorage.getItem("lategan_student_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="";
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[];
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -504,7 +515,7 @@ function makeBoard(el,revealed,current,board,setup,chooseMode=false,locateMode=f
 function renderTray(){const tray=$("tileTray"),items=state?.player?.tray||[];tray.innerHTML="";const total=(state?.game?.board_size||7)**2;$("placedCount").textContent=`${state?.player?.placed_count||0} / ${total} placed`;items.forEach((tile,i)=>{const b=document.createElement("div");b.className="tray-tile";b.textContent=tile.label;b.draggable=true;b.ondragstart=e=>{dragInfo={from_type:"tray",from_index:i};e.dataTransfer.effectAllowed="move"};b.onclick=()=>{dragInfo={from_type:"tray",from_index:i};document.querySelectorAll(".tray-tile").forEach(x=>x.classList.remove("selected"));b.classList.add("selected")};tray.appendChild(b)});tray.ondragover=e=>e.preventDefault();tray.ondrop=async e=>{e.preventDefault();if(!dragInfo||dragInfo.from_type!=="slot")return;const move={...dragInfo,to_type:"tray",to_index:-1};dragInfo=null;state=await post({action:"pirate_move_tile",join_token:token,...move});renderPlayer()}}
 
 function publicFeedOnly(f){
-  return [...(f||[])].filter(x=>!/shield|mirror/i.test(String(x?.text||"")));
+  return [...(f||[])].filter(x=>!/shield|mirror|bomb|choose|chose/i.test(String(x?.text||"")));
 }
 function feed(el,f){const a=publicFeedOnly(f).reverse().slice(0,12);el.innerHTML=a.length?a.map(x=>`<div class="feeditem">${x.text}</div>`).join(""):'<div class="wait">No public events yet.</div>'}
 function updateGameBadge(){
@@ -604,12 +615,52 @@ async function toggleTeacherFullscreen(){
 function actionLabel(type){
   return ({rob:"🏴‍☠️ ROB",sink:"🌊 SINK",present:"🎁 PRESENT",swap:"🔁 SWAP",bomb:"💣 BOMB",choose:"🎯 CHOOSE"})[type]||String(type||"ACTION").toUpperCase();
 }
+function cleanActionLabel(type){
+  const mapped={rob:"Robbery",sink:"Sink attack",present:"Present",swap:"Swap",bomb:"Bomb",choose:"Choose",choose_coord:"Choose next square",bank:"Bank treasure",double:"Double treasure",add:"Treasure maths",shield:"Shield",mirror:"Mirror"}[String(type||"").toLowerCase()];
+  if(mapped)return mapped;
+  return String(type||"Action").replace(/_/g," ").split(" ").filter(Boolean).map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(" ");
+}
 function queuePhaseLabel(status){
   if(status==="active")return "Choosing now";
   if(status==="awaiting_defense")return "Waiting for defender";
   if(status==="resolving")return "Resolving";
   if(status==="done_wait")return "Complete — teacher continues";
   return status||"";
+}
+function isPublicCarouselAction(type){
+  const t=String(type||"").toLowerCase();
+  return !!t && !["bomb","choose","choose_coord","choose_coordinate","choose_square"].includes(t);
+}
+function updateTeacherPublicHistory(current){
+  if(!current || !isPublicCarouselAction(current.action_type))return;
+  const id=String(current.id||"");
+  if(teacherLastPublicActionId!==null && id!==teacherLastPublicActionId && teacherLastPublicSnapshot){
+    teacherPublicHistory.unshift(teacherLastPublicSnapshot);
+    teacherPublicHistory=teacherPublicHistory.slice(0,2);
+  }
+  teacherLastPublicActionId=id;
+  teacherLastPublicSnapshot={...current};
+}
+function renderCarouselMini(item,label,past=false){
+  return `<div class="carousel-card ${past?"past":""}"><div class="cap">${label}</div><div class="name">${item.player_name||"Player"}</div><div class="act">${cleanActionLabel(item.action_type)}</div></div>`;
+}
+function currentActionSentence(item){
+  const label=cleanActionLabel(item.action_type).toLowerCase();
+  const name=item.player_name||"Player";
+  const map={rob:`${name} is busy robbing…`,sink:`${name} is launching a sink attack…`,present:`${name} is choosing a present recipient…`,swap:`${name} is arranging a swap…`,bank:`${name} is banking treasure…`,double:`${name} is doubling treasure…`,add:`${name} is solving treasure maths…`,shield:`${name} is using a shield…`,mirror:`${name} is using a mirror…`};
+  return map[String(item.action_type||"").toLowerCase()]||`${name} is completing ${label}…`;
+}
+function teacherStatusInfo(pl,g,current){
+  if(g.status==="lobby")return {badge:pl.locked?"Ready":"Setting up",note:pl.locked?"Board locked and ready to play.":`${pl.placed||0}/${g.board_size*g.board_size} tiles placed.`,tone:pl.locked?"":"busy"};
+  if(g.status==="paused")return {badge:"Paused",note:"This saved game is waiting to be resumed.",tone:""};
+  if(g.status==="finished")return {badge:"Finished",note:"Game complete.",tone:""};
+  if(pl.private_waiting)return {badge:"Private",note:pl.waiting_on||"Working privately.",tone:"private"};
+  if(current && !isPublicCarouselAction(current.action_type) && current.player_name===pl.name)return {badge:"Private",note:cleanActionLabel(current.action_type),tone:"private"};
+  if(g.status==="choosing" && pl.id===g.chooser_player_id)return {badge:"Choosing",note:"Choosing the next square privately.",tone:"private"};
+  if(pl.busy)return {badge:"Busy",note:pl.waiting_on||"Working on the current task.",tone:"busy"};
+  if(["ready","ready_chosen"].includes(g.status))return {badge:"Ready",note:g.status==="ready_chosen"?`Next square chosen: ${g.current_coord}.`:"Ready for the next square.",tone:""};
+  if(g.status==="running")return {badge:"Done",note:"Finished for now — waiting for the class.",tone:""};
+  return {badge:"Waiting",note:"Waiting.",tone:""};
 }
 
 function actionSound(type,result=""){
@@ -625,7 +676,7 @@ function actionSound(type,result=""){
   return "event";
 }
 function showActionMoment(current){
-  if(!teacherMode||!current)return;
+  if(!teacherMode||!current||!isPublicCarouselAction(current.action_type))return;
   const key=`${current.id}|${current.status}|${current.result_text||""}`;
   if(key===lastActionMomentKey)return;
   lastActionMomentKey=key;
@@ -652,7 +703,7 @@ function renderTeacher(){
   updateGameBadge();
 
   $("lobbyPanel").style.display=g.status==="lobby"?"block":"none";
-  $("boardPanel").style.display=g.status==="lobby"?"none":"block";
+  $("boardPanel").style.display=g.status==="lobby"?"none":"flex";
   $("bigCode").textContent=g.join_code.slice(0,3)+" "+g.join_code.slice(3);
 
   const joinUrl=location.origin+location.pathname+"?code="+g.join_code;
@@ -675,73 +726,65 @@ function renderTeacher(){
   if(g.status==="paused")headline="💾 Game saved · paused";
   if(g.status==="finished")headline="🏆 Game finished";
   $("roundStatus").textContent=headline;
-  const rankedPlayers=[...players].sort((a,b)=>(Number(b.cash)||0)-(Number(a.cash)||0)||String(a.name).localeCompare(String(b.name)));
-  $("teacherPlayers").innerHTML=rankedPlayers.length?rankedPlayers.map((pl,i)=>{
-    const lobbyStatus=g.status==="lobby"
-      ?`<small style="color:var(--muted)">${pl.locked?"Ready ✓":`${pl.placed}/${totalCells} placed`}</small>`
-      :"";
-    return `<div class="playerrow ${pl.private_waiting?"private-stall":""}">
-      <div style="display:flex;align-items:center;gap:9px;min-width:0">
-        <span style="width:24px;font-weight:950">${i===0&&g.status!=="lobby"?"🥇":(i+1)+"."}</span>
-        <div><strong>${pl.name}</strong>${lobbyStatus}</div>
-      </div>
-      <div style="font-size:18px;font-weight:950;white-space:nowrap">${money(pl.cash)}</div>
-    </div>`;
-  }).join(""):'<div class="wait">No players yet.</div>';
+
+  $("teacherCurrentCoord").textContent=g.current_coord||"—";
+  $("teacherCurrentState").textContent=g.status==="running"?"Class is working on this square.":g.status==="ready"?"Everyone is ready to continue.":g.status==="ready_chosen"?"Next square has already been chosen.":g.status==="choosing"?"A player is choosing the next square privately.":g.status==="paused"?"Saved game — currently paused.":g.status==="finished"?"Game finished.":"Waiting for the round to begin.";
+  $("teacherGameCode").textContent=g.join_code||"—";
+  $("teacherRoundInfo").textContent=`${g.round_number||0}`;
+  $("teacherRoundSub").textContent=`${(g.difficulty||"").toUpperCase()} · ${players.length} players`;
+
+  const leaderboardPlayers=[...players].sort((a,b)=>(Number(b.total)||0)-(Number(a.total)||0)||String(a.name).localeCompare(String(b.name)));
+  $("teacherPlayers").innerHTML=leaderboardPlayers.length?leaderboardPlayers.map((pl,i)=>`
+    <div class="leader-row">
+      <div class="leader-rank">${i+1}</div>
+      <div><div class="leader-name">${pl.name}</div><div class="leader-sub">Cash ${money(pl.cash)} · Bank ${money(pl.bank)}</div></div>
+      <div class="leader-total">${money(pl.total)}</div>
+    </div>`).join(""):'<div class="wait">No players yet.</div>';
 
   const aq=state.action_queue||{current:null,queued:[]};
-  const current=aq.current;
-  const queued=aq.queued||[];
+  const rawCurrent=aq.current||null;
+  const current=rawCurrent&&isPublicCarouselAction(rawCurrent.action_type)?rawCurrent:null;
+  const queued=(aq.queued||[]).filter(x=>isPublicCarouselAction(x.action_type));
+  updateTeacherPublicHistory(current);
+
   const remaining=(current?1:0)+queued.length;
-  $("queueCount").textContent=`${remaining} remaining`;
+  $("queueCount").textContent=`${remaining} public ${remaining===1?"item":"items"}`;
 
-  $("currentActionBox").innerHTML=current
-    ?`<div class="action-now">
-        <div class="who">NOW · ${current.player_name}</div>
-        <div class="what">${actionLabel(current.action_type)}</div>
-        <div class="phase">${queuePhaseLabel(current.status)}</div>
-        ${current.result_text
-          ?`<div class="result">${current.result_text}</div>`
-          :`<div class="result">${current.status==="active"?"Waiting for the student to make their choice…":"Action in progress…"}</div>`}
-      </div>`
-    :'<div class="queue-note">No public action playing right now.</div>';
-
-  const steps=[];
   if(current){
-    steps.push(`<div class="queue-step now">
-      <div class="queue-number">NOW</div>
-      <div><div class="queue-person">${current.player_name}</div><div class="queue-action">${actionLabel(current.action_type)}</div></div>
-      <div class="queue-state live">${queuePhaseLabel(current.status)}</div>
-    </div>`);
+    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">${current.player_name}</div><div class="carousel-action">${currentActionSentence(current)}</div><div class="carousel-result">${current.result_text||"Their device is handling the next step."}</div><div class="carousel-phase">${queuePhaseLabel(current.status)}</div></div>`;
+  }else if(rawCurrent && !isPublicCarouselAction(rawCurrent.action_type)){
+    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Private action</div><div class="carousel-action">A student is completing something privately.</div><div class="carousel-result">Bombs and choose-next-square steps do not appear as public carousel cards.</div><div class="carousel-phase">Private</div></div>`;
+  }else{
+    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Waiting…</div><div class="carousel-action">No public action is active.</div><div class="carousel-result">When a public action begins, it will appear here and move through the carousel.</div><div class="carousel-phase">Idle</div></div>`;
   }
-  queued.forEach((x,i)=>{
-    steps.push(`<div class="queue-step ${i===0?"next":""}">
-      <div class="queue-number">${current?i+2:i+1}</div>
-      <div><div class="queue-person">${x.player_name}</div><div class="queue-action">${actionLabel(x.action_type)}</div></div>
-      <div class="queue-state ${i===0?"next":"wait"}">${i===0?"NEXT":"WAITING"}</div>
-    </div>`);
+
+  $("carouselPrev").innerHTML=teacherPublicHistory.length
+    ?teacherPublicHistory.slice(0,2).map((x,i)=>renderCarouselMini(x,i===0?"Just finished":"Earlier",true)).join("")
+    :'<div class="carousel-empty">Completed public actions will slide back here.</div>';
+  $("carouselNext").innerHTML=queued.length
+    ?queued.slice(0,3).map((x,i)=>renderCarouselMini(x,i===0?"Next":`Up next ${i+1}`)).join("")
+    :'<div class="carousel-empty">No public action is queued next.</div>';
+
+  const statusPlayers=[...players].sort((a,b)=>{
+    const ab=a.private_waiting?0:a.busy?1:2;
+    const bb=b.private_waiting?0:b.busy?1:2;
+    return ab-bb || String(a.name).localeCompare(String(b.name));
   });
-  $("actionQueueList").innerHTML=steps.length
-    ?`<div class="queue-track">${steps.join("")}</div>`
-    :'';
+  $("statusGrid").innerHTML=statusPlayers.length?statusPlayers.map(pl=>{
+    const info=teacherStatusInfo(pl,g,rawCurrent);
+    return `<div class="teacher-status-card ${info.tone}"><div class="teacher-status-top"><div class="teacher-status-name">${pl.name}</div><div class="teacher-status-badge">${info.badge}</div></div><div class="teacher-status-note">${info.note}</div></div>`;
+  }).join(""):'<div class="wait">No players yet.</div>';
 
-  const privateWaiting=players.filter(pl=>pl.private_waiting);
-  $("privateWaitingBox").innerHTML=privateWaiting.length
-    ?`<div class="private-wait"><strong>Still working privately</strong>${privateWaiting.map(pl=>`${pl.name} — ${pl.waiting_on}`).join("<br>")}</div>`
-    :"";
-
-  $("advanceAction").style.display=current&&current.status==="done_wait"?"block":"none";
-  $("advanceAction").disabled=!(current&&current.status==="done_wait");
+  const advanceCurrent=rawCurrent||current;
+  $("advanceAction").style.display=advanceCurrent&&advanceCurrent.status==="done_wait"?"block":"none";
+  $("advanceAction").disabled=!(advanceCurrent&&advanceCurrent.status==="done_wait");
   $("advanceAction").textContent=queued.length?"Action complete — play NEXT":"Action complete — finish queue";
   if(current)showActionMoment(current);
-
-  if(g.status!=="lobby")makeBoard($("teacherBoard"),g.revealed||[],g.status==="running"?g.current_coord:null,null,false);
 
   $("forceGame").disabled=g.status!=="running"||players.every(p=>!p.busy);
   $("saveGame").style.display=["running","ready","ready_chosen","choosing"].includes(g.status)?"":"none";
   $("resumeGame").style.display=g.status==="paused"?"":"none";
 
-  // Teacher no longer has to hunt for a Reveal button.
   const ready=["ready","ready_chosen"].includes(g.status);
   const showReady=ready&&!advancingRound;
   $("roundReady").classList.toggle("show",showReady);
@@ -755,8 +798,6 @@ function renderTeacher(){
     $("roundReady").classList.remove("show");
   }
 
-  // Only release the transition lock once we have definitely observed
-  // the NEXT running round (not a stale 'ready' response from polling).
   if(advancingRound && g.status==="running" && Number(g.round_number)>Number(advanceFromRound)){
     advancingRound=false;
   }
