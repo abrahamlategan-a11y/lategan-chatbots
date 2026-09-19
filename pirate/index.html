@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v23</title>
+<title>Pirate Game · Learning Hub · v25</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -82,7 +82,7 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 .playerrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 2px}
 .playerrow:last-child{border-bottom:0}.playerstatus{font-size:11px;color:var(--muted);text-align:right}.playerbtns{display:flex;gap:5px;margin-top:5px;justify-content:flex-end}.mini{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 7px;font-size:10px;font-weight:850;cursor:pointer}.mini.danger{color:#a23b37;border-color:#e5c4c0}
 .teacher-event{
-  position:fixed;inset:0;z-index:80;display:none;place-items:center;
+  position:fixed;inset:0;z-index:80;display:none!important;place-items:center;
   background:rgba(7,25,20,.74);padding:24px;backdrop-filter:blur(3px)
 }
 .teacher-event.show{display:grid}
@@ -497,6 +497,17 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   .teacher-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
+
+/* v25 richer carousel copy */
+.carousel-card .act{
+  font-size:10px !important;
+  line-height:1.35 !important;
+  color:#5f6c65 !important;
+}
+.carousel-card.past .act{
+  color:#4f5b55 !important;
+}
+
 </style>
 </head>
 <body>
@@ -903,14 +914,104 @@ function updateTeacherPublicHistory(current){
   teacherLastPublicActionId=id;
   teacherLastPublicSnapshot={...current};
 }
-function renderCarouselMini(item,label,past=false){
-  return `<div class="carousel-card ${past?"past":""}"><div class="cap">${label}</div><div class="name">${item.player_name||"Player"}</div><div class="act">${cleanActionLabel(item.action_type)}</div></div>`;
+function actionVerb(type){
+  const t=String(type||"").toLowerCase();
+  return ({
+    rob:"rob another pirate",
+    sink:"sink another pirate's unbanked cash",
+    present:"give treasure to another pirate",
+    swap:"swap unbanked cash with another pirate"
+  })[t]||cleanActionLabel(type).toLowerCase();
 }
-function currentActionSentence(item){
-  const label=cleanActionLabel(item.action_type).toLowerCase();
+function queuedActionText(item){
   const name=item.player_name||"Player";
-  const map={rob:`${name} is busy robbing…`,sink:`${name} is launching a sink attack…`,present:`${name} is choosing a present recipient…`,swap:`${name} is arranging a swap…`,bank:`${name} is banking treasure…`,double:`${name} is doubling treasure…`,add:`${name} is solving treasure maths…`,shield:`${name} is using a shield…`,mirror:`${name} is using a mirror…`};
-  return map[String(item.action_type||"").toLowerCase()]||`${name} is completing ${label}…`;
+  const t=String(item.action_type||"").toLowerCase();
+  const map={
+    rob:`${name} is waiting to rob someone.`,
+    sink:`${name} is waiting to launch a sink attack.`,
+    present:`${name} is waiting to give a present.`,
+    swap:`${name} is waiting to swap scores.`
+  };
+  return map[t]||`${name} is waiting for ${cleanActionLabel(t).toLowerCase()}.`;
+}
+function renderCarouselMini(item,label,past=false){
+  const result=String(item.result_text||"").trim();
+  const detail=past && result ? result : queuedActionText(item);
+  return `<div class="carousel-card ${past?"past":""}">
+    <div class="cap">${label}</div>
+    <div class="name">${item.player_name||"Player"}</div>
+    <div class="act">${detail}</div>
+  </div>`;
+}
+function currentActionCopy(item){
+  const name=item.player_name||"Player";
+  const type=String(item.action_type||"").toLowerCase();
+  const status=String(item.status||"");
+  const result=String(item.result_text||"").trim();
+
+  if(status==="done_wait"){
+    return {
+      title:cleanActionLabel(type),
+      headline:result||`${name}'s action is complete.`,
+      detail:"Action complete — move to the next public action when you're ready.",
+      phase:"Complete"
+    };
+  }
+
+  if(status==="awaiting_defense"){
+    let defender="";
+    const m=result.match(/(?:ROB|SINK)\s+(.+?)\.$/i);
+    if(m)defender=m[1];
+    return {
+      title:cleanActionLabel(type),
+      headline:result||`${name} has launched an attack.`,
+      detail:defender
+        ?`${defender} is deciding whether to use a Shield, use a Mirror, or take the hit.`
+        :"The targeted pirate is choosing how to respond.",
+      phase:"Waiting for defence"
+    };
+  }
+
+  if(status==="resolving"){
+    return {
+      title:cleanActionLabel(type),
+      headline:result||`${name}'s ${cleanActionLabel(type).toLowerCase()} is resolving…`,
+      detail:"The result will appear here in a moment.",
+      phase:"Resolving"
+    };
+  }
+
+  const active={
+    rob:{
+      title:"Robbery",
+      headline:`${name} is choosing who to rob.`,
+      detail:"Their target will appear here once they make the choice."
+    },
+    sink:{
+      title:"Sink attack",
+      headline:`${name} is choosing who to sink.`,
+      detail:"Their target will appear here once they make the choice."
+    },
+    present:{
+      title:"Present",
+      headline:`${name} is choosing who gets the treasure.`,
+      detail:"The recipient and amount will appear here when the choice is made."
+    },
+    swap:{
+      title:"Swap",
+      headline:`${name} is choosing who to swap cash with.`,
+      detail:"The swap result will appear here when the choice is made."
+    }
+  }[type];
+
+  return {
+    ...(active||{
+      title:cleanActionLabel(type),
+      headline:`${name} is completing ${actionVerb(type)}.`,
+      detail:"Waiting for the student's choice."
+    }),
+    phase:"Live"
+  };
 }
 function teacherStatusInfo(pl,g,current){
   const raw=String(pl.waiting_on||"").trim();
@@ -989,16 +1090,9 @@ function showActionMoment(current){
   const key=`${current.id}|${current.status}|${current.result_text||""}`;
   if(key===lastActionMomentKey)return;
   lastActionMomentKey=key;
-
-  const text=current.result_text
-    ?current.result_text
-    :`${current.player_name} — ${actionLabel(current.action_type)}`;
-
-  $("teacherEventIcon").textContent=actionLabel(current.action_type).split(" ")[0];
-  $("teacherEventText").textContent=text;
+  // The carousel itself is now the visual announcement.
+  // Keep the teacher-side sound cue, but never cover the screen with the legacy modal.
   playSound(actionSound(current.action_type,current.result_text));
-  $("teacherEvent").classList.add("show");
-  setTimeout(()=>$("teacherEvent").classList.remove("show"),current.result_text?2300:1500);
 }
 
 function renderTeacher(){
@@ -1060,9 +1154,22 @@ function renderTeacher(){
   $("queueCount").textContent=`${remaining} public ${remaining===1?"item":"items"}`;
 
   if(current){
-    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">${current.player_name}</div><div class="carousel-action">${currentActionSentence(current)}</div><div class="carousel-result">${current.result_text||"Their device is handling the next step."}</div><div class="carousel-phase">${queuePhaseLabel(current.status)}</div></div>`;
+    const copy=currentActionCopy(current);
+    $("carouselCurrentBox").innerHTML=`<div class="carousel-now">
+      <div class="carousel-eyebrow">NOW · ${copy.title}</div>
+      <div class="carousel-name">${current.player_name}</div>
+      <div class="carousel-action">${copy.headline}</div>
+      <div class="carousel-result">${copy.detail}</div>
+      <div class="carousel-phase">${copy.phase}</div>
+    </div>`;
   }else if(rawCurrent && !isPublicCarouselAction(rawCurrent.action_type)){
-    $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Private action</div><div class="carousel-action">A student is completing something privately.</div><div class="carousel-result">Nothing public needs to be shown right now.</div><div class="carousel-phase">Private</div></div>`;
+    $("carouselCurrentBox").innerHTML=`<div class="carousel-now">
+      <div class="carousel-eyebrow">Now</div>
+      <div class="carousel-name">Class working</div>
+      <div class="carousel-action">No public action is playing.</div>
+      <div class="carousel-result">Private events stay on student devices. The next Rob, Sink, Present or Swap will appear here automatically.</div>
+      <div class="carousel-phase">Private work</div>
+    </div>`;
   }else{
     $("carouselCurrentBox").innerHTML=`<div class="carousel-now"><div class="carousel-eyebrow">Now</div><div class="carousel-name">Waiting…</div><div class="carousel-action">No public action is active.</div><div class="carousel-result">When a public action begins, it will appear here and move through the carousel.</div><div class="carousel-phase">Idle</div></div>`;
   }
