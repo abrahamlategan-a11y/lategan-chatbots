@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v26</title>
+<title>Pirate Game · Learning Hub · v27</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -784,7 +784,7 @@ const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const studentCode=localStorage.getItem("lategan_student_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[],autoActionTimer=null,autoActionBusy=false,lastCarouselActionId=null,coordRevealActive=false;
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[],autoActionTimer=null,autoActionBusy=false,autoActionScheduledId=null,lastCarouselActionId=null,coordRevealActive=false;
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -1044,7 +1044,7 @@ function currentActionCopy(item){
     return {
       title:cleanActionLabel(type),
       headline:result||`${name}'s action is complete.`,
-      detail:"Action complete — move to the next public action when you're ready.",
+      detail:"Action complete — the next public action will move into the centre automatically.",
       phase:"Complete"
     };
   }
@@ -1217,6 +1217,7 @@ function cancelAutoActionAdvance(){
     clearTimeout(autoActionTimer);
     autoActionTimer=null;
   }
+  autoActionScheduledId=null;
 }
 
 function scheduleAutoActionAdvance(current){
@@ -1225,11 +1226,21 @@ function scheduleAutoActionAdvance(current){
   const actionId=Number(current.id||0);
   if(!actionId)return;
 
+  // Teacher polling re-renders every ~1.2s. Do NOT keep resetting the 1.8s
+  // timer for the same completed action, or it can never fire.
+  if(autoActionTimer && Number(autoActionScheduledId)===actionId)return;
+
   cancelAutoActionAdvance();
+  autoActionScheduledId=actionId;
+
   autoActionTimer=setTimeout(async()=>{
+    const scheduledId=Number(autoActionScheduledId||0);
+    autoActionTimer=null;
+    autoActionScheduledId=null;
+
     if(autoActionBusy)return;
     const live=state?.action_queue?.current;
-    if(!live || Number(live.id)!==actionId || String(live.status)!=="done_wait")return;
+    if(!live || Number(live.id)!==scheduledId || String(live.status)!=="done_wait")return;
 
     autoActionBusy=true;
     try{
@@ -1242,9 +1253,9 @@ function scheduleAutoActionAdvance(current){
       renderTeacher();
     }catch(e){
       console.error("Automatic action advance failed:",e);
+      // A transient failure can be retried on the next poll/render.
     }finally{
       autoActionBusy=false;
-      autoActionTimer=null;
     }
   },1800);
 }
@@ -1319,8 +1330,11 @@ function renderTeacher(){
 
   if(current){
     animateCarouselTo(current.id);
-    if(String(current.status)==="done_wait")scheduleAutoActionAdvance(current);
-    else cancelAutoActionAdvance();
+    if(String(current.status)==="done_wait"){
+      scheduleAutoActionAdvance(current);
+    }else if(autoActionScheduledId && Number(autoActionScheduledId)!==Number(current.id)){
+      cancelAutoActionAdvance();
+    }
   }else{
     cancelAutoActionAdvance();
   }
