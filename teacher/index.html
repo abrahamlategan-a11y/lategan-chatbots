@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Teacher Learning Hub · v17</title>
+<title>Teacher Learning Hub · v18</title>
 <style>
 :root{
   --bg:#f4f6f3;--panel:#ffffff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
@@ -166,6 +166,10 @@ body.pti-warning .pti-wrapup{display:block}
 }
 .theme-swatch.active{box-shadow:0 0 0 2px var(--ink)}
 .theme-swatch:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+
+
+.teacher-attachment{display:block;max-width:min(520px,100%);max-height:420px;object-fit:contain;border-radius:12px;border:1px solid var(--line);background:#fff;margin:0 0 9px}
+.attachment-caption{font-size:10px;color:var(--muted);margin:0 0 8px}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -868,7 +872,12 @@ async function openSessionDetail(sessionId){
         </div>
         <div class="transcript">
           <h3>Full transcript</h3>
-          ${messages.map(m=>`<div class="msg ${m.role==="user"?"user":"assistant"}"><strong>${m.role==="user"?"Student":"Coach"}</strong>${md(m.content)}</div>`).join("")}
+          ${messages.map(m=>{
+            const imgs=(m.attachments||[]).map(a=>a.data_url
+              ? `<img class="teacher-attachment" src="${a.data_url}" alt="${esc(a.filename||"Student work")}"><div class="attachment-caption">Attached work · ${esc(a.filename||"image")}</div>`
+              : "").join("");
+            return `<div class="msg ${m.role==="user"?"user":"assistant"}"><strong>${m.role==="user"?"Student":"Coach"}</strong>${imgs}${md(m.content)}</div>`;
+          }).join("")}
         </div>
       </div>`;
   }catch(e){
