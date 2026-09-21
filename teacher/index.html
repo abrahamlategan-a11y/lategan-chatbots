@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Teacher Learning Hub · PTI Timer</title>
+<title>Teacher Learning Hub · v16</title>
 <style>
 :root{
   --bg:#f4f6f3;--panel:#ffffff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
@@ -119,6 +119,86 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 .class-switcher .add-class{white-space:nowrap}
 .class-chip{font-size:11px;color:var(--muted);font-weight:800}
 
+
+/* Teacher Hub colour palette */
+const HUB_PALETTE=[
+  {name:"Forest",hex:"#1A6144"},
+  {name:"Indigo",hex:"#48358F"},
+  {name:"Slate",hex:"#767F89"},
+  {name:"Sage",hex:"#D4E5B6"},
+  {name:"Lavender",hex:"#B9B0D4"},
+  {name:"Mist",hex:"#DCDFDE"},
+  {name:"Olive",hex:"#6A9440"},
+  {name:"Plum",hex:"#682375"},
+  {name:"Stone",hex:"#8F968E"},
+  {name:"Lime",hex:"#E5EA9F"},
+  {name:"Blush",hex:"#DCBFD9"},
+  {name:"Warm Grey",hex:"#DFDDCB"}
+];
+
+function hexToRgb(hex){
+  const h=hex.replace("#","");
+  return {
+    r:parseInt(h.slice(0,2),16),
+    g:parseInt(h.slice(2,4),16),
+    b:parseInt(h.slice(4,6),16)
+  };
+}
+function rgbToHex({r,g,b}){
+  return "#"+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,"0")).join("").toUpperCase();
+}
+function mix(hexA,hexB,amount){
+  const a=hexToRgb(hexA),b=hexToRgb(hexB);
+  return rgbToHex({
+    r:a.r+(b.r-a.r)*amount,
+    g:a.g+(b.g-a.g)*amount,
+    b:a.b+(b.b-a.b)*amount
+  });
+}
+function luminance(hex){
+  const {r,g,b}=hexToRgb(hex);
+  const c=[r,g,b].map(v=>{
+    v/=255;
+    return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4);
+  });
+  return .2126*c[0]+.7152*c[1]+.0722*c[2];
+}
+function applyHubTheme(hex){
+  const root=document.documentElement;
+  const isLight=luminance(hex)>.52;
+
+  // Keep the whole Hub coherent even when the chosen swatch is very pale.
+  const dark=isLight?mix(hex,"#1D2420",.68):mix(hex,"#000000",.22);
+  const soft=mix(hex,"#FFFFFF",isLight?.50:.86);
+  const accentText=isLight?dark:hex;
+
+  root.style.setProperty("--green",accentText);
+  root.style.setProperty("--green-dark",dark);
+  root.style.setProperty("--green-soft",soft);
+
+  localStorage.setItem("teacher_hub_theme",hex);
+  document.querySelectorAll(".theme-swatch").forEach(b=>b.classList.toggle("active",b.dataset.hex===hex));
+}
+function renderThemeSwatches(){
+  const box=$("themeSwatches");
+  if(!box)return;
+  box.innerHTML="";
+  HUB_PALETTE.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="theme-swatch";
+    b.type="button";
+    b.dataset.hex=c.hex;
+    b.title=`${c.name} · ${c.hex}`;
+    b.setAttribute("aria-label",`Use ${c.name} theme`);
+    b.style.background=c.hex;
+    b.onclick=()=>applyHubTheme(c.hex);
+    box.appendChild(b);
+  });
+  const saved=localStorage.getItem("teacher_hub_theme")||"#1A6144";
+  applyHubTheme(saved);
+}
+renderThemeSwatches();
+
 /* PTI Timer */
 .pti-wrap{display:grid;place-items:center;padding:6px 0 30px}
 .pti-card{width:min(980px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
@@ -154,6 +234,18 @@ body.pti-warning .pti-wrapup{display:block}
   .pti-info-grid{grid-template-columns:1fr}
   .pti-countdown{font-size:clamp(68px,21vw,112px)}
 }
+
+
+/* Teacher Hub palette themes */
+.theme-picker{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.theme-picker .theme-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#99a09c;font-weight:850;margin-bottom:9px}
+.theme-swatches{display:grid;grid-template-columns:repeat(6,24px);gap:7px}
+.theme-swatch{
+  width:24px;height:24px;border-radius:7px;border:2px solid rgba(255,255,255,.9);
+  box-shadow:0 0 0 1px #ccd4cf;cursor:pointer;padding:0
+}
+.theme-swatch.active{box-shadow:0 0 0 2px var(--ink)}
+.theme-swatch:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -197,6 +289,10 @@ body.pti-warning .pti-wrapup{display:block}
       <strong id="teacherName">Teacher</strong>
       <span id="teacherClass">—</span>
       <button class="signout" id="signOut">Sign out</button>
+      <div class="theme-picker">
+        <div class="theme-title">Hub colour</div>
+        <div class="theme-swatches" id="themeSwatches"></div>
+      </div>
     </div>
   </aside>
 
@@ -335,9 +431,9 @@ body.pti-warning .pti-wrapup{display:block}
             <div class="pti-actions">
               <button class="btn" id="ptiTestBell">Test bell</button>
               <button class="btn" id="ptiFullBtn">Full screen</button>
-              <button class="btn primary" id="ptiEnableSound">Enable sound</button>
+              <button class="btn primary" id="ptiSoundToggle">Sound on</button>
             </div>
-            <div class="pti-sound">Sound: <strong id="ptiSoundState">off</strong> · click Test bell once to authorise audio; the chime then rings automatically at 1:00 remaining.</div>
+            <div class="pti-sound">Sound: <strong id="ptiSoundState">off</strong> · turn sound on once to authorise audio; the chime rings automatically at 1:00 remaining.</div>
           </div>
         </div>
       </div>
@@ -835,7 +931,7 @@ async function ptiEnableAudio(){
     if(ptiAudioCtx.state==="suspended")await ptiAudioCtx.resume();
     ptiSoundEnabled=true;
     $("ptiSoundState").textContent=`on · ${ptiAudioCtx.state}`;
-    $("ptiEnableSound").textContent="Sound on";
+    $("ptiSoundToggle").textContent="Sound off";
   }catch(e){
     alert("Your browser would not enable sound.");
   }
@@ -913,8 +1009,21 @@ function openPTITimer(){
 }
 $("ptiNav").onclick=openPTITimer;
 $("ptiTile").onclick=openPTITimer;
-$("ptiEnableSound").onclick=async()=>{await ptiEnableAudio();await ptiBell()};
-$("ptiTestBell").onclick=async()=>{if(!ptiSoundEnabled)await ptiEnableAudio();if(ptiAudioCtx?.state==="suspended")await ptiAudioCtx.resume();await ptiBell()};
+$("ptiSoundToggle").onclick=async()=>{
+  if(ptiSoundEnabled){
+    ptiSoundEnabled=false;
+    $("ptiSoundState").textContent="off";
+    $("ptiSoundToggle").textContent="Sound on";
+  }else{
+    await ptiEnableAudio();
+    await ptiBell();
+  }
+};
+$("ptiTestBell").onclick=async()=>{
+  if(!ptiSoundEnabled)await ptiEnableAudio();
+  if(ptiAudioCtx?.state==="suspended")await ptiAudioCtx.resume();
+  await ptiBell();
+};
 $("ptiFullBtn").onclick=async()=>{
   try{
     const target=$("ptiCard");
