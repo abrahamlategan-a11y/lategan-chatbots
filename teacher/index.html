@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Teacher Learning Hub</title>
+<title>Teacher Learning Hub · PTI Timer</title>
 <style>
 :root{
   --bg:#f4f6f3;--panel:#ffffff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
@@ -118,10 +118,48 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
 .class-switcher select{border:1px solid var(--line);background:#fff;border-radius:11px;padding:10px 34px 10px 12px;font-size:13px;font-weight:850;color:var(--ink)}
 .class-switcher .add-class{white-space:nowrap}
 .class-chip{font-size:11px;color:var(--muted);font-weight:800}
+
+/* PTI Timer */
+.pti-wrap{display:grid;place-items:center;padding:6px 0 30px}
+.pti-card{width:min(980px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+.pti-head{background:var(--green-dark);color:#fff;padding:24px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:18px}
+.pti-head .eyebrow{color:#bfd2ca;margin-bottom:7px}
+.pti-head h2{margin:0;font-size:30px;letter-spacing:-.03em}
+.pti-anchor{font-size:12px;line-height:1.5;color:#d1ded8;text-align:right}
+.pti-body{padding:30px}
+.pti-slotline{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.pti-slot{font-size:20px;font-weight:850;color:var(--green)}
+.pti-badge{border-radius:999px;padding:6px 9px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;background:var(--green-soft);color:var(--green)}
+.pti-wrapup{display:none;width:max-content;max-width:100%;margin:14px auto 0;background:var(--amber-soft);color:var(--amber);border:1px solid #ead7a5;border-radius:999px;padding:9px 14px;font-size:12px;font-weight:900}
+.pti-countdown{text-align:center;font-variant-numeric:tabular-nums;font-size:clamp(72px,14vw,150px);font-weight:300;letter-spacing:-.055em;line-height:1;margin:24px 0 14px;color:var(--green-dark);transition:.2s ease}
+.pti-label{text-align:center;color:var(--muted);font-size:13px;font-weight:700;margin-bottom:24px}
+.pti-progress{height:16px;background:#eef2ef;border:1px solid #e4e9e5;border-radius:999px;overflow:hidden}
+.pti-bar{height:100%;width:0;background:var(--green);border-radius:999px;transition:width .25s linear,background .2s ease}
+.pti-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.pti-info{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:14px 15px}
+.pti-info .k{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#8a928e;font-weight:850;margin-bottom:5px}
+.pti-info .v{font-size:17px;font-weight:850}
+.pti-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:18px}
+.pti-sound{font-size:11px;color:#89918d;text-align:center;margin-top:12px}
+.pti-sound strong{color:var(--green)}
+body.pti-warning .pti-countdown{color:var(--amber)}
+body.pti-warning .pti-bar{background:var(--amber)}
+body.pti-warning .pti-wrapup{display:block}
+#ptiFlash{position:fixed;inset:0;pointer-events:none;opacity:0;background:rgba(240,190,72,.10);z-index:250}
+#ptiFlash.go{animation:ptiFlash .8s ease}
+@keyframes ptiFlash{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+@media(max-width:620px){
+  .pti-head{align-items:flex-start;flex-direction:column}
+  .pti-anchor{text-align:left}
+  .pti-info-grid{grid-template-columns:1fr}
+  .pti-countdown{font-size:clamp(68px,21vw,112px)}
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+<div id="ptiFlash"></div>
 
 <div class="login" id="loginScreen">
   <div class="login-card">
@@ -152,6 +190,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
     <div class="navlabel">Class</div>
     <div class="nav">
       <button id="morningNav"><span class="ico">☀</span>Good Morning</button>
+      <button id="ptiNav"><span class="ico">◷</span>PTI Timer</button>
             <button id="adminNav" style="display:none"><span class="ico">◆</span>Admin</button>
     </div>
     <div class="account">
@@ -182,6 +221,7 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
         <div class="tile clickable" data-go="chats"><div class="tile-icon">☰</div><h3>Chats & analytics</h3><p>Read transcripts and see how students are using each coach.</p><div class="tile-foot">Open →</div></div>
         <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
         <div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
+        <div class="tile clickable" id="ptiTile"><div class="tile-icon">◷</div><h3>PTI Timer</h3><p>Clock-bound 8-minute parent interview slots with a one-minute visual warning and bell.</p><div class="tile-foot">Open timer →</div></div>
         <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
         <div class="tile clickable" id="groupsTile"><div class="tile-icon">◫</div><h3>Groups</h3><p>Make quick random groups or manage your permanent classroom job groups.</p><div class="tile-foot">Open groups →</div></div>
         <div class="tile clickable" id="whiteboardsTile"><div class="tile-icon">✎</div><h3>Student Whiteboards</h3><p>See every student's live whiteboard, use Frost Mode, zoom in and save learning evidence.</p><div class="tile-foot">Open whiteboards →</div></div>
@@ -247,6 +287,59 @@ th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:#89918d;ba
           <p>A fast live strategy game with hidden boards, public actions, maths, shields, mirrors and treasure.</p>
           <div class="bot-actions"><span class="small primary">Open game →</span></div>
         </a>
+      </div>
+    </section>
+
+    <section class="section" id="section-pti">
+      <div class="sectionhead">
+        <div>
+          <div class="eyebrow">Parent Teacher Interviews</div>
+          <h2>PTI Timer</h2>
+          <p>Eight-minute slots anchored to 3:30 pm and bound to the real clock all day.</p>
+        </div>
+      </div>
+
+      <div class="pti-wrap">
+        <div class="pti-card" id="ptiCard">
+          <div class="pti-head">
+            <div>
+              <div class="eyebrow">Parent Teacher Interviews</div>
+              <h2>8-minute interview timer</h2>
+            </div>
+            <div class="pti-anchor">Anchored to <strong>3:30 pm</strong><br>Runs on the real clock all day</div>
+          </div>
+          <div class="pti-body">
+            <div class="pti-slotline">
+              <div class="pti-slot" id="ptiCurrentSlot">—</div>
+              <span class="pti-badge">Current slot</span>
+            </div>
+
+            <div class="pti-wrapup" id="ptiWrapup">🔔 1 minute left — wrap up</div>
+
+            <div class="pti-countdown" id="ptiCountdown">8:00</div>
+            <div class="pti-label">remaining in this interview</div>
+
+            <div class="pti-progress"><div class="pti-bar" id="ptiBar"></div></div>
+
+            <div class="pti-info-grid">
+              <div class="pti-info">
+                <div class="k">Next interview</div>
+                <div class="v" id="ptiNextSlot">—</div>
+              </div>
+              <div class="pti-info">
+                <div class="k">Current time</div>
+                <div class="v" id="ptiClock">—</div>
+              </div>
+            </div>
+
+            <div class="pti-actions">
+              <button class="btn" id="ptiTestBell">Test bell</button>
+              <button class="btn" id="ptiFullBtn">Full screen</button>
+              <button class="btn primary" id="ptiEnableSound">Enable sound</button>
+            </div>
+            <div class="pti-sound">Sound: <strong id="ptiSoundState">off</strong> · click Test bell once to authorise audio; the chime then rings automatically at 1:00 remaining.</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -708,6 +801,133 @@ async function refreshSummary(sessionId){
     await openSessionDetail(sessionId);
   }catch(e){alert(e.message)}
 }
+
+
+/* PTI Timer */
+const PTI_SLOT_MS=8*60*1000;
+const PTI_ANCHOR_HOUR=15;
+const PTI_ANCHOR_MINUTE=30;
+let ptiAudioCtx=null;
+let ptiSoundEnabled=false;
+let ptiLastSlotKey="";
+let ptiWarningRungFor="";
+
+function ptiPad(n){return String(n).padStart(2,"0")}
+function ptiFmtTime(d){
+  return new Intl.DateTimeFormat("en-AU",{hour:"numeric",minute:"2-digit",hour12:true}).format(d);
+}
+function ptiFmtClock(d){
+  return new Intl.DateTimeFormat("en-AU",{hour:"numeric",minute:"2-digit",second:"2-digit",hour12:true}).format(d);
+}
+function ptiSlotInfo(now=new Date()){
+  const anchor=new Date(now);
+  anchor.setHours(PTI_ANCHOR_HOUR,PTI_ANCHOR_MINUTE,0,0);
+  const delta=now.getTime()-anchor.getTime();
+  const slotIndex=Math.floor(delta/PTI_SLOT_MS);
+  const start=new Date(anchor.getTime()+slotIndex*PTI_SLOT_MS);
+  const end=new Date(start.getTime()+PTI_SLOT_MS);
+  const remaining=Math.max(0,end.getTime()-now.getTime());
+  return {start,end,remaining,slotIndex};
+}
+async function ptiEnableAudio(){
+  try{
+    if(!ptiAudioCtx)ptiAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(ptiAudioCtx.state==="suspended")await ptiAudioCtx.resume();
+    ptiSoundEnabled=true;
+    $("ptiSoundState").textContent=`on · ${ptiAudioCtx.state}`;
+    $("ptiEnableSound").textContent="Sound on";
+  }catch(e){
+    alert("Your browser would not enable sound.");
+  }
+}
+async function ptiBell(){
+  if(!ptiAudioCtx){
+    try{ptiAudioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}
+  }
+  if(ptiAudioCtx.state==="suspended"){
+    try{await ptiAudioCtx.resume()}catch(e){}
+  }
+  if(!ptiSoundEnabled)return;
+
+  const now=ptiAudioCtx.currentTime;
+  const master=ptiAudioCtx.createGain();
+  master.gain.value=.8;
+  master.connect(ptiAudioCtx.destination);
+
+  [
+    [783.99,0.00,.55],
+    [1046.50,0.18,.75],
+    [1567.98,0.18,.45]
+  ].forEach(([freq,delay,duration])=>{
+    const osc=ptiAudioCtx.createOscillator();
+    const gain=ptiAudioCtx.createGain();
+    osc.type="sine";
+    osc.frequency.setValueAtTime(freq,now+delay);
+    gain.gain.setValueAtTime(.0001,now+delay);
+    gain.gain.exponentialRampToValueAtTime(.42,now+delay+.02);
+    gain.gain.exponentialRampToValueAtTime(.0001,now+delay+duration);
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start(now+delay);
+    osc.stop(now+delay+duration+.05);
+  });
+
+  $("ptiFlash").classList.remove("go");
+  void $("ptiFlash").offsetWidth;
+  $("ptiFlash").classList.add("go");
+}
+function renderPTITimer(){
+  if(!$("ptiCountdown"))return;
+  const now=new Date();
+  const s=ptiSlotInfo(now);
+  const remainingSeconds=Math.ceil(s.remaining/1000);
+  const mins=Math.floor(remainingSeconds/60);
+  const secs=remainingSeconds%60;
+
+  $("ptiCurrentSlot").textContent=`${ptiFmtTime(s.start)} – ${ptiFmtTime(s.end)}`;
+  $("ptiNextSlot").textContent=`${ptiFmtTime(s.end)} – ${ptiFmtTime(new Date(s.end.getTime()+PTI_SLOT_MS))}`;
+  $("ptiClock").textContent=ptiFmtClock(now);
+  $("ptiCountdown").textContent=`${mins}:${ptiPad(secs)}`;
+
+  const elapsed=PTI_SLOT_MS-s.remaining;
+  const pct=Math.min(100,Math.max(0,(elapsed/PTI_SLOT_MS)*100));
+  $("ptiBar").style.width=`${pct}%`;
+
+  const slotKey=s.start.toISOString();
+  if(slotKey!==ptiLastSlotKey){
+    ptiLastSlotKey=slotKey;
+    ptiWarningRungFor="";
+  }
+
+  const inWarning=s.remaining>0 && s.remaining<=60000;
+  document.body.classList.toggle("pti-warning",inWarning);
+
+  if(ptiSoundEnabled && inWarning && ptiWarningRungFor!==slotKey){
+    ptiWarningRungFor=slotKey;
+    ptiBell();
+  }
+}
+function openPTITimer(){
+  setSection("pti");
+  renderPTITimer();
+}
+$("ptiNav").onclick=openPTITimer;
+$("ptiTile").onclick=openPTITimer;
+$("ptiEnableSound").onclick=async()=>{await ptiEnableAudio();await ptiBell()};
+$("ptiTestBell").onclick=async()=>{if(!ptiSoundEnabled)await ptiEnableAudio();if(ptiAudioCtx?.state==="suspended")await ptiAudioCtx.resume();await ptiBell()};
+$("ptiFullBtn").onclick=async()=>{
+  try{
+    const target=$("ptiCard");
+    if(!document.fullscreenElement)await target.requestFullscreen();
+    else await document.exitFullscreen();
+  }catch(e){}
+};
+document.addEventListener("fullscreenchange",()=>{
+  if($("ptiFullBtn"))$("ptiFullBtn").textContent=document.fullscreenElement?"Exit full screen":"Full screen";
+});
+renderPTITimer();
+setInterval(renderPTITimer,250);
+
 
 (async()=>{const saved=localStorage.getItem("lategan_teacher_code");if(saved){$("teacherCode").value=saved;await login()}})();
 
