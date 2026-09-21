@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Learning Coach</title>
+<title>Learning Coach · image feedback</title>
 <style>
 :root{
   --bg:#f4f6f3;--panel:#fff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
@@ -27,20 +27,31 @@ h1{font-size:34px;letter-spacing:-.035em;margin:0 0 7px}.sub{font-size:14px;colo
 .messages{flex:1;padding:22px;overflow:auto;display:flex;flex-direction:column;gap:16px}
 .msg{display:flex;gap:9px;max-width:82%}.msg.assistant{align-self:flex-start}.msg.user{align-self:flex-end;flex-direction:row-reverse}
 .avatar{width:30px;height:30px;border-radius:9px;background:var(--soft);color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:900;flex:0 0 auto}
-.bubble{padding:12px 14px;border-radius:15px;font-size:14px;line-height:1.52}.assistant .bubble{border:1px solid var(--line);background:#fff}.user .bubble{background:var(--student)}
+.bubble{padding:12px 14px;border-radius:15px;font-size:14px;line-height:1.52;max-width:100%}.assistant .bubble{border:1px solid var(--line);background:#fff}.user .bubble{background:var(--student)}
 .bubble p{margin:.2em 0 .65em}.bubble p:last-child{margin-bottom:.2em}.bubble ul{margin:.4em 0 .5em 1.2em;padding:0}
-.composer{border-top:1px solid var(--line);padding:14px 16px;background:#fff}.inputrow{display:flex;gap:9px}
+.msg-image{display:block;max-width:min(420px,100%);max-height:360px;object-fit:contain;border-radius:12px;margin:0 0 9px;border:1px solid rgba(0,0,0,.08);background:#fff}
+.composer{border-top:1px solid var(--line);padding:14px 16px;background:#fff}
+.inputrow{display:flex;gap:9px;align-items:stretch}
+.attach{width:52px;flex:0 0 52px;border:1px solid var(--line);background:#fff;border-radius:12px;font-size:22px;display:grid;place-items:center}
+.attach:hover{background:var(--soft)}
 textarea{flex:1;resize:none;min-height:52px;max-height:130px;border:1px solid var(--line);border-radius:12px;padding:13px 14px;outline:none}
-.send{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 20px;font-weight:850}.send:disabled{opacity:.55}
+.send{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 20px;font-weight:850}.send:disabled,.attach:disabled{opacity:.55}
 .note{text-align:center;font-size:10px;color:#959c98;margin-top:8px}
 .error{display:none;margin:0 16px 10px;border:1px solid #ecc4bb;background:var(--dangerbg);color:var(--danger);border-radius:11px;padding:10px 12px;font-size:12px}
+.attachment-preview{display:none;align-items:center;gap:10px;border:1px solid var(--line);background:#fafcfa;border-radius:13px;padding:9px;margin-bottom:10px}
+.attachment-preview.show{display:flex}
+.attachment-preview img{width:64px;height:64px;object-fit:cover;border-radius:9px;border:1px solid var(--line);background:#fff}
+.attachment-meta{min-width:0;flex:1}
+.attachment-meta strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.attachment-meta span{display:block;font-size:10px;color:var(--muted);margin-top:3px}
+.remove-attachment{border:1px solid var(--line);background:#fff;border-radius:9px;width:34px;height:34px;font-weight:900}
 .overlay{position:fixed;inset:0;background:rgba(244,246,243,.94);backdrop-filter:blur(4px);display:grid;place-items:center;padding:20px;z-index:50}
 .card{width:min(510px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:27px}
 .card h2{margin:0 0 7px;font-size:27px}.card p{margin:0 0 18px;color:var(--muted);font-size:13px;line-height:1.5}
 .list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px}.session{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 13px}
 .session strong{display:block;font-size:13px;margin-bottom:4px}.session span{font-size:10px;color:var(--muted)}
 .primary{width:100%;border:0;background:var(--green);color:#fff;border-radius:11px;padding:12px;font-weight:850}.empty{padding:16px;border:1px dashed var(--line);border-radius:12px;text-align:center;color:var(--muted);font-size:12px}
-@media(max-width:650px){.shell{padding:18px 10px}.msg{max-width:94%}.panel{min-height:calc(100vh - 160px)}h1{font-size:29px}.messages{padding:16px 12px}}
+@media(max-width:650px){.shell{padding:18px 10px}.msg{max-width:94%}.panel{min-height:calc(100vh - 160px)}h1{font-size:29px}.messages{padding:16px 12px}.attach{width:48px;flex-basis:48px}.send{padding:0 14px}}
 </style>
 </head>
 <body>
@@ -70,11 +81,18 @@ textarea{flex:1;resize:none;min-height:52px;max-height:130px;border:1px solid va
     <div class="error" id="errorBox"></div>
 
     <div class="composer">
+      <div class="attachment-preview" id="attachmentPreview">
+        <img id="attachmentThumb" alt="Attached work">
+        <div class="attachment-meta"><strong id="attachmentName">Student work</strong><span>Ready to send for feedback</span></div>
+        <button class="remove-attachment" id="removeAttachment" aria-label="Remove attachment">×</button>
+      </div>
       <div class="inputrow">
-        <textarea id="messageInput" placeholder="Type here…"></textarea>
+        <button class="attach" id="attachBtn" title="Upload a photo of your work" aria-label="Upload a photo">📎</button>
+        <input id="fileInput" type="file" accept="image/*" hidden>
+        <textarea id="messageInput" placeholder="Type here, or attach a photo of your work…"></textarea>
         <button class="send" id="sendBtn">Send</button>
       </div>
-      <div class="note">Your teacher can view this conversation. Your coach helps you think rather than doing the task for you.</div>
+      <div class="note">Attach one photo of your work for feedback. Your teacher can view this conversation and the attached work.</div>
     </div>
   </section>
 </div>
@@ -95,7 +113,7 @@ const params=new URLSearchParams(location.search);
 const BOT_SLUG=params.get("bot")||"";
 const studentCode=localStorage.getItem("lategan_student_code")||"";
 
-let bot=null,sessionId=null,sending=false;
+let bot=null,sessionId=null,sending=false,pendingAttachment=null;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
@@ -126,14 +144,30 @@ async function post(payload){
 function showError(message){$("errorBox").textContent=message;$("errorBox").style.display="block"}
 function clearError(){$("errorBox").style.display="none"}
 
-function addMessage(role,content){
+function addMessage(role,content,attachments=[]){
   const wrap=document.createElement("div");
   wrap.className=`msg ${role==="assistant"?"assistant":"user"}`;
   if(role==="assistant"){
     const av=document.createElement("div");av.className="avatar";av.textContent=bot?.icon||"✦";wrap.appendChild(av);
   }
-  const bubble=document.createElement("div");bubble.className="bubble";bubble.innerHTML=renderMarkdown(content);wrap.appendChild(bubble);
-  $("messages").appendChild(wrap);$("messages").scrollTop=$("messages").scrollHeight;
+  const bubble=document.createElement("div");bubble.className="bubble";
+
+  (attachments||[]).forEach(a=>{
+    if(a?.data_url){
+      const img=document.createElement("img");
+      img.className="msg-image";
+      img.src=a.data_url;
+      img.alt=a.filename||"Student work";
+      bubble.appendChild(img);
+    }
+  });
+
+  const body=document.createElement("div");
+  body.innerHTML=renderMarkdown(content);
+  bubble.appendChild(body);
+  wrap.appendChild(bubble);
+  $("messages").appendChild(wrap);
+  $("messages").scrollTop=$("messages").scrollHeight;
 }
 
 function showOpening(){
@@ -142,14 +176,8 @@ function showOpening(){
 }
 
 async function initialise(){
-  if(!studentCode){
-    location.href="../student/";
-    return;
-  }
-  if(!BOT_SLUG){
-    location.href="../student/";
-    return;
-  }
+  if(!studentCode){location.href="../student/";return}
+  if(!BOT_SLUG){location.href="../student/";return}
 
   try{
     const d=await post({action:"student_list_bots",student_code:studentCode});
@@ -167,9 +195,7 @@ async function initialise(){
     $("overlayIcon").textContent=bot.icon||"✦";
     $("overlayTitle").textContent=bot.name+" chats";
     await loadSessions();
-  }catch(e){
-    showError(e.message);
-  }
+  }catch(e){showError(e.message)}
 }
 
 async function loadSessions(){
@@ -190,41 +216,153 @@ async function loadSessions(){
 async function createSession(){
   try{
     const d=await post({action:"create_session",student_code:studentCode,bot_id:BOT_SLUG});
-    sessionId=d.session_id;$("sessionTitle").textContent="New conversation";$("sessionOverlay").style.display="none";showOpening();$("messageInput").focus();
+    sessionId=d.session_id;
+    $("sessionTitle").textContent="New conversation";
+    $("sessionOverlay").style.display="none";
+    clearAttachment();
+    showOpening();
+    $("messageInput").focus();
   }catch(e){showError(e.message)}
 }
 
 async function openSession(id){
   try{
     const d=await post({action:"get_session",student_code:studentCode,session_id:id});
-    sessionId=id;$("sessionTitle").textContent=d.session.title||"Conversation";$("messages").innerHTML="";
-    if(!(d.messages||[]).length)showOpening();else d.messages.forEach(m=>addMessage(m.role,m.content));
-    $("sessionOverlay").style.display="none";$("messageInput").focus();
+    sessionId=id;
+    $("sessionTitle").textContent=d.session.title||"Conversation";
+    $("messages").innerHTML="";
+    clearAttachment();
+    if(!(d.messages||[]).length)showOpening();
+    else d.messages.forEach(m=>addMessage(m.role,m.content,m.attachments||[]));
+    $("sessionOverlay").style.display="none";
+    $("messageInput").focus();
   }catch(e){showError(e.message)}
+}
+
+function clearAttachment(){
+  pendingAttachment=null;
+  $("fileInput").value="";
+  $("attachmentPreview").classList.remove("show");
+  $("attachmentThumb").removeAttribute("src");
+}
+
+function fileToDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(reader.result);
+    reader.onerror=()=>reject(new Error("That image could not be read."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>resolve(img);
+    img.onerror=()=>reject(new Error("That photo format could not be opened. Try a screenshot or JPG."));
+    img.src=dataUrl;
+  });
+}
+
+async function prepareImage(file){
+  if(!file)return null;
+  if(file.size>12*1024*1024)throw new Error("That photo is too large. Please choose a smaller one.");
+
+  const original=await fileToDataURL(file);
+  const img=await loadImage(original);
+
+  const maxSide=1600;
+  const scale=Math.min(1,maxSide/Math.max(img.naturalWidth,img.naturalHeight));
+  const w=Math.max(1,Math.round(img.naturalWidth*scale));
+  const h=Math.max(1,Math.round(img.naturalHeight*scale));
+
+  const canvas=document.createElement("canvas");
+  canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0,w,h);
+
+  let quality=.82;
+  let dataUrl=canvas.toDataURL("image/jpeg",quality);
+  while(dataUrl.length>850000 && quality>.48){
+    quality-=.08;
+    dataUrl=canvas.toDataURL("image/jpeg",quality);
+  }
+  if(dataUrl.length>900000)throw new Error("That image is still too large after resizing. Try a closer photo or screenshot.");
+
+  return {
+    name:(file.name||"student-work").replace(/\.[^.]+$/,"")+".jpg",
+    type:"image/jpeg",
+    data_url:dataUrl
+  };
+}
+
+async function chooseAttachment(file){
+  clearError();
+  $("attachBtn").disabled=true;
+  try{
+    const a=await prepareImage(file);
+    if(!a)return;
+    pendingAttachment=a;
+    $("attachmentThumb").src=a.data_url;
+    $("attachmentName").textContent=a.name;
+    $("attachmentPreview").classList.add("show");
+  }catch(e){
+    clearAttachment();
+    showError(e.message);
+  }finally{
+    $("attachBtn").disabled=false;
+  }
 }
 
 async function sendMessage(){
   if(sending)return;
   const text=$("messageInput").value.trim();
-  if(!text)return;
+  const attachment=pendingAttachment;
+  if(!text&&!attachment)return;
   if(!sessionId){showError("Start or open a conversation first.");return}
 
-  clearError();sending=true;$("sendBtn").disabled=true;$("messageInput").value="";addMessage("user",text);
+  clearError();
+  sending=true;
+  $("sendBtn").disabled=true;
+  $("attachBtn").disabled=true;
+  $("messageInput").value="";
 
-  const typing=document.createElement("div");typing.className="msg assistant";typing.id="typing";
-  typing.innerHTML=`<div class="avatar">${esc(bot?.icon||"✦")}</div><div class="bubble">Thinking…</div>`;
+  const shownText=text||"Please give me feedback on the work I attached.";
+  addMessage("user",shownText,attachment?[{filename:attachment.name,data_url:attachment.data_url}]:[]);
+  clearAttachment();
+
+  const typing=document.createElement("div");
+  typing.className="msg assistant";
+  typing.id="typing";
+  typing.innerHTML=`<div class="avatar">${esc(bot?.icon||"✦")}</div><div class="bubble">${attachment?"Looking at your work…":"Thinking…"}</div>`;
   $("messages").appendChild(typing);
+  $("messages").scrollTop=$("messages").scrollHeight;
 
   try{
-    const d=await post({action:"chat",student_code:studentCode,session_id:sessionId,bot_id:BOT_SLUG,message:text});
-    $("typing")?.remove();addMessage("assistant",d.reply);
+    const d=await post({
+      action:"chat",
+      student_code:studentCode,
+      session_id:sessionId,
+      bot_id:BOT_SLUG,
+      message:text,
+      attachment:attachment
+    });
+    $("typing")?.remove();
+    addMessage("assistant",d.reply);
   }catch(e){
-    $("typing")?.remove();showError(e.message);
+    $("typing")?.remove();
+    showError(e.message);
   }finally{
-    sending=false;$("sendBtn").disabled=false;$("messageInput").focus();
+    sending=false;
+    $("sendBtn").disabled=false;
+    $("attachBtn").disabled=false;
+    $("messageInput").focus();
   }
 }
 
+$("attachBtn").onclick=()=>$("fileInput").click();
+$("fileInput").onchange=()=>chooseAttachment($("fileInput").files?.[0]);
+$("removeAttachment").onclick=clearAttachment;
 $("startNewBtn").onclick=createSession;
 $("newChatBtn").onclick=createSession;
 $("myChatsBtn").onclick=loadSessions;
