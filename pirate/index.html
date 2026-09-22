@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v28</title>
+<title>Pirate Game · Learning Hub · v29</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -591,6 +591,22 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
   transition:.2s ease;
 }
 
+
+.saved-library{margin-top:22px;border-top:1px solid var(--line);padding-top:20px}
+.saved-library-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:10px}
+.saved-library-head h3{margin:0;font-size:17px}
+.saved-library-head p{margin:3px 0 0;color:var(--muted);font-size:11px}
+.saved-list{display:grid;gap:9px}
+.saved-game-card{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;
+  border:1px solid var(--line);background:#fff;border-radius:14px;padding:13px 14px
+}
+.saved-game-name{font-size:14px;font-weight:900;margin-bottom:4px}
+.saved-game-meta{font-size:11px;color:var(--muted);line-height:1.45}
+.saved-game-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.saved-empty{border:1px dashed var(--line);border-radius:13px;padding:14px;color:var(--muted);font-size:12px;text-align:center}
+@media(max-width:700px){.saved-game-card{grid-template-columns:1fr}.saved-game-actions{justify-content:flex-start}}
+
 </style>
 </head>
 <body>
@@ -637,6 +653,13 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
         <button class="btn primary" id="createGame">Create game</button>
       </div>
       <div class="difficulty-help">Board size controls how long the game lasts. There is no game timer. Cash values are varied and unique on every board.</div>
+
+      <div class="saved-library">
+        <div class="saved-library-head">
+          <div><h3>Saved games</h3><p>Resume an earlier class game, or start a completely new one above.</p></div>
+        </div>
+        <div class="saved-list" id="savedGamesList"></div>
+      </div>
     </div></div>
 
     <div id="teacherGame" style="display:none">
@@ -784,7 +807,7 @@ const teacherMode=params.get("role")==="teacher";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const studentCode=localStorage.getItem("lategan_student_code")||"";
 let token=sessionStorage.getItem("pirate_join_token")||"";
-let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[],autoActionTimer=null,autoActionBusy=false,autoActionScheduledId=null,lastCarouselActionId=null,coordRevealActive=false;
+let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[],autoActionTimer=null,autoActionBusy=false,autoActionScheduledId=null,lastCarouselActionId=null,coordRevealActive=false,savedGames=[];
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 
 $("backLink").href=teacherMode?"../teacher/":"../student/";
@@ -1273,10 +1296,82 @@ function showCoordinateReveal(coord){
   },1900);
 }
 
+
+function savedDateLabel(value){
+  if(!value)return "Saved recently";
+  const raw=String(value);
+  const d=new Date(/[zZ]|[+-]\d\d:\d\d$/.test(raw)?raw:raw.replace(" ","T")+"Z");
+  if(Number.isNaN(d.getTime()))return raw;
+  return d.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"});
+}
+
+function renderSavedGames(){
+  const box=$("savedGamesList");
+  if(!box)return;
+  if(!savedGames.length){
+    box.innerHTML='<div class="saved-empty">No saved Pirate games yet.</div>';
+    return;
+  }
+  box.innerHTML=savedGames.map(g=>`
+    <div class="saved-game-card">
+      <div>
+        <div class="saved-game-name">${esc(g.name||"Saved Pirate Game")}</div>
+        <div class="saved-game-meta">
+          ${savedDateLabel(g.saved_at)} · Round ${Number(g.round_number||0)} ·
+          ${Number(g.player_count||0)} players · ${Number(g.board_size||7)} × ${Number(g.board_size||7)} ·
+          ${String(g.difficulty||"medium")} · code ${esc(g.join_code||"")}
+        </div>
+      </div>
+      <div class="saved-game-actions">
+        <button class="btn primary" onclick="resumeSavedGame(${Number(g.id)})">Resume</button>
+        <button class="btn danger" onclick="deleteSavedGame(${Number(g.id)},'${String(g.name||"Saved Pirate Game").replace(/\\/g,"\\\\").replace(/'/g,"\\'")}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function resumeSavedGame(gameId){
+  try{
+    state=await post({
+      action:"pirate_teacher_control",
+      teacher_code:teacherCode,
+      game_id:Number(gameId),
+      command:"resume"
+    });
+    savedGames=[];
+    teacherFinishedShown=false;
+    lastTeacherFeedAt=null;
+    teacherLastPublicActionId=null;
+    teacherLastPublicSnapshot=null;
+    teacherPublicHistory=[];
+    lastCarouselActionId=null;
+    cancelAutoActionAdvance();
+    renderTeacher();
+  }catch(e){alert(e.message)}
+}
+
+async function deleteSavedGame(gameId,name){
+  if(!confirm(`Delete "${name}" permanently?`))return;
+  try{
+    await post({
+      action:"pirate_teacher_control",
+      teacher_code:teacherCode,
+      game_id:Number(gameId),
+      command:"delete"
+    });
+    const fresh=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+    savedGames=fresh.saved_games||[];
+    if(fresh.game)state=fresh;
+    else state={game:null,players:[]};
+    renderTeacher();
+  }catch(e){alert(e.message)}
+}
+
 function renderTeacher(){
   if(!state?.game){
     $("teacherNoGame").style.display="block";$("teacherGame").style.display="none";
     $("roundReady").classList.remove("show");$("finalOverlay").classList.remove("show");
+    renderSavedGames();
     updateGameBadge();return
   }
   $("teacherNoGame").style.display="none";$("teacherGame").style.display="block";
@@ -1422,8 +1517,16 @@ function renderPlayer(){
   const g=state.game,p=state.player;
   updateGameBadge();
   $("playerTitle").textContent=p.name+"'s treasure map";
-  $("cash").textContent=money(p.cash);$("bank").textContent=money(p.bank);
-  $("sideCash").textContent=money(p.cash);$("sideBank").textContent=money(p.bank);$("sideTotal").textContent=money(p.total);
+
+  // During a maths challenge, do not leave an operand visible behind the modal.
+  // Students should work from the question itself, not read their current totals.
+  const hideTotals=p.task?.type==="math";
+  const masked="$••••";
+  $("cash").textContent=hideTotals?masked:money(p.cash);
+  $("bank").textContent=hideTotals?masked:money(p.bank);
+  $("sideCash").textContent=hideTotals?masked:money(p.cash);
+  $("sideBank").textContent=hideTotals?masked:money(p.bank);
+  $("sideTotal").textContent=hideTotals?masked:money(p.total);
   $("shield").textContent=p.shields;$("mirror").textContent=p.mirrors;
 
   const setup=g.status==="lobby"&&!p.board_locked;
@@ -1631,6 +1734,7 @@ async function load(){
   try{
     if(teacherMode){
       const fresh=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+      savedGames=fresh?.saved_games||[];
 
       if(advancingRound && fresh?.game){
         const staleReady=["ready","ready_chosen"].includes(fresh.game.status) &&
@@ -1750,8 +1854,31 @@ $("continueRound").onclick=async()=>{
   }
 };
 $("saveGame").onclick=async()=>{
-  state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"pause"});
-  renderTeacher()
+  if(!state?.game)return;
+  const now=new Date();
+  const defaultName=`Pirate Game · ${now.toLocaleDateString("en-AU",{day:"numeric",month:"short",year:"numeric"})}`;
+  const name=prompt("Name this saved game:",defaultName);
+  if(name===null)return;
+  const clean=String(name||"").trim()||defaultName;
+
+  try{
+    const result=await post({
+      action:"pirate_teacher_control",
+      teacher_code:teacherCode,
+      game_id:state.game.id,
+      command:"pause",
+      game_name:clean
+    });
+    savedGames=result.saved_games||[];
+    state={game:null,players:[]};
+    advancingRound=false;advanceFromRound=0;
+    teacherLastPublicActionId=null;
+    teacherLastPublicSnapshot=null;
+    teacherPublicHistory=[];
+    lastCarouselActionId=null;
+    cancelAutoActionAdvance();
+    renderTeacher();
+  }catch(e){alert(e.message)}
 };
 $("resumeGame").onclick=async()=>{
   state=await post({action:"pirate_teacher_control",teacher_code:teacherCode,game_id:state.game.id,command:"resume"});
