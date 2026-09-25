@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Game · Learning Hub · v30</title>
+<title>Pirate Game · Learning Hub · v31</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <style>
 :root{--bg:#eef3f0;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#f6e8ad;--soft:#f7faf8;--red:#994b40;--shadow:0 16px 44px rgba(25,55,44,.10)}
@@ -945,38 +945,70 @@ function playSound(kind="event"){
     const AudioCtx=window.AudioContext||window.webkitAudioContext;
     if(!AudioCtx)return;
     const ctx=playSound.ctx||(playSound.ctx=new AudioCtx());
+    if(ctx.state==="suspended")ctx.resume();
     const now=ctx.currentTime;
 
-    const patterns={
-      bomb:[95,62,45],
-      rob:[330,247,165],
-      sink:[260,196,130],
-      mirror:[520,760,1040],
-      shield:[180,360],
-      present:[523,659,784],
-      swap:[300,520,300,620],
-      choose:[392,494,587],
-      winner:[523,659,784,1047],
-      event:[330,440]
-    };
-    const notes=patterns[kind]||patterns.event;
-    notes.forEach((freq,i)=>{
+    const tone=(freq,t,dur=.18,type="triangle",vol=.10)=>{
       const o=ctx.createOscillator(),g=ctx.createGain();
-      o.type=kind==="bomb"?"sawtooth":"triangle";
-      o.frequency.value=freq;
-      const t=now+i*(kind==="bomb"?.07:.09);
+      o.type=type;o.frequency.setValueAtTime(freq,t);
       g.gain.setValueAtTime(.0001,t);
-      g.gain.exponentialRampToValueAtTime(kind==="bomb"?.14:.08,t+.012);
-      g.gain.exponentialRampToValueAtTime(.0001,t+.16);
-      o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.18);
-    });
+      g.gain.exponentialRampToValueAtTime(vol,t+.012);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+dur+.03);
+    };
+
+    if(kind==="sink"){
+      // Descending "splash / down she goes" cue.
+      [392,330,262,196,147].forEach((f,i)=>tone(f,now+i*.075,.22,"sine",.11));
+      return;
+    }
+    if(kind==="present"){
+      // Bright gift fanfare.
+      [523,659,784,1047].forEach((f,i)=>tone(f,now+i*.085,.24,"triangle",.10));
+      return;
+    }
+    if(kind==="swap"){
+      // Two crossing sweeps — clearly different from robbery.
+      [294,392,523,392,294,440].forEach((f,i)=>tone(f,now+i*.065,.17,"sine",.09));
+      return;
+    }
+    if(kind==="rob"){
+      // Short sneaky descending sting.
+      [440,330,247,165].forEach((f,i)=>tone(f,now+i*.07,.18,"square",.065));
+      return;
+    }
+    if(kind==="mirror"){
+      [520,760,1040,760].forEach((f,i)=>tone(f,now+i*.06,.19,"sine",.09));
+      return;
+    }
+    if(kind==="shield"){
+      [180,260,360].forEach((f,i)=>tone(f,now+i*.055,.22,"triangle",.10));
+      return;
+    }
+    if(kind==="bomb"){
+      [95,62,45].forEach((f,i)=>tone(f,now+i*.07,.20,"sawtooth",.14));
+      return;
+    }
+    if(kind==="winner"){
+      [523,659,784,1047,1319].forEach((f,i)=>tone(f,now+i*.09,.28,"triangle",.10));
+      return;
+    }
+    if(kind==="choose"){
+      [392,494,587].forEach((f,i)=>tone(f,now+i*.08,.20,"triangle",.08));
+      return;
+    }
+    [330,440].forEach((f,i)=>tone(f,now+i*.09,.18,"triangle",.08));
   }catch(e){}
 }
 function soundKind(text){
   const t=String(text||"").toLowerCase();
-  if(t.includes("bomb")||t.includes("sink")||t.includes("rob"))return "bad";
-  if(t.includes("bank"))return "bank";
-  if(t.includes("shield")||t.includes("mirror")||t.includes("present")||t.includes("swap"))return "special";
+  if(t.includes("bomb"))return "bomb";
+  if(t.includes("sink"))return "sink";
+  if(t.includes("rob"))return "rob";
+  if(t.includes("mirror"))return "mirror";
+  if(t.includes("shield"))return "shield";
+  if(t.includes("present")||t.includes("gift"))return "present";
+  if(t.includes("swap"))return "swap";
   return "event";
 }
 function playNextTeacherEvent(){
@@ -1689,7 +1721,8 @@ function renderAction(){
   }
 
   if(t.type==="math"){
-    const title=t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";
+    const isPlace=String(t.kind||"").startsWith("place_");
+    const title=isPlace?"🔢 TREASURE CHECK":t.kind==="bank"?"🏦 BANK IT!":t.kind==="double"?"✖️ DOUBLE TREASURE!":"💰 TREASURE!";
     showModal(`<div class="eyebrow">${g.current_coord||"Current tile"}</div><h2>${title}</h2><p>Work it out before the timer runs out.</p><div style="font-size:24px;font-weight:950;margin:14px 0">${t.prompt}</div><div class="math-timer"><div id="mathTimerBar"></div></div><div class="math-time-text" id="mathTimeText"></div><div class="answerrow"><input id="ans" inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" spellcheck="false"><button class="btn primary" onclick="answer()">Check</button></div>`);
     const key=(t.deadline||"")+"|"+t.prompt;
     if(lastMathKey!==key){
