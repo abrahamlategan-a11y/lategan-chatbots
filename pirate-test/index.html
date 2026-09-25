@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pirate Student Bot Tester v4 · Learning Hub</title>
+<title>Pirate Student Bot Tester v5 · Learning Hub</title>
 <style>
 :root{--bg:#edf3ef;--panel:#fff;--ink:#17211c;--muted:#6d7771;--line:#dce5df;--green:#2f6655;--deep:#183f35;--gold:#e2bd57;--soft:#f7faf8;--red:#a0443e;--amber:#a97416;--shadow:0 16px 44px rgba(25,55,44,.10)}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#e8f0ec,#f7f8f6 58%);color:var(--ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1380px;margin:auto;padding:22px}.top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}.brand{display:flex;align-items:center;gap:10px;font-weight:950}.logo{width:42px;height:42px;border-radius:13px;background:var(--deep);color:#fff;display:grid;place-items:center}.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900}.hero{display:flex;justify-content:space-between;align-items:center;gap:20px;background:var(--deep);color:#fff;border-radius:22px;padding:22px 24px;box-shadow:var(--shadow);margin-bottom:18px}.hero h1{font-size:34px;margin:0 0 5px}.hero p{margin:0;color:#c9d9d2;font-size:13px;line-height:1.4}.hero .badge{background:rgba(255,255,255,.10);border-radius:14px;padding:10px 14px;font-size:12px;font-weight:900}.grid{display:grid;grid-template-columns:390px minmax(0,1fr);gap:18px;align-items:start}.panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}.ph{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}.ph h2,.ph h3{margin:0;font-size:16px}.pb{padding:16px}.field{margin-bottom:13px}.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:900;margin-bottom:6px}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff;color:var(--ink)}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;font-size:12px;font-weight:900}.btn.primary{background:var(--green);border-color:var(--green);color:#fff}.btn.danger{color:var(--red)}.btn:disabled{opacity:.5;cursor:not-allowed}.controls{display:flex;gap:8px;flex-wrap:wrap}.note{background:#fff8df;border:1px solid #ead99a;border-radius:14px;padding:12px;font-size:11px;line-height:1.45;color:#5d4b1c}.note strong{display:block;margin-bottom:3px}.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.check{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px}.check .lab{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:900}.check .val{font-size:17px;font-weight:950;margin-top:3px}.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}.botgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.bot{border:1px solid var(--line);border-radius:14px;padding:11px;background:#fbfcfb;min-width:0}.bot.busy{border-color:#ead28a;background:#fff9e7}.bot.error{border-color:#e3b9b5;background:#fff5f4}.bot.done{background:#f2f7f4}.bot-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.bot-name{font-size:13px;font-weight:950;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bot-state{font-size:9px;font-weight:950;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:4px 6px;background:#edf2ef;color:#657169;white-space:nowrap}.bot-note{margin-top:6px;font-size:10px;color:var(--muted);line-height:1.35;min-height:28px}.money{margin-top:7px;font-size:9px;color:var(--muted)}.logwrap{margin-top:18px}.log{height:330px;overflow:auto;background:#10231d;color:#dbe8e2;border-radius:15px;padding:10px 12px;font:11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}.logline{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.04)}.logline.ok{color:#cbeedb}.logline.err{color:#ffb8b2}.logline.warn{color:#ffe0a3}.empty{padding:34px;text-align:center;color:var(--muted);font-size:12px}.statusline{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}.dot{width:9px;height:9px;border-radius:50%;background:#aeb8b3}.dot.live{background:#4f9a78}.dot.stop{background:#c66c61}@media(max-width:1000px){.grid{grid-template-columns:1fr}.botgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.botgrid,.twocol,.checks{grid-template-columns:1fr}.hero{align-items:flex-start;flex-direction:column}}
@@ -83,7 +83,55 @@ async function joinAndPrepare(bot,code){
 async function act(bot,s){if(!s?.game||!s?.player)return;const g=s.game,p=s.player,t=p.task;bot.cash=p.cash||0;bot.bank=p.bank||0;gameSeen=g;$("gameStat").textContent=String(g.status||"—").replace(/_/g," ");if(g.status==="finished"){updateBot(bot,{status:"finished",note:"Game finished",busy:false,done:true});return}if(["lobby","setup"].includes(g.status)){updateBot(bot,{status:"ready",note:"Waiting for teacher to start",busy:false,done:false});return}if(g.status==="paused"){updateBot(bot,{status:"paused",note:"Waiting for teacher to resume",busy:false});return}if(!t){const own=p.own_action,cur=p.current_action;if(own?.status==="queued")updateBot(bot,{status:"queued",note:`Public action #${own.queue_position||"?"} in queue`,busy:false});else if(own?.status==="done_wait")updateBot(bot,{status:"done",note:"Public action complete — waiting for teacher",busy:false,done:true});else if(cur)updateBot(bot,{status:"watching",note:`Watching ${cur.player_name}'s action`,busy:false,done:true});else if(["ready","ready_chosen"].includes(g.status))updateBot(bot,{status:"ready",note:"Round complete",busy:false,done:true});else updateBot(bot,{status:"done",note:"Waiting for classmates",busy:false,done:true});return}
 updateBot(bot,{busy:true,done:false,status:t.type,note:`Handling ${t.type}…`});const started=Date.now();await delay(botDelay());if(!running)return;try{if(t.type==="locate"){const coord=t.coord;if(Math.random()<wrongChance()){const a=allCoords(Number(g.board_size||7)).filter(c=>c!==coord),wrong=a[Math.floor(Math.random()*a.length)];await post({action:"pirate_click_coord",join_token:bot.token,coord:wrong});warn(`${bot.name} deliberately tapped ${wrong} instead of ${coord}`);await delay(350)}await post({action:"pirate_click_coord",join_token:bot.token,coord});updateBot(bot,{status:"found",note:`Found ${coord}`,busy:false});log(`${bot.name} found ${coord}`)}else if(t.type==="math"){let ans=solveMath(t);if(ans===null){warn(`${bot.name}: could not parse maths "${t.prompt}", using timeout`);await post({action:"pirate_math_timeout",join_token:bot.token})}else{if(Math.random()<wrongChance())ans=Number(ans)+1;const out=await post({action:"pirate_math_answer",join_token:bot.token,answer:String(ans)}),good=out?.feedback?.correct!==false;log(`${bot.name} answered maths ${t.prompt} → ${ans}${good?"":" (wrong)"}`,good?"":"warn")}}else if(t.type==="target"){const id=chooseTarget(s,bot);if(id==null)updateBot(bot,{status:"waiting",note:"No target available",busy:false});else{await post({action:"pirate_choose_target",join_token:bot.token,target_player_id:id});log(`${bot.name} chose a target for ${t.action||"public action"}`)}}else if(t.type==="defend"){const choice=defenceChoice(p);await post({action:"pirate_defence",join_token:bot.token,choice});log(`${bot.name} defended with ${choice}`)}else if(t.type==="ack"){const title=String(t.title||t.action||"event");await post({action:"pirate_ack",join_token:bot.token});log(`${bot.name} acknowledged ${title}`)}else if(t.type==="choose_coord"){const coord=chooseUnusedCoord(s);await post({action:"pirate_choose_coord",join_token:bot.token,coord});warn(`${bot.name} handled legacy choose-square (${coord})`)}else warn(`${bot.name} has unknown task type "${t.type}"`)}catch(e){if(/already|nothing|no active|round has changed|not waiting/i.test(String(e.message||"")))log(`${bot.name}: state moved on (${e.message})`,"warn");else throw e}if(Date.now()-started>15000)warn(`${bot.name} action took more than 15 seconds`)}
 async function botLoop(bot){while(running&&bot.token){try{const s=await post({action:"pirate_player_state",join_token:bot.token});if(s?.ended||!s?.game){updateBot(bot,{status:"ended",note:"Game ended",busy:false});return}const sig=JSON.stringify([s.game?.status,s.game?.round_number,s.player?.task?.type,s.player?.task?.coord,s.player?.task?.prompt,s.player?.task?.action,s.player?.task?.attack_id,s.player?.task?.queue_id,s.player?.task?.attacker_name,s.player?.own_action?.id,s.player?.own_action?.status,s.player?.own_action?.queue_position,s.player?.current_action?.id,s.player?.current_action?.status,s.player?.current_action?.result_text]);bot.lastSeen=Date.now();if(sig!==bot.lastSig){bot.lastSig=sig;await act(bot,s)}else{bot.cash=s.player?.cash||0;bot.bank=s.player?.bank||0;renderBots()}}catch(e){bot.failures=(bot.failures||0)+1;if(bot.failures<=2)warn(`${bot.name}: ${e.message}`);else{updateBot(bot,{error:true,status:"error",note:e.message,busy:false});fail(`${bot.name} stopped: ${e.message}`);return}}await delay(650+Math.random()*300)}}
-async function teacherWatch(){if(!teacherCode)return;while(running){try{const s=await post({action:"pirate_teacher_active",teacher_code:teacherCode});if(s?.game){const q=s.action_queue||{},all=[q.current,...(q.queued||[])].filter(Boolean),leak=all.find(x=>["bomb","choose","choose_coord","choose_square","choose_coordinate"].includes(String(x.action_type||"").toLowerCase()));if(leak){const sig=`leak:${leak.id}:${leak.action_type}`;if(sig!==lastTeacherQueueSig){lastTeacherQueueSig=sig;fail(`PUBLIC QUEUE LEAK: ${leak.player_name} has ${leak.action_type}`)}}else{const sig=all.map(x=>`${x.id}:${x.status}`).join("|");if(sig!==lastTeacherQueueSig){lastTeacherQueueSig=sig;if(q.current)log(`Teacher queue NOW: ${q.current.player_name} — ${q.current.action_type}`);if((q.queued||[]).length)log(`Teacher queue waiting: ${(q.queued||[]).map(x=>x.player_name).join(", ")}`)}}}}catch(e){warn(`Teacher-state check failed: ${e.message}`)}await delay(900)}}
+async function teacherWatch(){
+  if(!teacherCode)return;
+  let lastRound=null,lastOrder="";
+  while(running){
+    try{
+      const s=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+      if(s?.game){
+        const q=s.action_queue||{};
+        const all=[q.current,...(q.queued||[])].filter(Boolean);
+
+        const leak=all.find(x=>["bomb","choose","choose_coord","choose_square","choose_coordinate"]
+          .includes(String(x.action_type||"").toLowerCase()));
+        if(leak){
+          fail(`PUBLIC QUEUE LEAK: ${leak.player_name} has ${leak.action_type}`);
+        }
+
+        // There must never be two simultaneous current public actions.
+        const currentCount=q.current?1:0;
+        if(currentCount>1)fail("QUEUE INVARIANT FAILED: more than one current action.");
+
+        const round=Number(s.game.round_number||0);
+        const order=all.map(x=>`${x.player_name}:${x.action_type}`).join(" → ");
+        if(order && (round!==lastRound || order!==lastOrder)){
+          lastRound=round;lastOrder=order;
+          log(`Round ${round} public order: ${order}`);
+        }
+
+        const sig=all.map(x=>`${x.id}:${x.status}:${x.player_name}:${x.action_type}`).join("|");
+        if(sig!==lastTeacherQueueSig){
+          lastTeacherQueueSig=sig;
+          if(q.current)log(`Teacher queue NOW: ${q.current.player_name} — ${q.current.action_type} [${q.current.status}]`);
+          if((q.queued||[]).length)log(`Teacher queue waiting: ${(q.queued||[]).map(x=>x.player_name).join(", ")}`);
+        }
+
+        // During an active public action there should be exactly one student's
+        // choice chain progressing; tester bots only act when their real task appears.
+        if(q.current && ["active","awaiting_defense","resolving"].includes(String(q.current.status))){
+          const publicActors=bots.filter(b=>["choosing","defending","responding"].includes(String(b.status||"").toLowerCase()));
+          if(publicActors.length>1){
+            warn(`QUEUE CHECK: ${publicActors.length} bots appear actionable at once (${publicActors.map(b=>b.name).join(", ")}).`);
+          }
+        }
+      }
+    }catch(e){
+      warn(`Teacher-state check failed: ${e.message}`);
+    }
+    await delay(900);
+  }
+}
 async function launch(){
   const code=$("gameCode").value.replace(/\D/g,"");
   const count=Number($("botCount").value);
