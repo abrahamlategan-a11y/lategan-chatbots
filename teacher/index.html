@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Teacher Learning Hub · v18</title>
+<title>Teacher Learning Hub · v20</title>
 <style>
 :root{
   --bg:#f4f6f3;--panel:#ffffff;--ink:#1d2420;--muted:#69726d;--line:#dfe5df;
@@ -171,6 +171,25 @@ body.pti-warning .pti-wrapup{display:block}
 .teacher-attachment{display:block;max-width:min(520px,100%);max-height:420px;object-fit:contain;border-radius:12px;border:1px solid var(--line);background:#fff;margin:0 0 9px}
 .attachment-caption{font-size:10px;color:var(--muted);margin:0 0 8px}
 
+
+.hub-master-card{
+  display:none;
+  align-items:center;
+  gap:12px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:10px 12px;
+  box-shadow:var(--shadow)
+}
+.hub-master-card.show{display:flex}
+.hub-master-dot{width:11px;height:11px;border-radius:50%;background:#56a06f;box-shadow:0 0 0 4px rgba(86,160,111,.12)}
+.hub-master-card.locked .hub-master-dot{background:var(--red);box-shadow:0 0 0 4px rgba(147,73,63,.12)}
+.hub-master-copy{min-width:150px}
+.hub-master-copy strong{display:block;font-size:12px}
+.hub-master-copy span{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+.hub-master-card.locked .hub-master-copy strong{color:var(--red)}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -199,6 +218,7 @@ body.pti-warning .pti-wrapup{display:block}
       <button data-section="students"><span class="ico">◎</span>Students</button>
       <button data-section="chats"><span class="ico">☰</span>Chats & analytics</button>
       <button data-section="games"><span class="ico">🎮</span>Class Games</button>
+      <button id="assessmentsNav"><span class="ico">✓</span>Assessments</button>
       <button id="instructionsNav"><span class="ico">☷</span>Instructions Board</button>
       <button id="groupsNav"><span class="ico">◫</span>Groups</button>
       <button id="whiteboardsNav"><span class="ico">✎</span>Student Whiteboards</button>
@@ -228,10 +248,20 @@ body.pti-warning .pti-wrapup{display:block}
           <h1 id="welcomeHeading">Good morning.</h1>
           <div class="sub">Everything for your class in one place. Build chatbots, manage students and set up the tools your class sees.</div>
         </div>
-        <div class="class-switcher">
-          <span class="class-chip">Class</span>
-          <select id="classSwitcher"></select>
-          <button class="btn add-class" id="addClassBtn">+ Add class</button>
+        <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end">
+          <div class="hub-master-card" id="hubMasterCard">
+            <div class="hub-master-dot"></div>
+            <div class="hub-master-copy">
+              <strong id="hubMasterStatus">Learning Hub open</strong>
+              <span id="hubMasterSub">Students and teachers can access the Hub.</span>
+            </div>
+            <button class="btn" id="hubMasterToggle">Lock Hub</button>
+          </div>
+          <div class="class-switcher">
+            <span class="class-chip">Class</span>
+            <select id="classSwitcher"></select>
+            <button class="btn add-class" id="addClassBtn">+ Add class</button>
+          </div>
         </div>
       </div>
       <div class="tilegrid">
@@ -240,6 +270,7 @@ body.pti-warning .pti-wrapup{display:block}
         <div class="tile clickable" data-go="students"><div class="tile-icon">◎</div><h3>Students</h3><p>Manage your roster, student codes and access.</p><div class="tile-foot"><span id="homeStudentCount">0</span> students · Open →</div></div>
         <div class="tile clickable" data-go="chats"><div class="tile-icon">☰</div><h3>Chats & analytics</h3><p>Read transcripts and see how students are using each coach.</p><div class="tile-foot">Open →</div></div>
         <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
+        <div class="tile clickable" id="assessmentsTile"><div class="tile-icon">✓</div><h3>Assessments</h3><p>Upload existing questions, let AI build the digital quiz, then publish and auto-mark it.</p><div class="tile-foot">Open Assessment Studio →</div></div>
         <div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
         <div class="tile clickable" id="ptiTile"><div class="tile-icon">◷</div><h3>PTI Timer</h3><p>Clock-bound 8-minute parent interview slots with a one-minute visual warning and bell.</p><div class="tile-foot">Open timer →</div></div>
         <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
@@ -475,7 +506,7 @@ body.pti-warning .pti-wrapup{display:block}
 
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
-let teacherCode="",teacher=null,teacherClasses=[],activeClassId=null,bots=[],students=[],editingBotId=null,published=false,shared=false,currentStudent=null;
+let teacherCode="",teacher=null,teacherClasses=[],activeClassId=null,bots=[],students=[],editingBotId=null,published=false,shared=false,currentStudent=null,hubOwner=false,hubLocked=false;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
@@ -595,6 +626,50 @@ async function switchClass(classId){
   await Promise.all([loadStudents(),loadBots()]);
 }
 
+
+function renderHubMasterControl(){
+  const card=$("hubMasterCard");
+  if(!card)return;
+
+  card.classList.toggle("show",!!hubOwner);
+  card.classList.toggle("locked",!!hubLocked);
+
+  if(!hubOwner)return;
+
+  $("hubMasterStatus").textContent=hubLocked?"Learning Hub LOCKED":"Learning Hub OPEN";
+  $("hubMasterSub").textContent=hubLocked
+    ?"Everyone except you is blocked."
+    :"Students and teachers can access the Hub normally.";
+  $("hubMasterToggle").textContent=hubLocked?"Reopen Hub":"Lock Hub";
+  $("hubMasterToggle").classList.toggle("primary",hubLocked);
+}
+
+async function toggleHubMasterLock(){
+  if(!hubOwner)return;
+
+  const next=!hubLocked;
+  const message=next
+    ?"Lock the entire Learning Hub? All students and other teachers will be blocked immediately. Your account will stay open."
+    :"Reopen the Learning Hub for teachers? Student school-hours rules will still apply, including all-day Saturday and Sunday closure.";
+
+  if(!confirm(message))return;
+
+  $("hubMasterToggle").disabled=true;
+  try{
+    const d=await post({
+      action:"hub_set_master_lock",
+      teacher_code:teacherCode,
+      locked:next
+    });
+    hubLocked=!!d.locked;
+    renderHubMasterControl();
+  }catch(e){
+    alert(e.message);
+  }finally{
+    $("hubMasterToggle").disabled=false;
+  }
+}
+
 async function login(){
   $("loginError").textContent="";
   const code=$("teacherCode").value.trim();
@@ -603,6 +678,8 @@ async function login(){
     const d=await post({action:"teacher_login",teacher_code:code});
     teacherCode=code;teacher=d.teacher;
     teacherClasses=d.classes||[];
+    hubOwner=!!d.hub_owner;
+    hubLocked=!!d.hub_locked;
     activeClassId=Number(teacher.class_id||teacherClasses.find(c=>Number(c.is_default)===1)?.id||teacherClasses[0]?.id||0)||null;
     localStorage.setItem("lategan_teacher_code",code);
     $("teacherName").textContent=teacher.display_name||"Teacher";
@@ -611,6 +688,7 @@ async function login(){
     $("studentClass").value=teacher.class_name||"";
     $("adminNav").style.display=Number(teacher.is_admin)===1?"flex":"none";
     renderClassSwitcher();
+    renderHubMasterControl();
     $("loginScreen").style.display="none";
     await Promise.all([loadBots(),loadStudents()]);
   }catch(e){$("loginError").textContent=e.message}
@@ -618,6 +696,7 @@ async function login(){
 $("loginBtn").onclick=login;
 $("teacherCode").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
 $("signOut").onclick=()=>{localStorage.removeItem("lategan_teacher_code");location.reload()};
+$("hubMasterToggle").onclick=toggleHubMasterLock;
 
 async function loadStudents(){
   try{
@@ -1067,6 +1146,8 @@ $("groupsTile").onclick=()=>{location.href="../groups/"};
 $("whiteboardsNav").onclick=()=>{location.href="../tewhiteboard/"};
 $("whiteboardsTile").onclick=()=>{location.href="../tewhiteboard/"};
 $("adminNav").onclick=()=>{location.href="../admin/"};
+$("assessmentsNav").onclick=()=>{location.href="../assessments/"};
+$("assessmentsTile").onclick=()=>{location.href="../assessments/"};
 
 $("morningNav")?.addEventListener("click",()=>{location.href="../morning/?role=teacher"});
 $("morningTile")?.addEventListener("click",()=>{location.href="../morning/?role=teacher"});
