@@ -20,7 +20,7 @@ jobs:
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         shell: python
         run: |
-          import os, json, hashlib, urllib.request, urllib.error, re
+          import os, json, hashlib, urllib.request, urllib.error, re, email.parser, email.policy
           token = os.environ.get("CF_TOKEN", "")
           account = os.environ.get("CF_ACCOUNT", "")
           if not token or not re.fullmatch(r"[a-fA-F0-9]{32}", account):
@@ -33,17 +33,27 @@ jobs:
               try:
                   with urllib.request.urlopen(req, timeout=45) as response:
                       data = response.read()
+                      content_type = response.headers.get('Content-Type', '')
               except urllib.error.HTTPError as error:
                   raise SystemExit("Cloudflare inspection failed with HTTP " + str(error.code)) from None
               if raw:
-                  return data
+                  return data, content_type
               result = json.loads(data)
               if not result.get("success"):
                   raise SystemExit("Cloudflare API did not confirm success; no raw response printed.")
               return result["result"]
           script = "/workers/scripts/lategan-chatbot"
           settings = api(script + "/settings")
-          source = api(script, raw=True)
+          source, content_type = api(script, raw=True)
+          if "multipart/" in content_type:
+              message = email.parser.BytesParser(policy=email.policy.default).parsebytes(("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode() + source)
+              candidates = [part.get_payload(decode=True) for part in message.iter_parts() if "javascript" in part.get_content_type() or (part.get_filename() or "").endswith((".js", ".mjs"))]
+              if len(candidates) != 1:
+                  raise SystemExit("Expected one Worker JavaScript module; needs review.")
+              source = candidates[0]
+          normalized = source.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n")
+          print("Normalized source SHA-256:", hashlib.sha256(normalized.encode()).hexdigest())
+          print("Matches supplied code.js:", hashlib.sha256(normalized.encode()).hexdigest() == "76c292c8917357543df63428e2effda4ace4311a5977b0dde6cc6d051f45a1bd")
           print("Worker content SHA-256:", hashlib.sha256(source).hexdigest())
           print("Teacher insertion marker count:", source.count(b"// ================= TEACHER ================="))
           print("Maths Trek action present:", b"maths_trek_save" in source)
