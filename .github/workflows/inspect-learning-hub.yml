@@ -1,0 +1,75 @@
+name: Inspect live Learning Hub (read only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/maths-trek-safe-integration]
+    paths: [.github/workflows/inspect-learning-hub.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect Worker and D1 structure without deploying
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_INSPECT_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        shell: python
+        run: |
+          import os, json, hashlib, urllib.request, urllib.error, re
+          token = os.environ.get("CF_TOKEN", "")
+          account = os.environ.get("CF_ACCOUNT", "")
+          if not token or not re.fullmatch(r"[a-fA-F0-9]{32}", account):
+              raise SystemExit("Add repository secrets CLOUDFLARE_INSPECT_TOKEN and CLOUDFLARE_ACCOUNT_ID, then rerun this job.")
+          base = "https://api.cloudflare.com/client/v4/accounts/" + account
+          def api(path, payload=None, raw=False):
+              body = None if payload is None else json.dumps(payload).encode()
+              req = urllib.request.Request(base + path, data=body, headers={
+                  "Authorization": "Bearer " + token, "Content-Type": "application/json"})
+              try:
+                  with urllib.request.urlopen(req, timeout=45) as response:
+                      data = response.read()
+              except urllib.error.HTTPError as error:
+                  raise SystemExit("Cloudflare inspection failed with HTTP " + str(error.code)) from None
+              if raw:
+                  return data
+              result = json.loads(data)
+              if not result.get("success"):
+                  raise SystemExit("Cloudflare API did not confirm success; no raw response printed.")
+              return result["result"]
+          script = "/workers/scripts/lategan-chatbot"
+          settings = api(script + "/settings")
+          source = api(script, raw=True)
+          print("Worker content SHA-256:", hashlib.sha256(source).hexdigest())
+          print("Teacher insertion marker count:", source.count(b"// ================= TEACHER ================="))
+          print("Maths Trek action present:", b"maths_trek_save" in source)
+          print("Pirate action references present:", b"pirate" in source.lower())
+          bindings = [b for b in settings.get("bindings", []) if b.get("type") == "d1" and b.get("name") == "DB"]
+          if len(bindings) != 1:
+              raise SystemExit("Expected exactly one D1 binding named DB; manual review needed.")
+          database_id = bindings[0].get("id") or bindings[0].get("database_id")
+          if not database_id or not re.fullmatch(r"[a-fA-F0-9-]{36}", database_id):
+              raise SystemExit("Unexpected D1 identifier; manual review needed.")
+          # Fixed schema-only SELECT. No application rows, source, settings values or credentials are logged.
+          tables = ["students", "teachers", "teacher_classes", "maths_trek_results", "maths_trek_groups", "maths_trek_group_students"]
+          query = "SELECT name, sql FROM sqlite_schema WHERE type='table' AND name IN (" + ",".join("?" for _ in tables) + ") ORDER BY name"
+          result = api("/d1/database/" + database_id + "/query", {"sql": query, "params": tables})
+          for item in result:
+              if not item.get("success", True):
+                  raise SystemExit("D1 schema inspection failed.")
+              for row in item.get("results", []):
+                  # Report column names/types only, never defaults which could contain sensitive values.
+                  name = row["name"]
+                  if name not in tables:
+                      raise SystemExit("Unexpected schema result.")
+                  columns = api("/d1/database/" + database_id + "/query", {
+                      "sql": "SELECT name,type FROM pragma_table_info(?)", "params": [name]})
+                  print("Table:", name)
+                  for batch in columns:
+                      for column in batch.get("results", []):
+                          print("  Column:", column["name"], column["type"])
+          print("Read-only inspection complete. No deployment, migration or student-record query performed.")
