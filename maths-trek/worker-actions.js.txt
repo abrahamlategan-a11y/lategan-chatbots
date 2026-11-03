@@ -11,11 +11,10 @@ if (action === "maths_trek_list" || action === "maths_trek_save" ||
   const teacherId = Number(teacher.id);
   if (action === "maths_trek_list") {
     const rows = await env.DB.prepare(
-      "SELECT r.student_id,r.test_number,r.marks_json,r.feedback_json,r.total_score,r.updated_at,s.display_name,s.class_name,s.class_id FROM maths_trek_results r JOIN students s ON s.id=r.student_id WHERE r.teacher_id=? ORDER BY s.display_name COLLATE NOCASE,r.test_number"
-    ).bind(teacherId).all();
+      "SELECT r.student_id,r.test_number,r.marks_json,r.feedback_json,r.total_score,r.updated_at,s.display_name,s.class_name,s.class_id FROM maths_trek_results r JOIN students s ON s.id=r.student_id WHERE r.teacher_id=? AND s.teacher_id=? AND s.active=1 AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id) ORDER BY s.display_name COLLATE NOCASE,r.test_number"
+    ).bind(teacherId,teacherId,teacherId).all();
     return json({ok:true,results:(rows.results||[]).map(r=>({
-      student_id:r.student_id,test:r.test_number,marks:JSON.parse(r.marks_json),
-      ...JSON.parse(r.feedback_json||"{}"),total:r.total_score,
+      student_id:r.student_id,test:r.test_number,marks:JSON.parse(r.marks_json),total:r.total_score,
       name:r.display_name,class_name:r.class_name,class_id:r.class_id,updated:r.updated_at
     }))});
   }
@@ -31,13 +30,7 @@ if (action === "maths_trek_list" || action === "maths_trek_save" ||
     if(!Array.isArray(marks)||marks.length!==40||marks.some((v,i)=>!Number.isInteger(v)||v<0||v>(i<24?1:i<36?2:3)))
       return json({error:"Invalid question marks."},400);
     const total=marks.reduce((a,b)=>a+b,0);
-    const feedback=body.feedback&&typeof body.feedback==="object"?body.feedback:{};
-    const cleanFeedback={
-      parts:Array.isArray(feedback.parts)?feedback.parts.slice(0,3):[],
-      strands:feedback.strands&&typeof feedback.strands==="object"?feedback.strands:{},
-      strengths:Array.isArray(feedback.strengths)?feedback.strengths.slice(0,3).map(x=>String(x).slice(0,200)):[],
-      weaknesses:Array.isArray(feedback.weaknesses)?feedback.weaknesses.slice(0,3).map(x=>String(x).slice(0,200)):[]
-    };
+    const cleanFeedback={parts:[marks.slice(0,24).reduce((a,b)=>a+b,0),marks.slice(24,36).reduce((a,b)=>a+b,0),marks.slice(36).reduce((a,b)=>a+b,0)]};
     await env.DB.prepare(
       "INSERT INTO maths_trek_results(teacher_id,student_id,test_number,marks_json,feedback_json,total_score) VALUES(?,?,?,?,?,?) ON CONFLICT(teacher_id,student_id,test_number) DO UPDATE SET marks_json=excluded.marks_json,feedback_json=excluded.feedback_json,total_score=excluded.total_score,updated_at=CURRENT_TIMESTAMP"
     ).bind(teacherId,studentId,test,JSON.stringify(marks),JSON.stringify(cleanFeedback),total).run();
@@ -47,7 +40,7 @@ if (action === "maths_trek_list" || action === "maths_trek_save" ||
     const rows=await env.DB.prepare("SELECT id,group_name FROM maths_trek_groups WHERE teacher_id=? ORDER BY group_name COLLATE NOCASE").bind(teacherId).all();
     const groups=[];
     for(const g of rows.results||[]){
-      const members=await env.DB.prepare("SELECT student_id FROM maths_trek_group_students WHERE group_id=?").bind(g.id).all();
+      const members=await env.DB.prepare("SELECT m.student_id FROM maths_trek_group_students m JOIN students s ON s.id=m.student_id WHERE m.group_id=? AND s.teacher_id=? AND s.active=1 AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)").bind(g.id,teacherId,teacherId).all();
       groups.push({id:g.id,name:g.group_name,ids:(members.results||[]).map(x=>String(x.student_id))});
     }
     return json({ok:true,groups});
@@ -57,26 +50,33 @@ if (action === "maths_trek_list" || action === "maths_trek_save" ||
     const ids=[...new Set((Array.isArray(body.student_ids)?body.student_ids:[]).map(Number))];
     if(!name||!ids.length||ids.length>200||ids.some(x=>!Number.isSafeInteger(x)||x<=0))return json({error:"Invalid group."},400);
     for(const id of ids){
-      const allowed=await env.DB.prepare("SELECT id FROM students WHERE id=? AND teacher_id=? AND active=1").bind(id,teacherId).first();
+      const allowed=await env.DB.prepare("SELECT s.id FROM students s WHERE s.id=? AND s.teacher_id=? AND s.active=1 AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)").bind(id,teacherId,teacherId).first();
       if(!allowed)return json({error:"One or more students are not available to this teacher."},403);
     }
     let groupId=Number(body.group_id||0);
+    if(!Number.isSafeInteger(groupId)||groupId<0)return json({error:"Invalid group."},400);
+    const statements=[];
     if(groupId){
       const owned=await env.DB.prepare("SELECT id FROM maths_trek_groups WHERE id=? AND teacher_id=?").bind(groupId,teacherId).first();
       if(!owned)return json({error:"Group not found."},404);
-      await env.DB.prepare("UPDATE maths_trek_groups SET group_name=? WHERE id=?").bind(name,groupId).run();
-      await env.DB.prepare("DELETE FROM maths_trek_group_students WHERE group_id=?").bind(groupId).run();
+      statements.push(env.DB.prepare("UPDATE maths_trek_groups SET group_name=? WHERE id=? AND teacher_id=?").bind(name,groupId,teacherId));
+      statements.push(env.DB.prepare("DELETE FROM maths_trek_group_students WHERE group_id=?").bind(groupId));
     }else{
-      const r=await env.DB.prepare("INSERT INTO maths_trek_groups(teacher_id,group_name) VALUES(?,?)").bind(teacherId,name).run();
-      groupId=Number(r.meta.last_row_id);
+      const random=crypto.getRandomValues(new Uint32Array(2));
+      groupId=(random[0]&65535)*4294967296+random[1]+1;
+      statements.push(env.DB.prepare("INSERT INTO maths_trek_groups(id,teacher_id,group_name) VALUES(?,?,?)").bind(groupId,teacherId,name));
     }
-    for(const id of ids)await env.DB.prepare("INSERT INTO maths_trek_group_students(group_id,student_id) VALUES(?,?)").bind(groupId,id).run();
+    for(const id of ids)statements.push(env.DB.prepare("INSERT INTO maths_trek_group_students(group_id,student_id) VALUES(?,?)").bind(groupId,id));
+    await env.DB.batch(statements);
     return json({ok:true,group_id:groupId});
   }
   const id=Number(body.group_id);
+  if(!Number.isSafeInteger(id)||id<=0)return json({error:"Invalid group."},400);
   const owned=await env.DB.prepare("SELECT id FROM maths_trek_groups WHERE id=? AND teacher_id=?").bind(id,teacherId).first();
   if(!owned)return json({error:"Group not found."},404);
-  await env.DB.prepare("DELETE FROM maths_trek_group_students WHERE group_id=?").bind(id).run();
-  await env.DB.prepare("DELETE FROM maths_trek_groups WHERE id=?").bind(id).run();
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM maths_trek_group_students WHERE group_id=?").bind(id),
+    env.DB.prepare("DELETE FROM maths_trek_groups WHERE id=? AND teacher_id=?").bind(id,teacherId)
+  ]);
   return json({ok:true});
 }
