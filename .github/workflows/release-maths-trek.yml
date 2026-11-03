@@ -1,0 +1,29 @@
+name: Release Maths Trek
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Leave blank for preflight or type DEPLOY-MATHS-TREK to apply
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: learning-hub-production-worker
+  cancel-in-progress: false
+jobs:
+  release:
+    if: github.ref == 'refs/heads/feature/maths-trek-safe-integration'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: learning-hub-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node maths-trek/tests/integration.mjs
+      - run: python maths-trek/release.py
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          RELEASE_CONFIRMATION: ${{ inputs.confirmation }}
