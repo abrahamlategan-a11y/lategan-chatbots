@@ -2,29 +2,138 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Maths Trek | Learning Hub</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#20352d;background:#f3f6f2}*{box-sizing:border-box}body{margin:0}header{background:#214c3c;color:white;padding:18px 4vw;display:flex;align-items:center;justify-content:space-between}header a{color:#d8eee2}main{max-width:1200px;margin:auto;padding:24px}h1{margin:0;font-size:25px}h2{font-size:20px}.sub{color:#607267}.panel{background:white;border:1px solid #dbe5de;border-radius:15px;padding:18px;margin:14px 0;box-shadow:0 3px 12px #153d2910}button,select,input{font:inherit}button{background:#28664e;border:0;border-radius:9px;padding:10px 14px;color:white;cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}button.secondary{background:#e5eee8;color:#24513d}button.active{background:#123c2d}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.controls label{display:grid;gap:5px;font-weight:600}select{border:1px solid #cad8ce;border-radius:8px;padding:10px;background:white;min-width:150px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.question{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #edf1ed;gap:8px}.question select{min-width:80px;padding:7px}.tag{background:#eaf2eb;border-radius:7px;padding:3px 8px;color:#315c45;font-size:12px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.score{font-size:28px;font-weight:800}.notice{padding:12px;border-radius:10px;background:#fff3d8;color:#704d12;margin:10px 0}.success{background:#e3f4e8;color:#225a35}.hidden{display:none}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini{border:1px solid #dbe5de;border-radius:10px;padding:12px}.mini strong{display:block;font-size:23px}@media(max-width:760px){.grid,.cards{grid-template-columns:1fr}main{padding:12px}}
-@media print{header,.controls,.toolbar,#status,#marking,#groupPanel,#export,#printReport{display:none!important}#reports{display:block!important}.panel{box-shadow:none;break-inside:avoid}body{background:white}}
-</style></head><body><header><div><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><a href="../teacher/">← Teacher Hub</a></header>
+[hidden]{display:none!important}@media print{header,.controls,.toolbar,#status,#marking,#groupPanel,#export,#printReport{display:none!important}#reports{display:block!important}.panel{box-shadow:none;break-inside:avoid}body{background:white}}
+.testButtons{display:flex;gap:8px;flex-wrap:wrap}.partScore{font-size:23px;font-weight:750;margin:14px 0 0}.markButtons{display:flex;gap:4px}.markButtons button{min-width:36px;padding:6px}.question{padding:5px 0}dialog{width:min(650px,92vw);border:1px solid #cad8ce;border-radius:15px;max-height:85vh}dialog::backdrop{background:#123c2d88}#groupMembers{max-height:46vh;overflow:auto}</style></head><body><header><div><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" href="?view=summary">Summary</a><a href="../teacher/">Teacher Hub</a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
-<div class="panel controls"><label>Class<select id="class"></select></label><label>Student<select id="student"></select></label><label>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button class="secondary" id="refresh">Refresh</button></div>
-<div class="toolbar"><button id="markTab" class="active">Mark assessments</button><button id="reportTab" class="secondary">Results & reports</button></div>
-<section id="marking"><div class="panel"><div class="toolbar" style="justify-content:space-between"><div><h2 id="heading">Marking</h2><span class="sub">40 questions · 60 marks · partial marks supported</span></div><div><span class="score" id="score">0 / 60</span></div></div></div><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Save & next student</button><button class="secondary" id="saveOnly">Save marks</button><span id="saveState" class="sub"></span></div></section>
-<section id="groupPanel" class="panel"><h2>Marking groups</h2><p class="sub">Create a named group from students in the selected class.</p><div class="controls"><label>Group name<input id="groupName" placeholder="e.g. Maths support"></label><button id="createGroup">Save group</button><label>Choose group<select id="groupSelect"><option value="">Whole class</option></select></label><button class="secondary" id="deleteGroup">Delete group</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px"></div></section><section id="reports" class="hidden"><div class="panel"><h2 id="reportHeading">Student progress</h2><div class="controls"><label>Report test<select id="reportTest"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button id="printReport" class="secondary">Print / save PDF</button></div><p class="sub">Results saved across four Maths Trek tests.</p><div class="cards" id="reportCards"></div><div id="reportTotal"></div><button id="export">Export class results (CSV)</button></div></section>
+<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span></div>
+<section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Submit and next</button><span id="saveState" role="status" class="sub"></span></div></section>
+<dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
+<section id="reports" class="hidden"><div class="panel"><h2 id="reportHeading">Student progress</h2><div class="controls"><label>Report test<select id="reportTest"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button id="printReport" class="secondary">Print / save PDF</button></div><p class="sub">Results saved across four Maths Trek tests.</p><div class="cards" id="reportCards"></div><div id="reportTotal"></div><button id="export">Export class results (CSV)</button></div></section>
 </main><script src="./reporting.js"></script><script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev",code=localStorage.getItem("lategan_teacher_code")||"";
-const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1",groupSelect:""};
+const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1"};
 async function post(data){const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...data,teacher_code:code})});const j=await response.json();if(!response.ok||j.error)throw Error(j.error||"Server error");return j}
 function message(s,good=false){el("status").textContent=s;el("status").className="notice"+(good?" success":"")}
 function options(id,rows,value,label){const node=el(id);node.replaceChildren();for(const row of rows){const o=document.createElement("option");o.value=String(row[value]);o.textContent=row[label];node.append(o)}}
 function currentStudent(){return Number(el("student").value)}
 function currentTest(){return Number(el("test").value)}
 function existing(){return results.find(r=>Number(r.student_id)===currentStudent()&&Number(r.test||r.test_number)===currentTest())}
-function loadMarks(){selection={class:el("class").value,student:el("student").value,test:el("test").value,groupSelect:el("groupSelect").value};const r=existing();marks=Array.isArray(r?.marks)&&r.marks.length===40?r.marks.map(Number):Array(40).fill(0);dirty=false;render();renderReports()}
-function render(){el("heading").textContent="Test "+currentTest()+" · "+(students.find(s=>Number(s.id)===currentStudent())?.display_name||"Choose a student");el("score").textContent=marks.reduce((a,b)=>a+b,0)+" / 60";const root=el("columns");root.replaceChildren();[[0,24,1],[24,36,2],[36,40,3]].forEach(([from,to,max])=>{const panel=document.createElement("div");panel.className="panel";const h=document.createElement("h2");h.textContent=max+"-mark questions";panel.append(h);const all=document.createElement("button");all.className="secondary";all.textContent="Mark all correct";all.onclick=()=>{for(let i=from;i<to;i++)marks[i]=max;dirty=true;render()};panel.append(all);for(let i=from;i<to;i++){const row=document.createElement("div");row.className="question";const label=document.createElement("span");label.textContent="Question "+(i+1);const select=document.createElement("select");for(let n=0;n<=max;n++){const opt=document.createElement("option");opt.value=n;opt.textContent=n+" / "+max;select.append(opt)}select.value=marks[i];select.onchange=()=>{marks[i]=Number(select.value);dirty=true;el("score").textContent=marks.reduce((a,b)=>a+b,0)+" / 60";el("saveState").textContent="Unsaved changes"};const details=metadata[currentTest()-1]?.[i];if(details){const concept=document.createElement("small");concept.style.cssText="display:block;color:#61746a;font-size:11px;max-width:190px";concept.textContent=details[0]+" · "+details[1];const wrap=document.createElement("div");wrap.append(label,concept);row.append(wrap,select)}else row.append(label,select);panel.append(row)}root.append(panel)});el("saveState").textContent=dirty?"Unsaved changes":existing()?"Previously saved":"Not yet marked"}
-let schoolRoster=null;
-async function loadStudents(){if(schoolRoster){const classId=el("class").value;students=schoolRoster.filter(s=>classId==="all"||String(s.class_id)===classId);options("student",students,"id","display_name");renderGroupMembers();loadMarks();return;}const id=Number(el("class").value);const d=await post({action:"teacher_list_students",class_id:id});students=(d.students||[]).filter(s=>Number(s.active)!==0);options("student",students,"id","display_name");renderGroupMembers();loadMarks()}
+const summaryPage=new URLSearchParams(location.search).get("view")==="summary";
+let selectedTest=summaryPage,schoolRoster=null,regularClasses=[];
+const parts=[[0,24,1],[24,36,2],[36,40,3]];
+const draftKey=()=>JSON.stringify(["maths-trek-draft",currentStudent(),currentTest()]);
+function loadMarks(){
+ selection={class:el("class").value,student:el("student").value,test:el("test").value};
+ const saved=existing();
+ marks=saved?.marks?.length===40?[...saved.marks]:Array(40).fill(0);
+ dirty=false;
+ if(!summaryPage&&currentStudent())try{const draft=JSON.parse(localStorage.getItem(draftKey()));if(Array.isArray(draft)&&draft.length===40){marks=draft;dirty=true}}catch{}
+ render();if(summaryPage)renderReports();
+}
+function saveDraft(){
+ dirty=true;
+ try{localStorage.setItem(draftKey(),JSON.stringify(marks))}catch{}
+ el("saveState").textContent="Draft · submit to finish";
+}
+function render(){
+ const root=el("columns");root.replaceChildren();
+ el("marking").hidden=summaryPage||!selectedTest||!currentStudent();
+ const list=Array.from(el("student").options);
+ el("progress").textContent=list.length?(el("student").selectedIndex+1)+" of "+list.length+(existing()?" · Completed":""):"";
+ for(const button of el("testButtons").children){
+  const active=selectedTest&&Number(button.dataset.test)===currentTest();
+  button.classList.toggle("active",active);button.setAttribute("aria-pressed",active);
+ }
+ if(el("marking").hidden)return;
+ parts.forEach(([from,to,max],part)=>{
+  const panel=document.createElement("section");panel.className="panel";
+  const title=document.createElement("h2");title.textContent="Part "+(part+1);
+  const all=document.createElement("button");all.className="secondary";all.textContent="Mark all correct";
+  const score=document.createElement("div");score.className="partScore";
+  const update=()=>score.textContent=marks.slice(from,to).reduce((sum,n)=>sum+n,0)+" / "+((to-from)*max);
+  all.onclick=()=>{marks.fill(max,from,to);saveDraft();render()};
+  panel.append(title,all);
+  for(let i=from;i<to;i++){
+   const row=document.createElement("div");row.className="question";
+   const label=document.createElement("span");label.textContent="Q"+(i+1);
+   const controls=document.createElement("div");controls.className="markButtons";
+   for(let n=0;n<=max;n++){
+    const button=document.createElement("button");button.textContent=n;
+    button.setAttribute("aria-label","Question "+(i+1)+", "+n+" marks");
+    const select=()=>{for(const item of controls.children){const active=Number(item.textContent)===marks[i];item.className=active?"active":"secondary";item.setAttribute("aria-pressed",active)}};
+    button.onclick=()=>{marks[i]=n;select();update();saveDraft()};controls.append(button);select();
+   }
+   row.append(label,controls);panel.append(row);
+  }
+  update();panel.append(score);root.append(panel);
+ });
+ el("save").disabled=!ready;
+ el("saveState").textContent=dirty?"Draft · submit to finish":existing()?"Completed":"";
+}
+async function loadStudents(){
+ const value=el("class").value;
+ if(value.startsWith("group:")){
+  const group=groups.find(g=>"group:"+g.id===value);
+  const ids=new Set((group?.ids||[]).map(Number));
+  const roster=schoolRoster||await loadAccessibleRoster();
+  students=roster.filter(s=>ids.has(Number(s.id)));
+ }else if(schoolRoster){
+  students=schoolRoster.filter(s=>value==="all"||String(s.class_id)===value);
+ }else{
+  const d=await post({action:"teacher_list_students",class_id:Number(value)});
+  students=(d.students||[]).filter(s=>Number(s.active)!==0);
+ }
+ students.sort((a,b)=>a.display_name.localeCompare(b.display_name));
+ options("student",students,"id","display_name");loadMarks();
+}
+async function loadAccessibleRoster(){
+ const lists=await Promise.all(regularClasses.map(c=>post({action:"teacher_list_students",class_id:c.id})));
+ return [...new Map(lists.flatMap(d=>d.students||[]).filter(s=>Number(s.active)!==0).map(s=>[s.id,s])).values()];
+}
 async function loadResults(){try{const d=await post({action:"maths_trek_list"});results=d.results||[];ready=true;message("Connected. Results are stored centrally.",true)}catch(e){ready=false;results=[];message("Maths Trek backend not activated yet: "+e.message+". Marking can be explored, but saving is disabled.");}loadMarks()}
-async function init(){try{const response=await fetch("./question-metadata.json",{cache:"no-store"});if(!response.ok)throw Error("Question metadata unavailable");metadata=await response.json();if(metadata.length!==4||metadata.some(test=>test.length!==40))throw Error("Incomplete question metadata")}catch(e){message("Question metadata could not load: "+e.message);return}if(!code){message("Please sign in through Teacher Hub first.");return}try{const d=await post({action:"teacher_list_classes"});classes=d.classes||[];try{const roster=await post({action:"maths_trek_roster"});if(Array.isArray(roster.students)){schoolRoster=roster.students;const byClass=new Map(schoolRoster.map(s=>[s.class_id,{id:s.class_id,name:s.class_name||"Unassigned"}]));classes=[{id:"all",name:"All students"},...byClass.values()];}}catch{}options("class",classes,"id","name");if(!classes.length){message("No classes available.");return}await loadStudents();await loadResults();await loadGroups()}catch(e){message("Could not load students: "+e.message)}}
-async function save(next){if(busy)return;if(!ready){message("Saving is unavailable until the Maths Trek backend and database are deployed.");return}if(!currentStudent())return;const studentId=currentStudent(),test=currentTest(),snapshot=[...marks];busy=true;document.querySelectorAll("button,select,input").forEach(n=>n.disabled=true);try{const d=await post({action:"maths_trek_save",student_id:studentId,test_number:test,marks:snapshot});results=results.filter(r=>!(Number(r.student_id)===studentId&&Number(r.test||r.test_number)===test));results.push({student_id:studentId,test,marks:snapshot,total:d.total});dirty=false;message("Saved "+d.total+" / 60 for "+students.find(s=>Number(s.id)===studentId)?.display_name,true);if(next){const remaining=[...el("student").options].map(o=>students.find(s=>Number(s.id)===Number(o.value))).filter(Boolean).sort((a,b)=>a.display_name.localeCompare(b.display_name)).find(s=>Number(s.id)!==studentId&&!results.some(r=>Number(r.student_id)===Number(s.id)&&Number(r.test||r.test_number)===test));if(remaining)el("student").value=String(remaining.id)}loadMarks()}catch(e){message("Save failed: "+e.message)}finally{busy=false;document.querySelectorAll("button,select,input").forEach(n=>n.disabled=false)}}
+function classOptions(preferred){
+ options("class",[...classes,...groups.map(g=>({id:"group:"+g.id,name:g.name}))],"id","name");
+ if(Array.from(el("class").options).some(o=>o.value===preferred))el("class").value=preferred;
+}
+async function init(){
+ if(!code){message("Please sign in through Teacher Hub first.");return}
+ try{
+  const response=await fetch("./question-metadata.json",{cache:"no-store"});
+  if(!response.ok)throw Error("Question metadata unavailable");
+  metadata=await response.json();
+  const d=await post({action:"teacher_list_classes"});regularClasses=d.classes||[];classes=[...regularClasses];
+  try{
+   const roster=await post({action:"maths_trek_roster"});
+   if(Array.isArray(roster.students)){
+    schoolRoster=roster.students;
+    const ids=new Set(classes.map(c=>String(c.id)));
+    for(const student of schoolRoster)if(!ids.has(String(student.class_id))){
+     ids.add(String(student.class_id));classes.push({id:student.class_id,name:student.class_name||"Unassigned"});
+    }
+    classes.push({id:"all",name:"All students"});
+   }
+  }catch{}
+  groups=(await post({action:"maths_trek_groups_list"})).groups||[];
+  classOptions(new URLSearchParams(location.search).get("class"));
+  await loadResults();await loadStudents();
+  const params=new URLSearchParams(location.search);
+  if(summaryPage&&students.some(s=>String(s.id)===params.get("student"))){el("student").value=params.get("student");loadMarks()}
+ }catch(e){message("Could not load Maths Trek: "+e.message)}
+}
+async function save(){
+ if(busy||!ready||!currentStudent())return;
+ const studentId=currentStudent(),test=currentTest(),snapshot=[...marks],key=draftKey();
+ const picker=el("student"),next=(picker.selectedIndex+1)%picker.options.length;
+ busy=true;setDisabled(true);el("saveState").textContent="Saving…";
+ try{
+  const d=await post({action:"maths_trek_save",student_id:studentId,test_number:test,marks:snapshot});
+  results=results.filter(r=>!(Number(r.student_id)===studentId&&Number(r.test||r.test_number)===test));
+  results.push({student_id:studentId,test,marks:snapshot,total:d.total});
+  try{localStorage.removeItem(key)}catch{}
+  picker.selectedIndex=next;loadMarks();
+ }catch(e){el("saveState").textContent="Save failed. Your draft is still here. "+e.message}
+ finally{busy=false;setDisabled(false)}
+}
 function renderReports(){
  const rs=results.filter(r=>Number(r.student_id)===currentStudent()&&(!el("reportTest").value||Number(r.test||r.test_number)===Number(el("reportTest").value)));
  el("reportHeading").textContent=(students.find(s=>Number(s.id)===currentStudent())?.display_name||"Student")+" · progress";
@@ -39,8 +148,8 @@ function renderReports(){
  for(const [title,items] of [["Strengths",d.strengths],["Areas to consolidate",d.growth]])line(title+": "+(items.length?items.map(x=>x.name+" ("+Math.round(x.pct*100)+"%)").join("; "):"Not enough evidence yet"));
 }
 function exportCsv(){
- const group=groups.find(x=>Number(x.id)===Number(el("groupSelect").value));
- const eligible=group?students.filter(s=>(group.ids||[]).map(Number).includes(Number(s.id))):students;
+ const group=groups.find(g=>"group:"+g.id===el("class").value);
+ const eligible=students;
  const rows=[["Student","Class","Test","Part 1 /24","Part 2 /24","Part 3 /12","Total /60","Percentage","NA score","NA available","MG score","MG available","SP score","SP available","Strengths","Areas to consolidate"]];
  for(const s of eligible)for(let test=1;test<=4;test++){
   if(el("reportTest").value&&test!==Number(el("reportTest").value))continue;
@@ -51,21 +160,61 @@ function exportCsv(){
  const csv="\uFEFF"+rows.map(row=>row.map(mathsTrekCsvCell).join(",")).join("\r\n");
  const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="maths-trek-"+(group?"group":"class")+"-results.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function renderGroupMembers(){const box=el("groupMembers");box.replaceChildren();for(const student of students){const label=document.createElement("label");label.style.cssText="display:flex;align-items:center;gap:5px;padding:6px 10px;border:1px solid #dbe5de;border-radius:8px";const check=document.createElement("input");check.type="checkbox";check.value=student.id;check.className="memberCheck";label.append(check,document.createTextNode(student.display_name));box.append(label)}}
-async function loadGroups(){const previous=el("groupSelect").value;try{const d=await post({action:"maths_trek_groups_list"});groups=d.groups||[];const sel=el("groupSelect");sel.replaceChildren();const all=document.createElement("option");all.value="";all.textContent="Whole class";sel.append(all);for(const group of groups){const o=document.createElement("option");o.value=group.id;o.textContent=group.name;sel.append(o)}if(groups.some(g=>String(g.id)===previous))sel.value=previous}catch(e){el("createGroup").disabled=true;el("deleteGroup").disabled=true}}
-el("createGroup").onclick=async()=>{const name=el("groupName").value.trim(),ids=[...document.querySelectorAll(".memberCheck:checked")].map(x=>Number(x.value));if(!name||!ids.length){message("Enter a group name and tick at least one student.");return}try{await post({action:"maths_trek_groups_save",name,student_ids:ids});el("groupName").value="";await loadGroups();message("Marking group saved.",true)}catch(e){message("Group could not be saved: "+e.message)}};
-el("deleteGroup").onclick=async()=>{const id=Number(el("groupSelect").value);if(!id||!confirm("Delete this marking group?"))return;try{await post({action:"maths_trek_groups_delete",group_id:id});await loadGroups();applyGroup();message("Group deleted.",true)}catch(e){message("Could not delete group: "+e.message)}};
-function allowChange(id){if(busy||dirty&&!confirm("Discard unsaved marks?")){el(id).value=selection[id];return false}return true}
-function applyGroup(){const group=groups.find(x=>Number(x.id)===Number(el("groupSelect").value));const eligible=group?students.filter(s=>(group.ids||[]).map(Number).includes(Number(s.id))):students;options("student",eligible,"id","display_name");loadMarks()}
-el("groupSelect").onchange=()=>{if(allowChange("groupSelect"))applyGroup()};
-el("class").onchange=async()=>{if(!allowChange("class"))return;busy=true;document.querySelectorAll("button,select,input").forEach(n=>n.disabled=true);el("groupSelect").value="";try{await loadStudents()}catch(e){el("class").value=selection.class;message("Could not load class: "+e.message)}finally{busy=false;document.querySelectorAll("button,select,input").forEach(n=>n.disabled=false)}};
-el("student").onchange=()=>{if(allowChange("student"))loadMarks()};el("test").onchange=()=>{if(allowChange("test"))loadMarks()};
-el("refresh").onclick=()=>{if(!busy&&(!dirty||confirm("Discard unsaved marks and refresh?")))loadResults()};
-el("save").onclick=()=>save(true);el("saveOnly").onclick=()=>save(false);el("export").onclick=exportCsv;
-el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
-window.addEventListener("beforeunload",e=>{if(dirty||busy){e.preventDefault();e.returnValue=""}});
-el("markTab").onclick=()=>{el("marking").classList.remove("hidden");el("reports").classList.add("hidden");el("markTab").className="active";el("reportTab").className="secondary"};
-el("reportTab").onclick=()=>{renderReports();el("marking").classList.add("hidden");el("reports").classList.remove("hidden");el("markTab").className="secondary";el("reportTab").className="active"};
-busy=true;document.querySelectorAll("button,select,input").forEach(n=>n.disabled=true);
-init().finally(()=>{busy=false;document.querySelectorAll("button,select,input").forEach(n=>n.disabled=false)});
+function setDisabled(disabled){
+ document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
+ el("save").disabled=disabled||!ready;
+}
+el("custom").onclick=async()=>{
+ if(busy)return;
+ try{
+  const roster=schoolRoster||await loadAccessibleRoster();
+  const box=el("groupMembers");box.replaceChildren();
+  for(const student of roster){
+   const label=document.createElement("label");
+   const check=document.createElement("input");check.type="checkbox";check.value=student.id;
+   label.append(check,document.createTextNode(" "+student.display_name+" · "+(student.class_name||"Unassigned")));
+   box.append(label);
+  }
+  el("groupError").textContent="";el("groupPanel").showModal();
+ }catch(e){message("Could not load students: "+e.message)}
+};
+el("closeGroup").onclick=()=>el("groupPanel").close();
+el("createGroup").onclick=async()=>{
+ if(busy)return;
+ const name=el("groupName").value.trim();
+ const ids=Array.from(el("groupMembers").querySelectorAll("input:checked"),x=>Number(x.value));
+ if(!name||!ids.length){el("groupError").textContent="Enter a name and select students.";return}
+ busy=true;setDisabled(true);
+ try{
+  const d=await post({action:"maths_trek_groups_save",name,student_ids:ids});
+  groups.push({id:d.group_id,name,ids});classOptions("group:"+d.group_id);
+  el("groupPanel").close();el("groupName").value="";await loadStudents();
+ }catch(e){el("groupError").textContent=e.message}
+ finally{busy=false;setDisabled(false)}
+};
+for(let test=1;test<=4;test++){
+ const button=document.createElement("button");button.className="secondary";button.dataset.test=test;button.textContent="Test "+test;
+ button.onclick=()=>{selectedTest=true;el("test").value=test;el("student").selectedIndex=0;loadMarks()};
+ el("testButtons").append(button);
+}
+el("class").onchange=async()=>{
+ if(busy)return;
+ busy=true;setDisabled(true);
+ try{await loadStudents()}catch(e){el("class").value=selection.class;message("Could not load class: "+e.message)}
+ finally{busy=false;setDisabled(false)}
+};
+el("student").onchange=loadMarks;
+el("save").onclick=save;
+el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
+el("pageLink").textContent=summaryPage?"Back to marking":"Summary";
+el("pageLink").onclick=e=>{
+ if(busy){e.preventDefault();return}
+ const params=new URLSearchParams({class:el("class").value,student:el("student").value});
+ if(!summaryPage)params.set("view","summary");
+ el("pageLink").href="?"+params;
+};
+el("assessmentControls").hidden=summaryPage;
+el("custom").hidden=summaryPage;
+el("reports").classList.toggle("hidden",!summaryPage);
+setDisabled(true);busy=true;init().finally(()=>{busy=false;setDisabled(false)});
 </script></body></html>

@@ -48,7 +48,7 @@ if (action === "maths_trek_roster" || action === "maths_trek_list" || action ===
     const rows=await env.DB.prepare("SELECT id,group_name FROM maths_trek_groups WHERE teacher_id=? ORDER BY group_name COLLATE NOCASE").bind(teacherId).all();
     const groups=[];
     for(const g of rows.results||[]){
-      const members=await env.DB.prepare("SELECT m.student_id FROM maths_trek_group_students m JOIN students s ON s.id=m.student_id WHERE m.group_id=? AND s.teacher_id=? AND s.active=1 AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)").bind(g.id,teacherId,teacherId).all();
+      const members=await env.DB.prepare("SELECT m.student_id FROM maths_trek_group_students m JOIN students s ON s.id=m.student_id WHERE m.group_id=? AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)))").bind(g.id,Number(isAdmin),teacherId,teacherId).all();
       groups.push({id:g.id,name:g.group_name,ids:(members.results||[]).map(x=>String(x.student_id))});
     }
     return json({ok:true,groups});
@@ -58,7 +58,7 @@ if (action === "maths_trek_roster" || action === "maths_trek_list" || action ===
     const ids=[...new Set((Array.isArray(body.student_ids)?body.student_ids:[]).map(Number))];
     if(!name||!ids.length||ids.length>200||ids.some(x=>!Number.isSafeInteger(x)||x<=0))return json({error:"Invalid group."},400);
     for(const id of ids){
-      const allowed=await env.DB.prepare("SELECT s.id FROM students s WHERE s.id=? AND s.teacher_id=? AND s.active=1 AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)").bind(id,teacherId,teacherId).first();
+      const allowed=await env.DB.prepare("SELECT s.id FROM students s WHERE s.id=? AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)))").bind(id,Number(isAdmin),teacherId,teacherId).first();
       if(!allowed)return json({error:"One or more students are not available to this teacher."},403);
     }
     let groupId=Number(body.group_id||0);

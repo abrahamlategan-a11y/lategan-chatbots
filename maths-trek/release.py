@@ -58,10 +58,10 @@ def main():
     current = original.decode().replace("\r\n", "\n").replace("\r", "\n")
     start = "// Maths Trek isolated API block."
     marker = "// ================= TEACHER ================="
-    updating = hashlib.sha256(current.encode()).hexdigest() == "b2e8c789ab075ff7de7f243063e4e82dad07b3917d5bdb48114da8dc1d185b17"
+    updating = hashlib.sha256(current.encode()).hexdigest() == "f730919eee1d556a23774be3dabbb9e931386bed7ad9e5b0587f8e709c744be0"
     if updating:
         begin = current.index(start)
-        end = current.index(marker, current.index('if (action === "maths_trek_list"', begin))
+        end = current.index(marker, current.index('if (action === "maths_trek_roster"', begin))
         current = current[:begin] + current[end:]
     patched = build(current, (root / "worker-actions.js.txt").read_text()).encode()
     with tempfile.TemporaryDirectory() as directory:
