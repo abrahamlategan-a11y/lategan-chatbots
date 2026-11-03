@@ -131,6 +131,7 @@ async function save(){
   results.push({student_id:studentId,test,marks:snapshot,total:d.total});
   try{localStorage.removeItem(key)}catch{}
   picker.selectedIndex=next;loadMarks();
+  picker.closest(".panel").scrollIntoView({block:"start",behavior:"instant"});
  }catch(e){el("saveState").textContent="Save failed. Your draft is still here. "+e.message}
  finally{busy=false;setDisabled(false)}
 }
