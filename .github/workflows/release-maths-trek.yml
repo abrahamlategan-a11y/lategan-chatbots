@@ -1,5 +1,8 @@
 name: Release Maths Trek
 on:
+  push:
+    branches: [feature/maths-trek-safe-integration]
+    paths: [.github/workflows/release-maths-trek.yml, maths-trek/release.py]
   workflow_dispatch:
     inputs:
       confirmation:
@@ -26,4 +29,4 @@ jobs:
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          RELEASE_CONFIRMATION: ${{ inputs.confirmation }}
+          RELEASE_CONFIRMATION: ${{ github.event_name == 'push' && 'DEPLOY-MATHS-TREK' || inputs.confirmation }}
