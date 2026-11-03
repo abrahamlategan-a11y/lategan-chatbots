@@ -2,6 +2,7 @@
 import email.parser
 import email.policy
 import json
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -54,7 +55,15 @@ def source():
 def main():
     name, original = source()
     root = Path(__file__).parent
-    patched = build(original.decode(), (root / "worker-actions.js.txt").read_text()).encode()
+    current = original.decode().replace("\r\n", "\n").replace("\r", "\n")
+    start = "// Maths Trek isolated API block."
+    marker = "// ================= TEACHER ================="
+    updating = hashlib.sha256(current.encode()).hexdigest() == "b2e8c789ab075ff7de7f243063e4e82dad07b3917d5bdb48114da8dc1d185b17"
+    if updating:
+        begin = current.index(start)
+        end = current.index(marker, current.index('if (action === "maths_trek_list"', begin))
+        current = current[:begin] + current[end:]
+    patched = build(current, (root / "worker-actions.js.txt").read_text()).encode()
     with tempfile.TemporaryDirectory() as directory:
         candidate = Path(directory) / "worker.mjs"
         candidate.write_bytes(patched)
@@ -70,14 +79,15 @@ def main():
     if os.environ.get("RELEASE_CONFIRMATION") != "DEPLOY-MATHS-TREK":
         print("Verified Worker source, syntax and D1 binding. Preflight only.")
         return
-    bookmark = api(db + "/time_travel/bookmark").get("bookmark")
-    if not bookmark:
-        raise SystemExit("D1 recovery bookmark unavailable")
-    print("D1 recovery bookmark:", bookmark, flush=True)
-    migration = (root / "migrations/001_create_tables.sql").read_text()
-    result = api(db + "/query", "POST", json.dumps({"sql": migration}).encode())
-    if not result or any(item.get("success") is not True for item in result):
-        raise SystemExit("D1 migration did not confirm success")
+    if not updating:
+        bookmark = api(db + "/time_travel/bookmark").get("bookmark")
+        if not bookmark:
+            raise SystemExit("D1 recovery bookmark unavailable")
+        print("D1 recovery bookmark:", bookmark, flush=True)
+        migration = (root / "migrations/001_create_tables.sql").read_text()
+        result = api(db + "/query", "POST", json.dumps({"sql": migration}).encode())
+        if not result or any(item.get("success") is not True for item in result):
+            raise SystemExit("D1 migration did not confirm success")
     if source() != (name, original):
         raise SystemExit("Live Worker changed during migration")
     boundary = uuid.uuid4().hex

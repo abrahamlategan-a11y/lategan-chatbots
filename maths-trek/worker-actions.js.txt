@@ -3,16 +3,24 @@
 // inside fetch(), after body/action have been parsed and global lock checked.
 // Requires maths-trek/migrations/001_create_tables.sql applied to D1 first.
 // Does not modify Pirate actions or existing tables.
-if (action === "maths_trek_list" || action === "maths_trek_save" ||
+if (action === "maths_trek_roster" || action === "maths_trek_list" || action === "maths_trek_save" ||
     action === "maths_trek_groups_list" || action === "maths_trek_groups_save" ||
     action === "maths_trek_groups_delete") {
   const teacher = await getTeacher(env, body.teacher_code);
   if (!teacher) return json({error:"Teacher access denied."},401);
   const teacherId = Number(teacher.id);
+  const isAdmin = Number(teacher.is_admin) === 1;
+  if (action === "maths_trek_roster") {
+    if (!isAdmin) return json({error:"Admin access required."},403);
+    const {results} = await env.DB.prepare(
+      "SELECT id,display_name,class_name,class_id,active FROM students WHERE active=1 ORDER BY class_name COLLATE NOCASE,display_name COLLATE NOCASE"
+    ).all();
+    return json({students:results||[]});
+  }
   if (action === "maths_trek_list") {
     const rows = await env.DB.prepare(
-      "SELECT r.student_id,r.test_number,r.marks_json,r.feedback_json,r.total_score,r.updated_at,s.display_name,s.class_name,s.class_id FROM maths_trek_results r JOIN students s ON s.id=r.student_id WHERE r.teacher_id=? AND s.teacher_id=? AND s.active=1 AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id) ORDER BY s.display_name COLLATE NOCASE,r.test_number"
-    ).bind(teacherId,teacherId,teacherId).all();
+      "SELECT r.student_id,r.test_number,r.marks_json,r.feedback_json,r.total_score,r.updated_at,s.display_name,s.class_name,s.class_id FROM maths_trek_results r JOIN students s ON s.id=r.student_id WHERE r.teacher_id=s.teacher_id AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id))) ORDER BY s.display_name COLLATE NOCASE,r.test_number"
+    ).bind(Number(isAdmin),teacherId,teacherId).all();
     return json({ok:true,results:(rows.results||[]).map(r=>({
       student_id:r.student_id,test:r.test_number,marks:JSON.parse(r.marks_json),total:r.total_score,
       name:r.display_name,class_name:r.class_name,class_id:r.class_id,updated:r.updated_at
@@ -23,8 +31,8 @@ if (action === "maths_trek_list" || action === "maths_trek_save" ||
     if(!Number.isSafeInteger(studentId)||studentId<=0||![1,2,3,4].includes(test))
       return json({error:"Invalid student or test."},400);
     const allowed=await env.DB.prepare(
-      "SELECT s.id FROM students s JOIN teacher_classes tc ON tc.class_id=s.class_id WHERE s.id=? AND s.teacher_id=? AND tc.teacher_id=? AND s.active=1"
-    ).bind(studentId,teacherId,teacherId).first();
+      "SELECT s.id,s.teacher_id FROM students s WHERE s.id=? AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.class_id=s.class_id AND tc.teacher_id=?)))"
+    ).bind(studentId,Number(isAdmin),teacherId,teacherId).first();
     if(!allowed)return json({error:"Student not available to this teacher."},403);
     const marks=body.marks;
     if(!Array.isArray(marks)||marks.length!==40||marks.some((v,i)=>!Number.isInteger(v)||v<0||v>(i<24?1:i<36?2:3)))
@@ -33,7 +41,7 @@ if (action === "maths_trek_list" || action === "maths_trek_save" ||
     const cleanFeedback={parts:[marks.slice(0,24).reduce((a,b)=>a+b,0),marks.slice(24,36).reduce((a,b)=>a+b,0),marks.slice(36).reduce((a,b)=>a+b,0)]};
     await env.DB.prepare(
       "INSERT INTO maths_trek_results(teacher_id,student_id,test_number,marks_json,feedback_json,total_score) VALUES(?,?,?,?,?,?) ON CONFLICT(teacher_id,student_id,test_number) DO UPDATE SET marks_json=excluded.marks_json,feedback_json=excluded.feedback_json,total_score=excluded.total_score,updated_at=CURRENT_TIMESTAMP"
-    ).bind(teacherId,studentId,test,JSON.stringify(marks),JSON.stringify(cleanFeedback),total).run();
+    ).bind(allowed.teacher_id,studentId,test,JSON.stringify(marks),JSON.stringify(cleanFeedback),total).run();
     return json({ok:true,total});
   }
   if(action==="maths_trek_groups_list"){
