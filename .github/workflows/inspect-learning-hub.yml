@@ -47,7 +47,7 @@ jobs:
           source, content_type = api(script, raw=True)
           if "multipart/" in content_type:
               message = email.parser.BytesParser(policy=email.policy.default).parsebytes(("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode() + source)
-              candidates = [part.get_payload(decode=True) for part in message.iter_parts() if "javascript" in part.get_content_type() or (part.get_filename() or "").endswith((".js", ".mjs"))]
+              candidates = [part.get_payload(decode=True) for part in message.iter_parts() if b"// ================= TEACHER =================" in (part.get_payload(decode=True) or b"")]
               if len(candidates) != 1:
                   raise SystemExit("Expected one Worker JavaScript module; needs review.")
               source = candidates[0]
