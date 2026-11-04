@@ -267,6 +267,11 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
 @media(max-width:1100px){#section-home .topbar{padding-left:150px}#section-home .topbar:before{font-size:90px}.classroom-launch .tile{padding-left:42%!important}.classroom-launch .tile-icon{font-size:50px!important}#section-home>.hub-home-group>.tilegrid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:780px){.sidebar{width:210px}.main{margin-left:210px;width:calc(100% - 210px);padding:25px 18px}.brand{font-size:18px}#section-home .topbar{padding:28px 14px 28px 90px;min-height:150px}#section-home .topbar:before{font-size:65px;left:7px}#section-home .sub{font-size:16px}.classroom-launch .tilegrid{grid-template-columns:1fr!important}.classroom-launch .tile{min-height:148px!important}}
 @media(max-width:620px){.sidebar{display:none}.main{margin:0;width:100%;padding:20px 14px}#section-home .topbar{padding-left:85px}#section-home h1{font-size:30px}.classroom-launch .tilegrid{grid-template-columns:1fr!important}#section-home>.hub-home-group>.tilegrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
+.sidebar>.nav:first-of-type button[data-section="home"]{display:none!important}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -286,7 +291,7 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="logo">LH</div><div>Learning<br>Hub</div></div>
+    <a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div>Learning<br>Hub</div></a>
 <div class="nav"><button class="active" data-section="home"><span class="ico">⌂</span>Home</button></div>
 <details class="hub-nav-group"><summary>Classroom</summary><div class="nav"><button id="morningNav"><span class="ico">☀</span>Good Morning</button>
 <button id="instructionsNav"><span class="ico">☷</span>Instructions Board</button>
