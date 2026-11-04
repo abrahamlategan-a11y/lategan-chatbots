@@ -66,13 +66,17 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 .shell{background:radial-gradient(circle at 95% 0,#e5d8fa,transparent 28%)}.top{background:#fffefa}.back{background:#e6f7f0}.message,.bubble,.composer,.chat-card{border-radius:21px}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
 
 <div class="shell">
   <div class="top">
-    <div class="brand"><div class="logo" id="topIcon">✦</div><div>Learning Hub</div></div>
+    <a class="brand hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><div class="logo" id="topIcon">LH</div><div>Learning Hub</div></a>
     <a class="back" href="../student/">⌂ Student Home</a>
   </div>
 
