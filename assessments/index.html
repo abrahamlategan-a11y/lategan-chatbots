@@ -5,7 +5,7 @@
 [hidden]{display:none!important}@media print{header,.controls,.toolbar,#status,#marking,#groupPanel,#export,#printReport{display:none!important}#reports{display:block!important}.panel{box-shadow:none;break-inside:avoid}body{background:white}}
 .testButtons{display:flex;gap:8px;flex-wrap:wrap}.partScore{font-size:23px;font-weight:750;margin:14px 0 0}.markButtons{display:flex;gap:4px}.markButtons button{min-width:36px;padding:6px}.question{padding:5px 0}dialog{width:min(650px,92vw);border:1px solid #cad8ce;border-radius:15px;max-height:85vh}dialog::backdrop{background:#123c2d88}#groupMembers{max-height:46vh;overflow:auto}</style></head><body><header><div><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" href="?view=summary">Summary</a><a href="../teacher/">Teacher Hub</a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
-<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span></div>
+<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button id="saveTop" hidden>Submit and next</button></div>
 <section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Submit and next</button><span id="saveState" role="status" class="sub"></span></div></section>
 <dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
 <section id="reports" class="hidden"><div class="panel"><h2 id="reportHeading">Student progress</h2><div class="controls"><label>Report test<select id="reportTest"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button id="printReport" class="secondary">Print / save PDF</button></div><p class="sub">Results saved across four Maths Trek tests.</p><div class="cards" id="reportCards"></div><div id="reportTotal"></div><button id="export">Export class results (CSV)</button></div></section>
@@ -44,6 +44,7 @@ function render(){
   const active=selectedTest&&Number(button.dataset.test)===currentTest();
   button.classList.toggle("active",active);button.setAttribute("aria-pressed",active);
  }
+ el("saveTop").hidden=el("marking").hidden;
  if(el("marking").hidden)return;
  parts.forEach(([from,to,max],part)=>{
   const panel=document.createElement("section");panel.className="panel";
@@ -67,7 +68,7 @@ function render(){
   }
   update();panel.append(score);root.append(panel);
  });
- el("save").disabled=!ready;
+ el("saveTop").disabled=el("save").disabled=!ready;
  el("saveState").textContent=dirty?"Draft · submit to finish":existing()?"Completed":"";
 }
 async function loadStudents(){
@@ -163,7 +164,7 @@ function exportCsv(){
 }
 function setDisabled(disabled){
  document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
- el("save").disabled=disabled||!ready;
+ el("saveTop").disabled=el("save").disabled=disabled||!ready;
 }
 el("custom").onclick=async()=>{
  if(busy)return;
@@ -205,7 +206,7 @@ el("class").onchange=async()=>{
  finally{busy=false;setDisabled(false)}
 };
 el("student").onchange=loadMarks;
-el("save").onclick=save;
+el("saveTop").onclick=el("save").onclick=save;
 el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
 el("pageLink").textContent=summaryPage?"Back to marking":"Summary";
 el("pageLink").onclick=e=>{
