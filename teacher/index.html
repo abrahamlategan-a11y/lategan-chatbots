@@ -196,6 +196,24 @@ body.pti-warning .pti-wrapup{display:block}
 .section:not(#section-home) .sectionhead{background:linear-gradient(110deg,#ebe4ff,#eef7f1);border-radius:18px;padding:20px 24px;border:1px solid #ded8ef;flex-wrap:wrap}
 .botgrid>*{border-top:4px solid #bca9e8}.botgrid>*:nth-child(3n+2){border-top-color:#8abfad}.botgrid>*:nth-child(3n+3){border-top-color:#e1b377}
 .classroom-launch .tile:nth-child(2) .tile-icon{background:#d8eee3}.classroom-launch .tile:nth-child(3) .tile-icon{background:#ffe6bc}.classroom-launch .tile:nth-child(4) .tile-icon{background:#f3dbee}
+
+/* Learning Hub playful refresh: visual layer only; existing logic preserved */
+:root{--bg:#f7f8ff;--panel:#fff;--ink:#26334b;--muted:#64738a;--line:#e5e9f5;--green:#4375d6;--green-dark:#304e99;--green-soft:#eaf0ff;--soft:#fbfcff;--shadow:0 12px 30px rgba(51,72,130,.09)}
+body{background:radial-gradient(circle at 95% 0%,#ebebff 0,transparent 35%),var(--bg)}
+.sidebar{background:#fff;border-right-color:#e5e9f5;box-shadow:5px 0 28px rgba(60,76,140,.035)}
+.logo{background:linear-gradient(145deg,#6386f4,#8068d6);border-radius:15px;box-shadow:0 5px 12px rgba(88,97,190,.19)}
+.nav button{border-radius:13px}.nav button:hover{background:#f3f5ff;color:#3758aa}
+.nav button.active{background:#eaf0ff;color:#3455b1}
+.eyebrow{color:#6475d6}h1{letter-spacing:-.04em}
+.tile,.botcard,.panel,.login-card,.modal-card{border-radius:24px;box-shadow:var(--shadow)}
+.tile{border-color:#e5e9f5;transition:transform .17s,box-shadow .17s}
+.tile.clickable:hover{transform:translateY(-4px) rotate(-.3deg);box-shadow:0 17px 36px rgba(61,77,148,.15)}
+.tile-icon,.bot-icon{background:#edf0ff;border-radius:17px}
+.btn,.small,.list-btn{border-radius:13px}.btn.primary,.small.primary{background:#526fda;border-color:#526fda}
+.btn:hover,.small:hover{filter:brightness(.97)}
+.panelhead,th{background:#fbfcff}.badge.live,.status{background:#eaf0ff;color:#3455b1}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #dce5ff;outline-offset:1px}
+@media(max-width:620px){.main{background:transparent}.tile{min-height:155px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
