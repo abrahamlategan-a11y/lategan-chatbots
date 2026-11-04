@@ -222,7 +222,8 @@ body.pti-warning .pti-wrapup{display:block}
 <button data-section="games"><span class="ico">🎮</span>Class Games</button>
 <button id="whiteboardsNav"><span class="ico">✎</span>Student Whiteboards</button></div></details>
 <details class="hub-nav-group"><summary>Teacher tools</summary><div class="nav"><button id="assessmentsNav"><span class="ico">✓</span>Maths Trek</button>
-<button id="groupsNav"><span class="ico">◫</span>Groups</button>
+<button id="groupsNav"><span class="ico">◫</span>Group Maker</button>
+<button id="jobsNav"><span class="ico">✓</span>Classroom Jobs</button>
 <button id="ptiNav"><span class="ico">◷</span>PTI Timer</button>
 <button data-section="chatbots"><span class="ico">✦</span>My Chatbots</button>
 <button data-section="shared"><span class="ico">⇄</span>Shared Library</button>
@@ -260,7 +261,8 @@ body.pti-warning .pti-wrapup{display:block}
 <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
 <div class="tile clickable" id="whiteboardsTile"><div class="tile-icon">✎</div><h3>Student Whiteboards</h3><p>See every student's live whiteboard, use Frost Mode, zoom in and save learning evidence.</p><div class="tile-foot">Open whiteboards →</div></div></div></div>
 <details class="hub-home-group"><summary>Teacher tools</summary><div class="tilegrid"><div class="tile clickable" id="assessmentsTile"><div class="tile-icon">✓</div><h3>Maths Trek</h3><p>Mark tests and review student and class results.</p><div class="tile-foot">Open Maths Trek →</div></div>
-<div class="tile clickable" id="groupsTile"><div class="tile-icon">◫</div><h3>Groups</h3><p>Make quick random groups or manage your permanent classroom job groups.</p><div class="tile-foot">Open groups →</div></div>
+<div class="tile clickable" id="groupsTile"><div class="tile-icon">◫</div><h3>Group Maker</h3><p>Make quick random groups for a lesson.</p><div class="tile-foot">Open group maker →</div></div>
+<div class="tile clickable" id="jobsTile"><div class="tile-icon">✓</div><h3>Classroom Jobs</h3><p>Set up and manage classroom job groups.</p><div class="tile-foot">Open classroom jobs →</div></div>
 <div class="tile clickable" id="ptiTile"><div class="tile-icon">◷</div><h3>PTI Timer</h3><p>Clock-bound 8-minute parent interview slots with a one-minute visual warning and bell.</p><div class="tile-foot">Open timer →</div></div>
 <div class="tile clickable" data-go="chatbots"><div class="tile-icon">✦</div><h3>My Chatbots</h3><p>Create and manage learning coaches you own.</p><div class="tile-foot"><span id="homeBotCount">0</span> bots · Open →</div></div>
 <div class="tile clickable" data-go="shared"><div class="tile-icon">⇄</div><h3>Shared Library</h3><p>Assign shared learning coaches to your class without making copies.</p><div class="tile-foot">Browse →</div></div>
@@ -1154,6 +1156,7 @@ $("instructionsNav").onclick=()=>{location.href="../instructions/?role=teacher"}
 $("instructionsTile").onclick=()=>{location.href="../instructions/?role=teacher"};
 $("groupsNav").onclick=()=>{location.href="../groups/"};
 $("groupsTile").onclick=()=>{location.href="../groups/"};
+$("jobsNav").onclick=$("jobsTile").onclick=()=>{location.href="../groups/?view=jobs"};
 $("whiteboardsNav").onclick=()=>{location.href="../tewhiteboard/"};
 $("whiteboardsTile").onclick=()=>{location.href="../tewhiteboard/"};
 $("adminNav").onclick=()=>{location.href="../admin/"};

@@ -101,8 +101,8 @@ button,input,select{font:inherit}.shell{max-width:1220px;margin:auto;padding:22p
   </div>
 
   <div class="tabs">
-    <button class="tab on" data-view="quick">Quick Group Maker</button>
-    <button class="tab" data-view="jobs">Job Groups</button>
+    <button class="tab on" data-view="quick">Group Maker</button>
+    <button class="tab" data-view="jobs">Classroom Jobs</button>
   </div>
 
   <section class="view on" id="view-quick">
@@ -201,6 +201,8 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
   document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="view-"+b.dataset.view));
 });
+
+if(new URLSearchParams(location.search).get("view")==="jobs")document.querySelector('.tab[data-view="jobs"]').click();
 
 function renderQuickStudentChecks(){
   const active=activeStudents();
