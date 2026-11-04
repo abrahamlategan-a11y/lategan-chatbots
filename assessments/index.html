@@ -29,7 +29,7 @@ header .summary-cta{display:inline-flex;align-items:center;gap:12px;background:#
 header .summary-cta:hover{transform:translateY(-2px);box-shadow:0 7px 0 #f1d893}
 header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 @media(max-width:620px){header .summary-cta{font-size:14px;padding:12px 14px}}
-</style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">📊 View Results Summary <span aria-hidden="true">→</span></a></nav></header>
+</style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button id="saveTop" hidden>Submit and next</button></div>
 <section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Submit and next</button><span id="saveState" role="status" class="sub"></span></div></section>
@@ -302,7 +302,7 @@ el("class").onchange=async()=>{
 el("student").onchange=loadMarks;
 el("saveTop").onclick=el("save").onclick=save;
 el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
-el("pageLink").textContent=summaryPage?"← Back to marking":"📊 View Results Summary →";
+el("pageLink").textContent=summaryPage?"← Back to marking":"View Results Summary →";
 el("pageLink").onclick=e=>{
  if(busy){e.preventDefault();return}
  const params=new URLSearchParams({class:el("class").value,student:el("student").value});
