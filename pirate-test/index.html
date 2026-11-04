@@ -20,11 +20,15 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 
 /* Pirate game's mechanics, timers, balances and overlays remain unchanged */
 body{background:linear-gradient(180deg,#e8f9f1,#fffefa 58%)}.top{background:transparent}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="top"><div class="brand"><div class="logo">🤖</div><div>Learning Hub · Pirate Test Lab</div></div><span class="tag">Student simulator</span></div>
+  <div class="top"><a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div>Learning Hub · Pirate Test Lab</div></a><span class="tag">Student simulator</span></div>
   <div class="hero"><div><h1>Pirate Student Bot Tester</h1><p>Launch fake students into a normal Pirate lobby and let them use the same student API as real devices.</p></div><div class="badge" id="heroBadge">Stopped</div></div>
   <div class="grid">
     <div>
