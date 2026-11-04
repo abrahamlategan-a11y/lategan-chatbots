@@ -172,7 +172,7 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
     <section class="today-hero">
       <div>
         <div class="eyebrow">Your classroom today</div>
-        <h1 class="greeting" id="greeting">Good morning.</h1>
+        <h1 class="greeting" id="greeting">Hello.</h1>
         <div class="hero-sub">Your class information and learning tools are all here.</div>
       </div>
       <div class="datebox">
@@ -335,7 +335,7 @@ function switchStudent(){
   $("studentCode").value="";
   $("loginError").textContent="";
   $("studentChip").textContent="Student";
-  $("greeting").textContent="Good morning.";
+  updateGreeting();
   $("helperName").textContent="—";
   $("lunchNames").textContent="—";
   $("studentReminders").textContent="No reminders today.";
@@ -361,7 +361,7 @@ async function login(){
     student=d.student;
     localStorage.setItem("lategan_student_code",student.student_code);
     $("studentChip").textContent=`${student.display_name||"Student"} · ${student.class_name||""}`;
-    $("greeting").textContent=`Good morning, ${student.display_name||"Student"}.`;
+    updateGreeting();
     $("loginScreen").style.display="none";
     await Promise.all([loadBots(),loadDaily()]);
   }catch(e){$("loginError").textContent=e.message}
@@ -392,6 +392,15 @@ $("chatbotsTile").onclick=()=>{$("homeView").style.display="none";$("botView").c
 $("backHome").onclick=()=>{$("botView").classList.remove("show");$("homeView").style.display="block"};
 
 (async()=>{const saved=localStorage.getItem("lategan_student_code");if(saved){$("studentCode").value=saved;await login()}})();
+function updateGreeting(){
+  const hour=new Date().getHours();
+  const greeting=hour<12?"Good morning":hour<18?"Good afternoon":"Good evening";
+  const name=student?(student.display_name||"Student"):"";
+  $("greeting").textContent=greeting+(name?`, ${name}.`:".");
+}
+updateGreeting();
+setInterval(updateGreeting,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)updateGreeting()});
 </script>
 </body>
 </html>
