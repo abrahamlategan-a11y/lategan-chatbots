@@ -125,7 +125,8 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
 .hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 
 /* The Learning Hub wordmark is the single home navigation control. */
-#backHome{display:none!important}
+#backHome{display:inline-flex!important;align-items:center;gap:7px}
+.top{justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -155,7 +156,7 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
 
 <div class="shell">
   <div class="top">
-    <a class="brand hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><div class="logo">LH</div><div>Learning Hub</div></a>
+    
     <div class="student-actions">
       <div class="student-chip" id="studentChip">Student</div>
       <button class="switch-btn" id="switchStudentBtn" type="button">Switch student</button>
@@ -228,7 +229,7 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
   <div class="bot-list" id="botView">
     <div class="bothead">
       <div><div class="eyebrow" style="color:var(--green)">Learning coaches</div><h2>Choose a coach</h2></div>
-      <button class="homebtn" id="backHome">⌂ Student Home</button>
+      <button class="homebtn" id="backHome">⌂ Student Hub</button>
     </div>
     <div class="botgrid" id="botGrid"></div>
   </div>
