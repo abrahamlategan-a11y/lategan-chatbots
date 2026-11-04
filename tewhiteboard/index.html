@@ -82,12 +82,16 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 .top{background:#fffefa}.sessionbar{background:#e8f7f0}.empty{background:radial-gradient(circle at 12% 8%,#d5f8ed,transparent 35%),#fffefa}.empty-card .ico{background:#e7d5fa}.code{background:#e3f7ed;border-color:#c8eeda}.card-head{background:#f5f0ff}.board-card:nth-child(4n+2) .card-head{background:#e8f8ef}.board-card:nth-child(4n+3) .card-head{background:#fff0c7}.board-card:nth-child(4n) .card-head{background:#e0f1ff}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand"><div class="logo">LH</div><div class="title"><strong>Student Whiteboards</strong><span>Live classroom view</span></div></div>
+    <a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div class="title"><strong>Learning Hub</strong><span>Student Whiteboards</span></div></a>
     <div class="top-actions"><span class="count" id="countText"></span><div class="code" id="joinCode" style="display:none"></div><button class="btn" id="guestJoinInfo" style="display:none">▣ Guest Join</button><button class="btn" onclick="location.href='../teacher/'">⌂ Hub</button></div>
   </div>
 
