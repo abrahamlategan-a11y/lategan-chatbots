@@ -11,6 +11,20 @@ button,input{font:inherit}.shell{max-width:900px;margin:auto;padding:22px}.top{d
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.group{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fafcfb}.group h3{margin:0 0 8px}.score{display:flex;gap:8px;align-items:center}.score input{width:90px;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;font-weight:950;font-size:18px}.total{font-size:11px;color:var(--muted);margin-top:8px}.total strong{color:var(--ink)}
 .btn{border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:#fff;font-weight:900;cursor:pointer}.btn.primary{background:var(--green);color:#fff;border-color:var(--green)}.savebar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:13px}.saved{font-size:11px;color:var(--muted)}
 @media(max-width:650px){.grid{grid-template-columns:1fr}}
+
+/* Learning Hub mock-up inspired visual system. Presentation-only. */
+:root{--bg:#fffefa;--panel:#fff;--ink:#121d4b;--muted:#64708b;--line:#ede9f3;--green:#3dc5a4;--deep:#172554;--sage:#c5f3e3;--mint:#c5f3e3;--lav:#e9d7fb;--gold:#ffe9ad;--yellow:#ffefbd;--blue:#c9eaff;--soft:#effaf5;--shadow:0 8px 25px rgba(45,49,102,.055)}
+body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink);background-color:var(--bg)}
+.logo{background:linear-gradient(135deg,#7be7cd,#3cc8ab)!important;color:#152452!important;border-radius:16px!important;box-shadow:none!important}
+.hero{background:linear-gradient(115deg,#b8f2df,#ead6fa)!important;color:#14204c!important;border-radius:26px!important;box-shadow:none!important}
+.hero h1{color:#14204c!important}.hero p{color:#485376!important}
+.panel,.card,.empty-card,.group-card,.job-card,.board-card,.toolbar,.pool,.login-card,.modal-card,.zoom-card{border-radius:23px;box-shadow:var(--shadow);border-color:var(--line)}
+.btn,.back,.tool,.tab,.teacher,button.secondary{border-radius:13px}
+.btn.primary,button.primary{background:#526bd2!important;border-color:#526bd2!important;color:white!important}
+.top a,.back{color:#152454;text-decoration:none}
+input,select,textarea{border-radius:12px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
+.hero{background:linear-gradient(110deg,#b8f3df,#e9d7fa)!important}.card:nth-of-type(even){background:#f5efff}.notice{background:#e9f8ef}
 </style></head>
 <body><div class="shell">
 <div class="top"><strong>LH · Group Points</strong><a href="../student/">⌂ Student Hub</a></div>
