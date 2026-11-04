@@ -38,6 +38,20 @@ button,input{font:inherit}button{cursor:pointer}
 .modal-card h2{margin:0 0 8px}.emailbox{white-space:pre-wrap;background:#f8faf8;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px;line-height:1.55;margin-top:14px}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 @media(max-width:800px){.grid{grid-template-columns:1fr}.top{align-items:flex-start}.teacher{grid-template-columns:1fr}.actions{justify-content:flex-start}}
+
+/* Learning Hub playful refresh: presentation only, no behaviour changes */
+:root{--bg:#f7f8ff;--panel:#fff;--ink:#26334b;--muted:#64738a;--line:#e5e9f5;--green:#4375d6;--green-dark:#304e99;--green-soft:#eaf0ff;--shadow:0 12px 30px rgba(51,72,130,.09)}
+body{background:radial-gradient(circle at 90% 0%,#e8e9ff 0,transparent 34%),var(--bg)}
+.logo{background:linear-gradient(145deg,#6386f4,#8068d6);border-radius:15px;box-shadow:0 5px 12px rgba(88,97,190,.19)}
+.hero{background:linear-gradient(115deg,#466bd5,#8168d8);border-radius:27px;padding:30px 32px}
+.hero p{color:#f0edff}.hero h1{letter-spacing:-.035em}
+.panel,.login-card{border-radius:23px;box-shadow:var(--shadow)}
+.ph{background:#fbfcff}.btn,.back,.small{border-radius:13px;transition:transform .15s,box-shadow .15s}
+.btn:hover,.back:hover,.small:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(55,78,141,.12)}
+.btn.primary{background:#526fda;border-color:#526fda}.field input{border-radius:13px;background:#fcfdff}
+.field input:focus{outline:3px solid #dce5ff;border-color:#7694e6}
+.teacher:hover{background:#fafbff}.badge{background:#eaf0ff;color:#3b5cba}
+@media(max-width:600px){.hero{padding:24px}.hero h1{font-size:29px}}
 </style>
 </head>
 <body>
