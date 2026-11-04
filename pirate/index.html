@@ -834,7 +834,16 @@ let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosi
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
-$("backLink").href=teacherMode?"../teacher/":"../student/";
+// The clickable house logo replaces the old backLink control.
+const hubHome=document.querySelector(".hub-brand-link");
+if(hubHome){
+  hubHome.href=teacherMode?"../teacher/":"../student/";
+  hubHome.setAttribute("aria-label",teacherMode?"Learning Hub home":"Student Hub home");
+  const mark=hubHome.querySelector(".logo");
+  if(mark)mark.textContent=teacherMode?"LH":"SH";
+  const title=hubHome.querySelector(".logo + div");
+  if(title)title.textContent=teacherMode?"Learning Hub":"Student Hub";
+}
 if(teacherMode)$("teacherView").style.display="block";
 else if(token)$("playerView").style.display="block";
 else $("joinView").style.display="block";
