@@ -24,10 +24,15 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 .join{background:radial-gradient(circle at 12% 10%,#d5f8e9 0,transparent 34%),#fffefa}.card{border-radius:26px}.btn.primary{background:#526bd2}
+
+/* Learning Hub clickable home wordmark */
+.hub-brand-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none!important;color:#172451!important;font-weight:900;font-size:15px;cursor:pointer}
+.hub-brand-link:hover{opacity:.8}.hub-brand-link:focus-visible{outline:3px solid #6ddcbf;outline-offset:3px;border-radius:10px}
+.hub-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#5bd6bc;color:#13234e;font-size:17px;font-weight:950}
 </style>
 </head>
 <body>
-<section class="join" id="joinView"><div class="card"><div class="logo">LH</div><h1>Join a whiteboard</h1><p>You do not need a Learning Hub account. Enter the session code from the teacher and your first name.</p><div class="field"><label>Session code</label><input class="code" id="code" maxlength="5" placeholder="ABCDE"></div><div class="field"><label>Your name</label><input id="name" maxlength="40" placeholder="e.g. Sam"></div><button class="btn primary" id="joinBtn" style="width:100%;margin-top:6px">Join whiteboard</button></div></section>
+<section class="join" id="joinView"><div class="card"><a class="hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><span class="logo">LH</span><span>Learning Hub</span></a><h1>Join a whiteboard</h1><p>You do not need a Learning Hub account. Enter the session code from the teacher and your first name.</p><div class="field"><label>Session code</label><input class="code" id="code" maxlength="5" placeholder="ABCDE"></div><div class="field"><label>Your name</label><input id="name" maxlength="40" placeholder="e.g. Sam"></div><button class="btn primary" id="joinBtn" style="width:100%;margin-top:6px">Join whiteboard</button></div></section>
 <section class="board-app" id="boardApp">
   <div class="top"><div><span class="name" id="displayName">Guest</span> <span class="pill" id="sessionPill">Guest</span></div><button class="btn primary" id="shareBtn">🙋 Ask to share</button></div>
   <div class="frost" id="frostNote">❄️ Your answer is hidden until the teacher reveals it.</div>
