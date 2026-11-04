@@ -621,11 +621,15 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 
 /* Pirate game's mechanics, timers, balances and overlays remain unchanged */
 body{background:linear-gradient(180deg,#e8f9f1,#fffefa 58%)}.top{background:transparent}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="top"><div class="brand"><div class="logo">🏴‍☠️</div><div>Learning Hub · Class Games</div></div><a class="back" id="backLink" href="../">← Learning Hub</a></div>
+  <div class="top"><a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div>Learning Hub · Class Games</div></a><a class="back" id="backLink" href="../">← Learning Hub</a></div>
   <div class="hero"><div><h1>The Pirate Game</h1><p id="heroText">Hidden treasure. Public chaos. Do your own maths.</p></div><div class="gamebadge" id="gameBadge">Choose your game</div></div>
 
   <div id="joinView" style="display:none">
