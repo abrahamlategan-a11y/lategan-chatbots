@@ -47,10 +47,14 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .completionStudent{display:block;width:100%;margin:5px 0;padding:10px 12px;text-align:left;border-radius:10px;background:white;color:#16234d;border:1px solid #e7e3f1;font-weight:650}
 .completionStudent:hover{background:#e1f8ee}
 @media(max-width:550px){.completionGrid{grid-template-columns:1fr}}
+
+.liveTotal{display:inline-flex;align-items:center;border-radius:13px;padding:11px 15px;background:#e1f8ee;color:#143c44;font-size:19px;font-weight:900;white-space:nowrap}
+#saveOnly,#saveOnlyTop{background:#35b99d;color:#12274b;font-weight:850}
+#saveState{font-weight:700}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
-<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See completed and not yet marked students">View marking status</button><button id="saveTop" hidden>Submit and next</button></div>
-<section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Submit and next</button><span id="saveState" role="status" class="sub"></span></div></section>
+<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See completed and not yet marked students">View marking status</button><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop" hidden>Save and next</button></div>
+<section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><strong id="totalBottom" class="liveTotal">Total: 0 / 60</strong><button id="saveOnly">Save</button><button id="save">Save and next</button><span id="saveState" role="status" class="sub"></span></div></section>
 <dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Completed</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not yet marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
@@ -98,10 +102,11 @@ function loadMarks(){
  if(!summaryPage&&currentStudent())try{const draft=JSON.parse(localStorage.getItem(draftKey()));if(Array.isArray(draft)&&draft.length===40){marks=draft;dirty=true}}catch{}
  render();if(summaryPage)renderReports();
 }
+function updateLiveTotal(){const total=marks.reduce((sum,n)=>sum+Number(n||0),0);el("totalTop").textContent="Total: "+total+" / 60";el("totalBottom").textContent="Total: "+total+" / 60"}
 function saveDraft(){
  dirty=true;
  try{localStorage.setItem(draftKey(),JSON.stringify(marks))}catch{}
- el("saveState").textContent="Draft · submit to finish";
+ el("saveState").textContent="Unsaved changes · draft stored on this device";updateLiveTotal();
 }
 function render(){
  const root=el("columns");root.replaceChildren();
@@ -114,6 +119,8 @@ function render(){
   button.classList.toggle("active",active);button.setAttribute("aria-pressed",active);
  }
  el("saveTop").hidden=el("marking").hidden;
+ el("saveOnlyTop").hidden=el("marking").hidden;
+ el("totalTop").hidden=el("marking").hidden;
  if(el("marking").hidden)return;
  parts.forEach(([from,to,max],part)=>{
   const panel=document.createElement("section");panel.className="panel";
@@ -137,8 +144,9 @@ function render(){
   }
   update();panel.append(score);root.append(panel);
  });
- el("saveTop").disabled=el("save").disabled=!ready;
- el("saveState").textContent=dirty?"Draft · submit to finish":existing()?"Completed":"";
+ el("saveTop").disabled=el("save").disabled=el("saveOnly").disabled=el("saveOnlyTop").disabled=!ready;
+ updateLiveTotal();
+ el("saveState").textContent=dirty?"Unsaved changes · draft stored on this device":hasSavedResult(currentStudent(),currentTest())?"Saved to Maths Trek":"Not yet saved";
 }
 async function loadStudents(){
  const value=el("class").value;
@@ -190,15 +198,14 @@ async function init(){
   if(summaryPage&&students.some(s=>String(s.id)===params.get("student"))){el("student").value=params.get("student");loadMarks()}
  }catch(e){message("Could not load Maths Trek: "+e.message)}
 }
-async function save(){
+async function save(moveNext=true){
  if(busy||!ready||!currentStudent())return;
  const studentId=currentStudent(),test=currentTest(),snapshot=[...marks],key=draftKey();
  const picker=el("student"),next=(picker.selectedIndex+1)%picker.options.length;
  // An untouched form is an unattempted test, not a zero result.
  if(!dirty&&!existing()){
-  picker.selectedIndex=next;loadMarks();
-  el("saveState").textContent="Skipped · no marks entered for the previous student. No result saved.";
-  picker.closest(".panel").scrollIntoView({block:"start",behavior:"instant"});
+  if(moveNext){picker.selectedIndex=next;loadMarks()}
+  el("saveState").textContent="Not saved · no marks entered";
   return;
  }
  busy=true;setDisabled(true);el("saveState").textContent="Saving…";
@@ -207,8 +214,8 @@ async function save(){
   results=results.filter(r=>!(Number(r.student_id)===studentId&&Number(r.test||r.test_number)===test));
   results.push({student_id:studentId,test,marks:snapshot,total:d.total});
   try{localStorage.removeItem(key)}catch{}
-  picker.selectedIndex=next;loadMarks();
-  picker.closest(".panel").scrollIntoView({block:"start",behavior:"instant"});
+  if(moveNext){picker.selectedIndex=next;loadMarks();picker.closest(".panel").scrollIntoView({block:"start",behavior:"instant"});el("saveState").textContent="Saved successfully · next student"}
+  else{loadMarks();el("saveState").textContent="Saved successfully to Maths Trek"}
  }catch(e){el("saveState").textContent="Save failed. Your draft is still here. "+e.message}
  finally{busy=false;setDisabled(false)}
 }
@@ -340,7 +347,7 @@ function exportCsv(){
 }
 function setDisabled(disabled){
  document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
- el("saveTop").disabled=el("save").disabled=disabled||!ready;
+ el("saveTop").disabled=el("save").disabled=el("saveOnly").disabled=el("saveOnlyTop").disabled=disabled||!ready;
 }
 el("custom").onclick=async()=>{
  if(busy)return;
@@ -384,7 +391,8 @@ el("class").onchange=async()=>{
 el("student").onchange=loadMarks;
 el("openCompletion").onclick=()=>{renderCompletion();el("completionPanel").showModal()};
 el("closeCompletion").onclick=()=>el("completionPanel").close();
-el("saveTop").onclick=el("save").onclick=save;
+el("saveTop").onclick=el("save").onclick=()=>save(true);
+el("saveOnlyTop").onclick=el("saveOnly").onclick=()=>save(false);
 el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
 el("pageLink").textContent=summaryPage?"← Back to marking":"View Results Summary →";
 el("pageLink").onclick=e=>{
