@@ -25,9 +25,14 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 .hero{background:linear-gradient(110deg,#b8f3df,#e9d7fa)!important}.card:nth-of-type(even){background:#f5efff}.notice{background:#e9f8ef}
+
+/* Learning Hub clickable home wordmark */
+.hub-brand-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none!important;color:#172451!important;font-weight:900;font-size:15px;cursor:pointer}
+.hub-brand-link:hover{opacity:.8}.hub-brand-link:focus-visible{outline:3px solid #6ddcbf;outline-offset:3px;border-radius:10px}
+.hub-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#5bd6bc;color:#13234e;font-size:17px;font-weight:950}
 </style></head>
 <body><div class="shell">
-<div class="top"><strong>LH · Group Points</strong><a href="../student/">⌂ Student Hub</a></div>
+<div class="top"><a class="hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><strong>Group Points</strong><a href="../student/">⌂ Student Hub</a></div>
 <div class="hero"><h1>Group Points</h1><p>Today's Daily Helper can enter each job group's score out of 10.</p></div>
 <div class="card" id="content"><div class="notice">Loading…</div></div>
 </div>
