@@ -38,12 +38,17 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 .home{background:radial-gradient(circle at 12% 10%,#d9f8ee 0,transparent 35%),#fffefa}.card-head{background:#f1e5ff}.sessionbar{background:#e7f8f0}
+
+/* Learning Hub clickable home wordmark */
+.hub-brand-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none!important;color:#172451!important;font-weight:900;font-size:15px;cursor:pointer}
+.hub-brand-link:hover{opacity:.8}.hub-brand-link:focus-visible{outline:3px solid #6ddcbf;outline-offset:3px;border-radius:10px}
+.hub-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#5bd6bc;color:#13234e;font-size:17px;font-weight:950}
 </style>
 </head>
 <body>
 <section class="home" id="home">
   <div class="home-card">
-    <div class="brand"><strong>LH · Student Whiteboard</strong><a href="../student/">⌂ Student Hub</a></div>
+    <div class="brand"><a class="hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><strong>Student Whiteboard</strong><a href="../student/">⌂ Student Hub</a></div>
     <h1>Your whiteboard</h1>
     <p>Use a private slate whenever you need one, or join a live whiteboard session with your teacher.</p>
     <div class="mode-grid">
