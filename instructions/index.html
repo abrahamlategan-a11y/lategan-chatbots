@@ -68,12 +68,17 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 .page{background:linear-gradient(130deg,#c5f3e3,#e8d5fa)}.top{color:#16214c}.top small{color:#465276}.badge{background:#ffedb5}.tool{background:#fff;color:#17234f;border-color:#e5ddf0}.panel{background:#fffefa}.step{background:#e8d7fa}.step:nth-child(even){background:#c7f3e2}.num{background:#d3b2f5}.step:nth-child(even) .num{background:#9be8cf}.timer{background:#5966b8}.expand-btn{color:#162451}
+
+/* Learning Hub clickable home wordmark */
+.hub-brand-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none!important;color:#172451!important;font-weight:900;font-size:15px;cursor:pointer}
+.hub-brand-link:hover{opacity:.8}.hub-brand-link:focus-visible{outline:3px solid #6ddcbf;outline-offset:3px;border-radius:10px}
+.hub-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#5bd6bc;color:#13234e;font-size:17px;font-weight:950}
 </style>
 </head>
 <body>
 <div class="page" id="page">
   <div class="top">
-    <div class="titlewrap"><div class="badge">☰</div><div><h1 id="classTitle">Instructions</h1><small id="classMeta">Class instructions board</small></div></div>
+    <div class="titlewrap"><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><div class="badge">☰</div><div><h1 id="classTitle">Instructions</h1><small id="classMeta">Class instructions board</small></div></div>
     <div class="tools">
       <button class="tool" id="savePresetBtn">Save</button>
       <button class="tool" id="loadPresetBtn">Saved boards</button>
