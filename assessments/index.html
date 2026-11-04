@@ -5,6 +5,18 @@
 [hidden]{display:none!important}@media print{header,.controls,.toolbar,#status,#marking,#groupPanel,#export,#printReport{display:none!important}#reports{display:block!important}.panel{box-shadow:none;break-inside:avoid}body{background:white}}
 .testButtons{display:flex;gap:8px;flex-wrap:wrap}.partScore{font-size:23px;font-weight:750;margin:14px 0 0}.markButtons{display:flex;gap:4px}.markButtons button{min-width:36px;padding:6px}.question{padding:5px 0}dialog{width:min(650px,92vw);border:1px solid #cad8ce;border-radius:15px;max-height:85vh}dialog::backdrop{background:#123c2d88}#groupMembers{max-height:46vh;overflow:auto}
 .reportGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}.reportHero{margin-top:16px;padding:18px;border-radius:12px;background:#edf1ef}.reportHero strong{display:block;font-size:2rem}.reportGrid h3{margin-top:0}.metric{margin:12px 0}.metric label{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}.metric progress{width:100%;height:9px;accent-color:#60756d}.tableScroll{overflow:auto}.strandTable{width:100%;border-collapse:collapse;min-width:620px}.strandTable th,.strandTable td{text-align:left;padding:12px;border-bottom:1px solid #e2e8e4}.strandTable thead{background:#edf1ef}.strandTable tbody tr:nth-child(even){background:#f7f9f8}.strandTable td{font-variant-numeric:tabular-nums}.strandTable button{padding:5px 9px}@media(max-width:650px){.reportGrid{grid-template-columns:1fr}}@media print{.reportSwitch{display:none!important}}
+
+/* Learning Hub approved playful pastel facelift: presentation only */
+:root{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:#111b4b;background:#fffefa}
+body{background:radial-gradient(circle at 95% 2%,#e1faf0 0,transparent 27%),#fffefa;color:#111b4b}
+header{background:linear-gradient(110deg,#9fead8,#d8c5f7);color:#111b4b;padding:25px 4vw;border-radius:0 0 28px 28px}
+header h1{font-size:32px;letter-spacing:-.04em}header a{color:#182454;font-weight:800;background:#ffffffb9;border-radius:13px;padding:9px 12px;text-decoration:none}
+main{max-width:1280px}.panel{border:1px solid #f0edf5;border-radius:24px;box-shadow:0 7px 22px #2432630a;padding:21px}
+button{background:#5569cf;border-radius:13px;font-weight:800}button.secondary{background:#e9dafa;color:#26205c}button.active{background:#3bbf9e;color:#10254d}
+select,input{border-radius:13px;border-color:#e0dff0}.tag{background:#e0f8ed;color:#194c49;border-radius:11px}
+.mini{border-radius:17px;border-color:#e9e6f4;background:#f9f5ff}.mini:nth-child(even){background:#edfaf5}
+.reportHero{background:#e3f7f0;border-radius:20px}.strandTable thead{background:#e8f5f2}
+@media print{header{display:none!important}body{background:#fff}}
 </style></head><body><header><div><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" href="?view=summary">Summary</a><a href="../teacher/">Teacher Hub</a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button id="saveTop" hidden>Submit and next</button></div>
