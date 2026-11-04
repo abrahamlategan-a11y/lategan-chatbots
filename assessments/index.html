@@ -37,11 +37,21 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 
 .studentTiles{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px}.studentTiles button{background:#f5effc;color:#26205c;border:2px solid transparent;padding:12px 17px}.studentTiles button[aria-pressed="true"]{background:#c9f3e5;border-color:#239c7b;color:#112f37;box-shadow:0 3px 0 #a7dfcd}.studentTiles button:focus-visible{outline:3px solid #5569cf;outline-offset:3px}.reportFilters{margin:20px 0;padding:16px;background:#faf8fd;border-radius:17px}.reportFilters p{flex-basis:100%;margin:3px 0 0;font-size:.9rem}#classTestButtons{margin-top:9px}#classTestButtons button{border:2px solid transparent}#classTestButtons button[aria-pressed="true"]{border-color:#239c7b}#classTestButtons button:focus-visible{outline:3px solid #5569cf;outline-offset:3px}.reportActions{margin-top:20px}#reportScope{margin-top:-5px}.cards:has(>.mini:only-child){grid-template-columns:minmax(180px,1fr)}
 @media print{#studentPicker,.studentTiles,.reportFilters,.reportActions{display:none!important}#reportScope{color:#111}.strandTable{min-width:0;font-size:10px}.strandTable th,.strandTable td{padding:7px}.strandTable button{background:none;color:inherit;padding:0}.panel{break-inside:auto}.mini,.reportHero{break-inside:avoid}.strandTable thead{display:table-header-group}}
+
+/* Marking progress indicators and interactive class completion lists */
+#openCompletion{font-weight:800;border-radius:12px;background:#dff7ee;color:#123e40}
+#progress{font-weight:800;color:#264d4b}
+.completionGrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:15px 0 22px}
+.completionGrid section{background:#f8f6fc;padding:14px;border-radius:16px;min-height:140px}
+.completionGrid h3{margin:0 0 12px;font-size:16px}
+.completionStudent{display:block;width:100%;margin:5px 0;padding:10px 12px;text-align:left;border-radius:10px;background:white;color:#16234d;border:1px solid #e7e3f1;font-weight:650}
+.completionStudent:hover{background:#e1f8ee}
+@media(max-width:550px){.completionGrid{grid-template-columns:1fr}}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
-<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button id="saveTop" hidden>Submit and next</button></div>
+<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See completed and not yet marked students">View marking status</button><button id="saveTop" hidden>Submit and next</button></div>
 <section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Submit and next</button><span id="saveState" role="status" class="sub"></span></div></section>
-<dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
+<dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Completed</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not yet marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
 <h2 id="reportHeading">Student progress</h2><p id="reportScope" class="sub" aria-live="polite"></p>
@@ -58,7 +68,24 @@ function message(s,good=false){el("status").textContent=s;el("status").className
 function options(id,rows,value,label){const node=el(id);node.replaceChildren();for(const row of rows){const o=document.createElement("option");o.value=String(row[value]);o.textContent=row[label];node.append(o)}}
 function currentStudent(){return Number(el("student").value)}
 function currentTest(){return Number(el("test").value)}
+function hasSavedResult(studentId,test){return results.some(r=>Number(r.student_id)===Number(studentId)&&Number(r.test||r.test_number)===Number(test)&&Array.isArray(r.marks)&&r.marks.length===40)}
 function existing(){return results.find(r=>Number(r.student_id)===currentStudent()&&Number(r.test||r.test_number)===currentTest())}
+function completionCounts(test){return {total:students.length,done:students.filter(student=>hasSavedResult(student.id,test)).length}}
+function renderCompletion(){
+ const test=currentTest(),counts=completionCounts(test);
+ el("completionTitle").textContent="Test "+test+" · Marking progress";
+ el("completionTotal").textContent=counts.done+" of "+counts.total+" completed · "+(counts.total-counts.done)+" remaining";
+ for(const [finished,listId,titleId] of [[true,"completedList","completedTitle"],[false,"remainingList","remainingTitle"]]){
+  const list=el(listId);list.replaceChildren();
+  const matches=students.filter(student=>hasSavedResult(student.id,test)===finished);
+  el(titleId).textContent=(finished?"Completed":"Not yet marked")+" ("+matches.length+")";
+  if(!matches.length){const empty=document.createElement("p");empty.className="sub";empty.textContent="None";list.append(empty)}
+  for(const student of matches){const btn=document.createElement("button");btn.type="button";btn.className="completionStudent";btn.textContent=student.display_name;btn.onclick=()=>{el("student").value=String(student.id);el("completionPanel").close();loadMarks()};list.append(btn)}
+ }
+}
+function updateCompletionCounters(){
+ for(const button of el("testButtons").children){const test=Number(button.dataset.test),counts=completionCounts(test);button.textContent="Test "+test+" · "+counts.done+"/"+counts.total;button.title=counts.done+" of "+counts.total+" marked. Select test to view details."}
+}
 const summaryPage=new URLSearchParams(location.search).get("view")==="summary";
 let selectedTest=summaryPage,schoolRoster=null,regularClasses=[];
 const parts=[[0,24,1],[24,36,2],[36,40,3]];
@@ -80,7 +107,8 @@ function render(){
  const root=el("columns");root.replaceChildren();
  el("marking").hidden=summaryPage||!selectedTest||!currentStudent();
  const list=Array.from(el("student").options);
- el("progress").textContent=list.length?(el("student").selectedIndex+1)+" of "+list.length+(existing()?" · Completed":""):"";
+ el("progress").textContent=list.length?(hasSavedResult(currentStudent(),currentTest())?"✓ Completed":"○ Not yet marked"):"";
+ updateCompletionCounters();
  for(const button of el("testButtons").children){
   const active=selectedTest&&Number(button.dataset.test)===currentTest();
   button.classList.toggle("active",active);button.setAttribute("aria-pressed",active);
@@ -354,6 +382,8 @@ el("class").onchange=async()=>{
  finally{busy=false;setDisabled(false)}
 };
 el("student").onchange=loadMarks;
+el("openCompletion").onclick=()=>{renderCompletion();el("completionPanel").showModal()};
+el("closeCompletion").onclick=()=>el("completionPanel").close();
 el("saveTop").onclick=el("save").onclick=save;
 el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
 el("pageLink").textContent=summaryPage?"← Back to marking":"View Results Summary →";
