@@ -3,12 +3,14 @@
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#20352d;background:#f3f6f2}*{box-sizing:border-box}body{margin:0}header{background:#214c3c;color:white;padding:18px 4vw;display:flex;align-items:center;justify-content:space-between}header a{color:#d8eee2}main{max-width:1200px;margin:auto;padding:24px}h1{margin:0;font-size:25px}h2{font-size:20px}.sub{color:#607267}.panel{background:white;border:1px solid #dbe5de;border-radius:15px;padding:18px;margin:14px 0;box-shadow:0 3px 12px #153d2910}button,select,input{font:inherit}button{background:#28664e;border:0;border-radius:9px;padding:10px 14px;color:white;cursor:pointer}button:disabled{opacity:.4;cursor:not-allowed}button.secondary{background:#e5eee8;color:#24513d}button.active{background:#123c2d}.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.controls label{display:grid;gap:5px;font-weight:600}select{border:1px solid #cad8ce;border-radius:8px;padding:10px;background:white;min-width:150px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.question{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #edf1ed;gap:8px}.question select{min-width:80px;padding:7px}.tag{background:#eaf2eb;border-radius:7px;padding:3px 8px;color:#315c45;font-size:12px}.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.score{font-size:28px;font-weight:800}.notice{padding:12px;border-radius:10px;background:#fff3d8;color:#704d12;margin:10px 0}.success{background:#e3f4e8;color:#225a35}.hidden{display:none}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.mini{border:1px solid #dbe5de;border-radius:10px;padding:12px}.mini strong{display:block;font-size:23px}@media(max-width:760px){.grid,.cards{grid-template-columns:1fr}main{padding:12px}}
 [hidden]{display:none!important}@media print{header,.controls,.toolbar,#status,#marking,#groupPanel,#export,#printReport{display:none!important}#reports{display:block!important}.panel{box-shadow:none;break-inside:avoid}body{background:white}}
-.testButtons{display:flex;gap:8px;flex-wrap:wrap}.partScore{font-size:23px;font-weight:750;margin:14px 0 0}.markButtons{display:flex;gap:4px}.markButtons button{min-width:36px;padding:6px}.question{padding:5px 0}dialog{width:min(650px,92vw);border:1px solid #cad8ce;border-radius:15px;max-height:85vh}dialog::backdrop{background:#123c2d88}#groupMembers{max-height:46vh;overflow:auto}</style></head><body><header><div><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" href="?view=summary">Summary</a><a href="../teacher/">Teacher Hub</a></nav></header>
+.testButtons{display:flex;gap:8px;flex-wrap:wrap}.partScore{font-size:23px;font-weight:750;margin:14px 0 0}.markButtons{display:flex;gap:4px}.markButtons button{min-width:36px;padding:6px}.question{padding:5px 0}dialog{width:min(650px,92vw);border:1px solid #cad8ce;border-radius:15px;max-height:85vh}dialog::backdrop{background:#123c2d88}#groupMembers{max-height:46vh;overflow:auto}
+.reportGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}.reportHero{margin-top:16px;padding:18px;border-radius:12px;background:#edf1ef}.reportHero strong{display:block;font-size:2rem}.reportGrid h3{margin-top:0}.metric{margin:12px 0}.metric label{display:flex;justify-content:space-between;gap:10px;font-size:.9rem}.metric progress{width:100%;height:9px;accent-color:#60756d}.tableScroll{overflow:auto}.strandTable{width:100%;border-collapse:collapse;min-width:620px}.strandTable th,.strandTable td{text-align:left;padding:12px;border-bottom:1px solid #e2e8e4}.strandTable thead{background:#edf1ef}.strandTable tbody tr:nth-child(even){background:#f7f9f8}.strandTable td{font-variant-numeric:tabular-nums}.strandTable button{padding:5px 9px}@media(max-width:650px){.reportGrid{grid-template-columns:1fr}}@media print{.reportSwitch{display:none!important}}
+</style></head><body><header><div><h1>🧭 Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" href="?view=summary">Summary</a><a href="../teacher/">Teacher Hub</a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button id="saveTop" hidden>Submit and next</button></div>
 <section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><button id="save">Submit and next</button><span id="saveState" role="status" class="sub"></span></div></section>
 <dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
-<section id="reports" class="hidden"><div class="panel"><h2 id="reportHeading">Student progress</h2><div class="controls"><label>Report test<select id="reportTest"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button id="printReport" class="secondary">Print / save PDF</button></div><p class="sub">Results saved across four Maths Trek tests.</p><div class="cards" id="reportCards"></div><div id="reportTotal"></div><button id="export">Export class results (CSV)</button></div></section>
+<section id="reports" class="hidden"><div class="panel"><div class="toolbar reportSwitch" aria-label="Results view"><button id="studentView" class="active" aria-pressed="true">Student view</button><button id="classView" class="secondary" aria-pressed="false">Class view</button></div><h2 id="reportHeading">Student progress</h2><div class="controls"><label>Report test<select id="reportTest"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button id="printReport" class="secondary">Print / save PDF</button></div><div class="cards" id="reportCards"></div><div id="reportTotal"></div><div id="classReport" class="tableScroll" hidden></div><button id="export">Export class results (CSV)</button></div></section>
 </main><script src="./reporting.js"></script><script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev",code=localStorage.getItem("lategan_teacher_code")||"";
 const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1"};
@@ -136,19 +138,87 @@ async function save(){
  }catch(e){el("saveState").textContent="Save failed. Your draft is still here. "+e.message}
  finally{busy=false;setDisabled(false)}
 }
-function renderReports(){
- const rs=results.filter(r=>Number(r.student_id)===currentStudent()&&(!el("reportTest").value||Number(r.test||r.test_number)===Number(el("reportTest").value)));
- el("reportHeading").textContent=(students.find(s=>Number(s.id)===currentStudent())?.display_name||"Student")+" · progress";
- const root=el("reportCards");root.replaceChildren();
- for(let test=1;test<=4;test++){const r=results.find(x=>Number(x.student_id)===currentStudent()&&Number(x.test||x.test_number)===test);const card=document.createElement("div");card.className="mini";const h=document.createElement("div");h.textContent="Test "+test;const v=document.createElement("strong");v.textContent=r?mathsTrekSummary([r],metadata).total+" / 60":"Not marked";card.append(h,v);root.append(card)}
- const d=mathsTrekSummary(rs,metadata),box=el("reportTotal");box.replaceChildren();
- const line=text=>{const p=document.createElement("p");p.textContent=text;box.append(p)};
- const fraction=x=>x.max?x.score+" / "+x.max+" ("+Math.round(x.score/x.max*100)+"%)":"Not assessed";
- line(d.available?"Total: "+d.total+" / "+d.available+" ("+Math.round(d.total/d.available*100)+"%)":"No completed tests yet.");
- d.parts.forEach((x,i)=>line("Part "+(i+1)+": "+fraction(x)));
- for(const [key,label] of [["NA","Number & Algebra"],["MG","Measurement & Geometry"],["SP","Statistics & Probability"]])line(label+": "+fraction(d.strands[key]));
- for(const [title,items] of [["Strengths",d.strengths],["Areas to consolidate",d.growth]])line(title+": "+(items.length?items.map(x=>x.name+" ("+Math.round(x.pct*100)+"%)").join("; "):"Not enough evidence yet"));
+let classReportMode=false;
+const strandLabels=[["NA","Number & Algebra"],["MG","Measurement & Geometry"],["SP","Statistics & Probability"]];
+function reportNode(tag,text,css){
+ const node=document.createElement(tag);
+ if(text!=null)node.textContent=text;
+ if(css)node.className=css;
+ return node;
 }
+function reportPercent(score,max){return max?Math.round(score/max*100)+"%":"—"}
+function renderReports(){
+ const testFilter=el("reportTest").value;
+ const byStudent=new Map();
+ for(const r of results){
+  if(testFilter&&Number(r.test||r.test_number)!==Number(testFilter))continue;
+  const id=Number(r.student_id);
+  if(!byStudent.has(id))byStudent.set(id,[]);
+  byStudent.get(id).push(r);
+ }
+ const root=el("reportCards"),box=el("reportTotal"),classBox=el("classReport");
+ root.replaceChildren();box.replaceChildren();classBox.replaceChildren();
+ root.hidden=box.hidden=classReportMode;classBox.hidden=!classReportMode;
+ for(const [id,active] of [["classView",classReportMode],["studentView",!classReportMode]]){
+  el(id).className=active?"active":"secondary";el(id).setAttribute("aria-pressed",active);
+ }
+ if(classReportMode){
+  el("reportHeading").textContent=(el("class").selectedOptions[0]?.textContent||"Class")+" · strand overview";
+  classBox.append(reportNode("p","A dash means there are no submitted marks for that strand in the selected tests.","sub"));
+  const table=reportNode("table",null,"strandTable"),head=table.createTHead().insertRow();
+  for(const label of ["Student",...strandLabels.map(([,label])=>label)]){
+   const th=reportNode("th",label);th.scope="col";head.append(th);
+  }
+  const body=table.createTBody();
+  for(const student of students){
+   const row=body.insertRow(),cell=row.insertCell();
+   const button=reportNode("button",student.display_name,"secondary");
+   button.onclick=()=>{el("student").value=String(student.id);classReportMode=false;loadMarks()};
+   cell.append(button);
+   const d=mathsTrekSummary(byStudent.get(Number(student.id))||[],metadata);
+   for(const [key] of strandLabels){
+    const {score,max}=d.strands[key];row.insertCell().textContent=reportPercent(score,max);
+   }
+  }
+  if(!students.length)classBox.append(reportNode("p","No students in this class."));
+  else classBox.append(table);
+  return;
+ }
+ const id=currentStudent(),rs=byStudent.get(id)||[];
+ el("reportHeading").textContent=(students.find(s=>Number(s.id)===id)?.display_name||"Student")+" · progress";
+ for(let test=1;test<=4;test++){
+  const r=results.find(x=>Number(x.student_id)===id&&Number(x.test||x.test_number)===test);
+  const card=reportNode("div",null,"mini");
+  card.append(reportNode("div","Test "+test),reportNode("strong",r?mathsTrekSummary([r],metadata).total+" / 60":"Not marked"));
+  root.append(card);
+ }
+ const d=mathsTrekSummary(rs,metadata);
+ const hero=reportNode("div",null,"reportHero");
+ hero.append(reportNode("span","Overall result"),reportNode("strong",d.available?reportPercent(d.total,d.available):"Not marked"),reportNode("span",d.available?d.total+" / "+d.available+" marks · "+rs.length+" submitted "+(rs.length===1?"test":"tests"):"No submitted marks for this selection.","sub"));
+ const grid=reportNode("div",null,"reportGrid");
+ function metricCard(title,entries){
+  const card=reportNode("section",null,"mini");card.append(reportNode("h3",title));
+  for(const [label,{score,max}] of entries){
+   const metric=reportNode("div",null,"metric"),line=reportNode("label");
+   line.append(reportNode("span",label),reportNode("span",max?score+" / "+max+" · "+reportPercent(score,max):"—"));
+   metric.append(line);
+   if(max){const bar=reportNode("progress");bar.max=max;bar.value=score;bar.setAttribute("aria-label",label);metric.append(bar)}
+   card.append(metric);
+  }
+  return card;
+ }
+ grid.append(metricCard("Strands",strandLabels.map(([key,label])=>[label,d.strands[key]])),metricCard("Test parts",d.parts.map((part,i)=>["Part "+(i+1),part])));
+ const notes=reportNode("div",null,"reportGrid");
+ for(const [title,items] of [["Strengths",d.strengths],["Areas to consolidate",d.growth]]){
+  const card=reportNode("section",null,"mini");card.append(reportNode("h3",title));
+  if(items.length){const list=reportNode("ul");for(const x of items)list.append(reportNode("li",x.name+" ("+Math.round(x.pct*100)+"%)"));card.append(list)}
+  else card.append(reportNode("p","Not enough evidence yet","sub"));
+  notes.append(card);
+ }
+ box.append(hero,grid,notes);
+}
+el("studentView").onclick=()=>{classReportMode=false;renderReports()};
+el("classView").onclick=()=>{classReportMode=true;renderReports()};
 function exportCsv(){
  const group=groups.find(g=>"group:"+g.id===el("class").value);
  const eligible=students;
