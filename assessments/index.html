@@ -156,6 +156,13 @@ async function save(){
  if(busy||!ready||!currentStudent())return;
  const studentId=currentStudent(),test=currentTest(),snapshot=[...marks],key=draftKey();
  const picker=el("student"),next=(picker.selectedIndex+1)%picker.options.length;
+ // An untouched form is an unattempted test, not a zero result.
+ if(!dirty&&!existing()){
+  picker.selectedIndex=next;loadMarks();
+  el("saveState").textContent="Skipped · no marks entered for the previous student. No result saved.";
+  picker.closest(".panel").scrollIntoView({block:"start",behavior:"instant"});
+  return;
+ }
  busy=true;setDisabled(true);el("saveState").textContent="Saving…";
  try{
   const d=await post({action:"maths_trek_save",student_id:studentId,test_number:test,marks:snapshot});
