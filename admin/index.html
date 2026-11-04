@@ -66,6 +66,10 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 
 .hero{background:linear-gradient(115deg,#bdf2e0,#e8d5fa)!important}
 .teacher:hover{background:#effaf6}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
@@ -83,7 +87,7 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid 
 
 <div class="shell">
   <div class="top">
-    <div class="brand"><div class="logo">LH</div><div>Learning Hub · Admin</div></div>
+    <a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div>Learning Hub · Admin</div></a>
     <a class="back" href="../teacher/">← Teacher Hub</a>
   </div>
 
