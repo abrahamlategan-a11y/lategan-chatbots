@@ -607,6 +607,20 @@ button,input,select{font:inherit}button{cursor:pointer}.shell{max-width:1280px;m
 .saved-empty{border:1px dashed var(--line);border-radius:13px;padding:14px;color:var(--muted);font-size:12px;text-align:center}
 @media(max-width:700px){.saved-game-card{grid-template-columns:1fr}.saved-game-actions{justify-content:flex-start}}
 
+
+/* Learning Hub playful design consistency: styles only, gameplay untouched */
+:root{--bg:#fffefa;--panel:#fff;--ink:#17214c;--muted:#64708b;--line:#eeeaf3;--green:#3bc4a2;--deep:#172657;--soft:#e8f9f0;--sage:#c7f3e3;--lav:#e9d7fa;--gold:#ffe9ad;--shadow:0 8px 24px rgba(45,49,102,.065)}
+body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif}
+.logo{background:linear-gradient(135deg,#79e5ce,#3bc5a6)!important;color:#172450!important;border-radius:17px!important}
+.hero{background:linear-gradient(115deg,#bdf2e0,#e8d5fa)!important;color:#14204c!important;border-radius:26px!important}
+.hero h1{color:#14204c!important}.hero p{color:#495378!important}
+.panel,.card,.tile,.login-card,.modal-card{border-radius:23px;border-color:var(--line);box-shadow:var(--shadow)}
+.btn,.back,button{border-radius:13px}.btn.primary,button.primary{background:#526bd2!important;border-color:#526bd2!important;color:#fff!important}
+input,select,textarea{border-radius:12px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #a5e8d5;outline-offset:2px}
+
+/* Pirate game's mechanics, timers, balances and overlays remain unchanged */
+body{background:linear-gradient(180deg,#e8f9f1,#fffefa 58%)}.top{background:transparent}
 </style>
 </head>
 <body>
