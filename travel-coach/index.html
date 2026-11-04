@@ -493,7 +493,12 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif}
 .btn,.back,button{border-radius:13px}.btn.primary,button.primary{background:#526bd2!important;border-color:#526bd2!important;color:#fff!important}
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:3px solid #a5e8d5;outline-offset:2px}
-body{background:#fffefa}.app{background:radial-gradient(circle at 90% 0,#e8d7fa 0,transparent 26%),#fffefa}</style>
+body{background:#fffefa}.app{background:radial-gradient(circle at 90% 0,#e8d7fa 0,transparent 26%),#fffefa}
+/* Learning Hub clickable home wordmark */
+.hub-brand-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none!important;color:#172451!important;font-weight:900;font-size:15px;cursor:pointer}
+.hub-brand-link:hover{opacity:.8}.hub-brand-link:focus-visible{outline:3px solid #6ddcbf;outline-offset:3px;border-radius:10px}
+.hub-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#5bd6bc;color:#13234e;font-size:17px;font-weight:950}
+</style>
 </head>
 
 <body>
@@ -502,10 +507,10 @@ body{background:#fffefa}.app{background:radial-gradient(circle at 90% 0,#e8d7fa 
 
 <aside class="sidebar">
 
-  <div class="brand">
-    <div class="logo">TC</div>
-    <div>Travel Coach</div>
-  </div>
+  <a class="brand hub-brand-link" href="../student/" aria-label="Student Learning Hub home">
+    <div class="logo">LH</div>
+    <div>Learning Hub</div>
+  </a>
 
   <a class="back" href="../">← Back to hub</a>
 
