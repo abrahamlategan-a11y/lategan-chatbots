@@ -325,7 +325,7 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
       <div class="topbar">
         <div>
           <div class="eyebrow">✦ Your classroom dashboard</div>
-          <h1 id="welcomeHeading">Good morning.</h1>
+          <h1 id="welcomeHeading">Hello.</h1>
           <div class="sub">Ready for a great day with your class?</div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end">
@@ -778,7 +778,7 @@ async function login(){
     localStorage.setItem("lategan_teacher_code",code);
     $("teacherName").textContent=teacher.display_name||"Teacher";
     $("teacherClass").textContent=teacher.class_name||"";
-    $("welcomeHeading").textContent=`Good morning, ${teacher.display_name||"Teacher"}.`;
+    updateGreeting();
     $("studentClass").value=teacher.class_name||"";
     $("adminNav").style.display=Number(teacher.is_admin)===1?"flex":"none";
     renderClassSwitcher();
@@ -1246,6 +1246,15 @@ $("assessmentsTile").onclick=()=>{location.href="../assessments/"};
 
 $("morningNav")?.addEventListener("click",()=>{location.href="../morning/?role=teacher"});
 $("morningTile")?.addEventListener("click",()=>{location.href="../morning/?role=teacher"});
+function updateGreeting(){
+  const hour=new Date().getHours();
+  const greeting=hour<12?"Good morning":hour<18?"Good afternoon":"Good evening";
+  const name=teacher?(teacher.display_name||"Teacher"):"";
+  $("welcomeHeading").textContent=greeting+(name?`, ${name}.`:".");
+}
+updateGreeting();
+setInterval(updateGreeting,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)updateGreeting()});
 </script>
 </body>
 </html>
