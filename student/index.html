@@ -119,6 +119,10 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink)
 input,select,textarea{border-radius:12px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
 body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffefa}.hero{background:linear-gradient(110deg,#b9f4df,#e9d6fa)!important}.student-chip{border-radius:18px}.tile,.bot-card,.botcard{border-radius:24px;box-shadow:var(--shadow)}.tile:nth-child(4n+1){background:#ffefbd}.tile:nth-child(4n+2){background:#d2ecff}.tile:nth-child(4n+3){background:#e8d5fa}.tile:nth-child(4n){background:#c8f2e3}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
@@ -148,7 +152,7 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
 
 <div class="shell">
   <div class="top">
-    <div class="brand"><div class="logo">LH</div><div>Learning Hub</div></div>
+    <a class="brand hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><div class="logo">LH</div><div>Learning Hub</div></a>
     <div class="student-actions">
       <div class="student-chip" id="studentChip">Student</div>
       <button class="switch-btn" id="switchStudentBtn" type="button">Switch student</button>
