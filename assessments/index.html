@@ -35,7 +35,7 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .hub-brand-link{display:inline-flex;align-items:center;gap:10px;text-decoration:none!important;cursor:pointer}
 .hub-brand-link:focus-visible{outline:3px solid #75ddc6;outline-offset:4px}
 
-.studentTiles{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px}.studentTiles button{background:#f5effc;color:#26205c;border:2px solid transparent;padding:12px 17px}.studentTiles button[aria-pressed="true"]{background:#c9f3e5;border-color:#239c7b;color:#112f37;box-shadow:0 3px 0 #a7dfcd}.studentTiles button:focus-visible{outline:3px solid #5569cf;outline-offset:3px}.reportFilters{margin:20px 0;padding:16px;background:#faf8fd;border-radius:17px}.reportFilters p{flex-basis:100%;margin:3px 0 0;font-size:.9rem}.reportActions{margin-top:20px}#reportScope{margin-top:-5px}.cards:has(>.mini:only-child){grid-template-columns:minmax(180px,1fr)}
+.studentTiles{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px}.studentTiles button{background:#f5effc;color:#26205c;border:2px solid transparent;padding:12px 17px}.studentTiles button[aria-pressed="true"]{background:#c9f3e5;border-color:#239c7b;color:#112f37;box-shadow:0 3px 0 #a7dfcd}.studentTiles button:focus-visible{outline:3px solid #5569cf;outline-offset:3px}.reportFilters{margin:20px 0;padding:16px;background:#faf8fd;border-radius:17px}.reportFilters p{flex-basis:100%;margin:3px 0 0;font-size:.9rem}#classTestButtons{margin-top:9px}#classTestButtons button{border:2px solid transparent}#classTestButtons button[aria-pressed="true"]{border-color:#239c7b}#classTestButtons button:focus-visible{outline:3px solid #5569cf;outline-offset:3px}.reportActions{margin-top:20px}#reportScope{margin-top:-5px}.cards:has(>.mini:only-child){grid-template-columns:minmax(180px,1fr)}
 @media print{#studentPicker,.studentTiles,.reportFilters,.reportActions{display:none!important}#reportScope{color:#111}.strandTable{min-width:0;font-size:10px}.strandTable th,.strandTable td{padding:7px}.strandTable button{background:none;color:inherit;padding:0}.panel{break-inside:auto}.mini,.reportHero{break-inside:avoid}.strandTable thead{display:table-header-group}}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
@@ -46,7 +46,7 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
 <h2 id="reportHeading">Student progress</h2><p id="reportScope" class="sub" aria-live="polite"></p>
 <div class="cards" id="reportCards"></div><div id="reportTotal"></div>
-<div class="controls reportFilters"><label>Show results for<select id="reportTest" aria-describedby="filterHelp"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><button id="printReport" class="secondary">Print / save PDF</button><p id="filterHelp" class="sub">Applies to the entire report: scores, overall result, strands, test parts, strengths and areas to consolidate.</p></div>
+<div class="controls reportFilters"><label id="studentTestFilter">Show results for<select id="reportTest" aria-describedby="filterHelp"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><div id="classTestFilter" hidden><strong>Include tests in class results</strong><div id="classTestButtons" class="testButtons" role="group" aria-label="Tests included in class results"></div></div><button id="printReport" class="secondary">Print / save PDF</button><p id="filterHelp" class="sub">Applies to the entire report: scores, overall result, strands, test parts, strengths and areas to consolidate.</p></div>
 <div id="reportDetails"></div><div id="classReport" class="tableScroll" hidden></div>
 <div class="toolbar reportActions"><button id="classView" class="secondary" aria-pressed="false">Whole class summary</button><button id="studentView" class="secondary" hidden>← Back to student results</button><button id="export" hidden>Export class results (CSV)</button></div>
 </div></section>
@@ -185,6 +185,10 @@ async function save(){
  finally{busy=false;setDisabled(false)}
 }
 let classReportMode=false;
+const classTests=new Set([1,2,3,4]);
+function selectedReportTests(){
+ return classReportMode?[1,2,3,4].filter(test=>classTests.has(test)):el("reportTest").value?[Number(el("reportTest").value)]:[1,2,3,4];
+}
 const strandLabels=[["NA","Number & Algebra"],["MG","Measurement & Geometry"],["SP","Statistics & Probability"]];
 function reportNode(tag,text,css){
  const node=document.createElement(tag);
@@ -195,7 +199,18 @@ function reportNode(tag,text,css){
 function reportPercent(score,max){return max?Math.round(score/max*100)+"%":"—"}
 function renderReports(){
  const testFilter=el("reportTest").value;
- const scope=testFilter?"Test "+testFilter+" only":"All completed tests";
+ const selectedTests=selectedReportTests();
+ const scope=classReportMode?(selectedTests.length===4?"All completed tests":selectedTests.length?"Included: "+selectedTests.map(test=>"Test "+test).join(" + "):"No tests selected"):(testFilter?"Test "+testFilter+" only":"All completed tests");
+ el("studentTestFilter").hidden=classReportMode;el("classTestFilter").hidden=!classReportMode;
+ const testButtons=el("classTestButtons");testButtons.replaceChildren();
+ for(let test=1;test<=4;test++){
+  const button=reportNode("button","Test "+test,classTests.has(test)?"active":"secondary");
+  button.setAttribute("aria-pressed",classTests.has(test));
+  button.onclick=()=>{classTests.has(test)?classTests.delete(test):classTests.add(test);renderReports()};
+  testButtons.append(button);
+ }
+ el("filterHelp").textContent=classReportMode?"Select or deselect tests. Only selected tests contribute to overall results, strand percentages, printed reports and CSV exports. Unmarked tests are excluded.":"Applies to the entire report: scores, overall result, strands, test parts, strengths and areas to consolidate.";
+ el("export").disabled=!selectedTests.length;
  el("reportScope").textContent=scope+" · "+(el("class").selectedOptions[0]?.textContent||"Class");
  const tiles=el("studentTiles");tiles.replaceChildren();tiles.hidden=classReportMode;
  for(const student of students){
@@ -208,7 +223,7 @@ function renderReports(){
  const details=el("reportDetails");details.replaceChildren();details.hidden=classReportMode;
  const byStudent=new Map();
  for(const r of results){
-  if(testFilter&&Number(r.test||r.test_number)!==Number(testFilter))continue;
+  if(!selectedTests.includes(Number(r.test||r.test_number)))continue;
   const id=Number(r.student_id);
   if(!byStudent.has(id))byStudent.set(id,[]);
   byStudent.get(id).push(r);
@@ -219,9 +234,10 @@ function renderReports(){
  el("classView").setAttribute("aria-pressed",classReportMode);
  if(classReportMode){
   el("reportHeading").textContent=(el("class").selectedOptions[0]?.textContent||"Class")+" · whole class summary";
-  classBox.append(reportNode("p","A dash means there are no submitted marks for that strand in the selected tests.","sub"));
+  if(!selectedTests.length){classBox.append(reportNode("p","Select at least one test above to show class results.","sub"));return}
+  classBox.append(reportNode("p","A dash means there are no submitted marks in the selected tests. Overall and strand percentages use only completed, selected tests.","sub"));
   const table=reportNode("table",null,"strandTable"),head=table.createTHead().insertRow();
-  for(const label of ["Student",...(testFilter?["Test "+testFilter]:["Test 1","Test 2","Test 3","Test 4"]),"Overall",...strandLabels.map(([,label])=>label)]){
+  for(const label of ["Student",...selectedTests.map(test=>"Test "+test),"Overall",...strandLabels.map(([,label])=>label)]){
    const th=reportNode("th",label);th.scope="col";head.append(th);
   }
   const body=table.createTBody();
@@ -231,7 +247,7 @@ function renderReports(){
    button.onclick=()=>{el("student").value=String(student.id);classReportMode=false;loadMarks()};
    cell.append(button);
    const records=byStudent.get(Number(student.id))||[];
-   for(const test of (testFilter?[Number(testFilter)]:[1,2,3,4])){
+   for(const test of selectedTests){
     const record=records.find(r=>Number(r.test||r.test_number)===test);
     row.insertCell().textContent=record?mathsTrekSummary([record],metadata).total+" / 60":"—";
    }
@@ -286,7 +302,7 @@ function exportCsv(){
  const eligible=students;
  const rows=[["Student","Class","Test","Part 1 /24","Part 2 /24","Part 3 /12","Total /60","Percentage","NA score","NA available","MG score","MG available","SP score","SP available","Strengths","Areas to consolidate"]];
  for(const s of eligible)for(let test=1;test<=4;test++){
-  if(el("reportTest").value&&test!==Number(el("reportTest").value))continue;
+  if(!selectedReportTests().includes(test))continue;
   const r=results.find(x=>Number(x.student_id)===Number(s.id)&&Number(x.test||x.test_number)===test);
   if(!r){rows.push([s.display_name,s.class_name||"",test,...Array(13).fill("")]);continue}
   const d=mathsTrekSummary([r],metadata);rows.push([s.display_name,s.class_name||"",test,...d.parts.map(x=>x.score),d.total,Math.round(d.total/60*100),...Object.values(d.strands).flatMap(x=>[x.score,x.max]),d.strengths.map(x=>x.name).join("; "),d.growth.map(x=>x.name).join("; ")]);
