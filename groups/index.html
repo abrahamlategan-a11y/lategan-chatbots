@@ -104,14 +104,17 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 /* Clickable Learning Hub wordmark: returns to the appropriate hub */
 .hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
 .hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
+
+/* Separate destinations: hide the shared tool switcher while keeping both tool engines intact */
+.tabs[hidden]{display:none!important}
 </style>
 </head>
 <body>
 <div class="shell">
   <div class="top"><a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div>Learning Hub · Groups</div></a><a href="../teacher/">⌂ Teacher Hub</a></div>
   <div class="hero">
-    <h1>Groups</h1>
-    <p>Make quick working groups or keep permanent job groups for your class.</p>
+    <h1 id="toolPageTitle">Group Maker</h1>
+    <p id="toolPageDescription">Create quick, flexible groups for your class.</p>
     <div class="classbar">
       <span class="label">Class</span>
       <select id="groupsClassSwitcher"></select>
@@ -119,7 +122,7 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="tabs" hidden aria-hidden="true">
     <button class="tab on" data-view="quick">Group Maker</button>
     <button class="tab" data-view="jobs">Classroom Jobs</button>
   </div>
@@ -222,6 +225,13 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
 });
 
 if(new URLSearchParams(location.search).get("view")==="jobs")document.querySelector('.tab[data-view="jobs"]').click();
+const isClassroomJobs=new URLSearchParams(location.search).get("view")==="jobs";
+document.getElementById("toolPageTitle").textContent=isClassroomJobs?"Classroom Jobs":"Group Maker";
+document.getElementById("toolPageDescription").textContent=isClassroomJobs
+  ?"Manage your classroom jobs and permanent job groups."
+  :"Create quick, flexible groups for your class.";
+document.querySelector(".top .hub-brand-link").lastElementChild.textContent=isClassroomJobs?"Learning Hub · Classroom Jobs":"Learning Hub · Group Maker";
+
 
 function renderQuickStudentChecks(){
   const active=activeStudents();
