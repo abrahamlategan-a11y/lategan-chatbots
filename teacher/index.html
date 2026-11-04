@@ -214,6 +214,59 @@ body{background:radial-gradient(circle at 95% 0%,#ebebff 0,transparent 35%),var(
 .panelhead,th{background:#fbfcff}.badge.live,.status{background:#eaf0ff;color:#3455b1}
 input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #dce5ff;outline-offset:1px}
 @media(max-width:620px){.main{background:transparent}.tile{min-height:155px}}
+
+/* Approved mascot-and-pastel dashboard design, phase 1: visual presentation */
+:root{--bg:#fffefa;--ink:#101b4b;--muted:#59617b;--line:#f0edf0;--green:#34c9a7;--green-dark:#102151;--green-soft:#b6f3df;--shadow:0 8px 25px rgba(51,46,88,.035)}
+body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif}
+.sidebar{width:272px;background:#fffefa;border-right:1px solid #f3f0ec;padding:32px 13px 16px;box-shadow:none}
+.main{margin-left:272px;width:calc(100% - 272px);padding:48px 34px 50px}
+.brand{font-size:22px;line-height:1.05;letter-spacing:-.045em;margin:6px 12px 40px;color:#111a4a}
+.brand .logo{width:66px;height:61px;border-radius:22px;background:linear-gradient(130deg,#74e3ce,#2fc8aa);color:#11234d;font-size:25px;transform:rotate(-5deg);box-shadow:none}
+.nav button{color:#151d48;font-size:15px;font-weight:800;padding:14px 13px;border-radius:16px}
+.nav button.active{background:linear-gradient(90deg,#a9f1df,#9be9d3);color:#13234c}
+.hub-nav-group{margin-top:15px;border-bottom:1px solid #f0eeed;padding-bottom:16px}
+.hub-nav-group summary,.hub-nav-group[open] summary{background:transparent;color:#17214e;border-radius:13px;font-size:16px;font-weight:900;padding:12px 14px}
+.hub-nav-group summary:hover{background:#effbf5}.hub-nav-group .nav button{font-size:13px;font-weight:700;padding:10px 16px}
+.account{background:#faf7f2;border:0;border-radius:18px;padding:16px;margin-top:auto}
+#section-home .topbar{position:relative;min-height:194px;padding:20px 12px 20px 250px;margin:0 0 18px;align-items:flex-start;background:radial-gradient(ellipse at 15% 80%,#d9f8ee 0,#d9f8ee 21%,transparent 22%),radial-gradient(ellipse at 94% 0,#dcf9f1 0,#dcf9f1 13%,transparent 14%);border-radius:25px}
+#section-home .topbar:before{content:"🌵";position:absolute;left:32px;bottom:-7px;font-size:128px;line-height:1;filter:drop-shadow(0 8px 0 #d3f7e9);transform:rotate(-10deg)}
+#section-home .topbar .eyebrow{display:none}
+#section-home h1{font-size:clamp(32px,3.7vw,54px);font-weight:1000;letter-spacing:-.05em;line-height:1.12;color:#111a4a;margin:2px 0 10px}
+#section-home .sub{font-size:22px;color:#18234d}
+#section-home .class-switcher{position:relative;z-index:2}
+#section-home .class-switcher select{border-radius:15px;border:2px solid #d9d9dd;font-size:16px;color:#15214c}
+.classroom-launch{padding:0!important;margin:0!important;background:transparent!important;border-radius:0!important}
+.classroom-launch h2{font-size:29px!important;color:#111a4a!important;margin:0 0 16px!important;letter-spacing:-.04em}
+.classroom-launch>p{display:none}
+.classroom-launch .tilegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:15px!important}
+.classroom-launch .tile{position:relative;min-height:186px!important;padding:27px 24px 24px 47%!important;display:flex;justify-content:center;border:0!important;box-shadow:none!important;border-radius:30px!important;overflow:hidden}
+.classroom-launch .tile:nth-child(1){background:#ffedb6!important}
+.classroom-launch .tile:nth-child(2){background:#ffc9c8!important}
+.classroom-launch .tile:nth-child(3){background:#afe4ff!important}
+.classroom-launch .tile:nth-child(4){background:#e5c6fa!important}
+.classroom-launch .tile-icon{position:absolute;left:5%;top:17%;height:68%;width:38%;display:grid;place-items:center;background:rgba(255,255,255,.32)!important;border-radius:35px!important;font-size:76px!important;transform:rotate(-8deg);margin:0;color:#121b4a}
+.classroom-launch .tile h3{font-size:clamp(20px,2.5vw,32px)!important;line-height:1.1;letter-spacing:-.04em;color:#131d4c;margin:0}
+.classroom-launch .tile p{display:none!important}
+.classroom-launch .tile-foot{position:absolute;right:20px;top:calc(50% - 21px);margin:0;padding:0;width:42px;height:42px;background:#fff;border-radius:50%;display:grid;place-items:center;font-size:0;color:#17234c}
+.classroom-launch .tile-foot:after{content:"➜";font-size:24px}
+.classroom-launch .tile h3{padding-right:34px}
+#section-home>.hub-home-group{margin-top:23px}
+#section-home>.hub-home-group>summary{font-size:24px;font-weight:1000;letter-spacing:-.04em;color:#121b4a;background:transparent;padding:6px 0 14px}
+#section-home>.hub-home-group>.tilegrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#section-home>.hub-home-group>.tilegrid>.tile{min-height:94px;border:0;border-radius:20px;box-shadow:none;padding:14px 16px;display:flex;flex-direction:row;align-items:center;gap:10px;justify-content:space-between}
+#section-home>.hub-home-group>.tilegrid>.tile:nth-child(4n+1){background:#b8f3e2}
+#section-home>.hub-home-group>.tilegrid>.tile:nth-child(4n+2){background:#e9d7fa}
+#section-home>.hub-home-group>.tilegrid>.tile:nth-child(4n+3){background:#ffebbc}
+#section-home>.hub-home-group>.tilegrid>.tile:nth-child(4n){background:#c9eaff}
+#section-home>.hub-home-group>.tilegrid>.tile .tile-icon{font-size:25px;margin:0;background:transparent}
+#section-home>.hub-home-group>.tilegrid>.tile h3{font-size:15px;margin:0;line-height:1.15}
+#section-home>.hub-home-group>.tilegrid>.tile p{display:none}
+#section-home>.hub-home-group>.tilegrid>.tile .tile-foot{font-size:0;padding:0;margin:0}
+#section-home>.hub-home-group>.tilegrid>.tile .tile-foot:after{content:"➜";font-size:20px}
+.section:not(#section-home) .sectionhead{background:linear-gradient(110deg,#dff9ef,#f4e5ff);border:0;border-radius:24px}
+@media(max-width:1100px){#section-home .topbar{padding-left:150px}#section-home .topbar:before{font-size:90px}.classroom-launch .tile{padding-left:42%!important}.classroom-launch .tile-icon{font-size:50px!important}#section-home>.hub-home-group>.tilegrid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:780px){.sidebar{width:210px}.main{margin-left:210px;width:calc(100% - 210px);padding:25px 18px}.brand{font-size:18px}#section-home .topbar{padding:28px 14px 28px 90px;min-height:150px}#section-home .topbar:before{font-size:65px;left:7px}#section-home .sub{font-size:16px}.classroom-launch .tilegrid{grid-template-columns:1fr!important}.classroom-launch .tile{min-height:148px!important}}
+@media(max-width:620px){.sidebar{display:none}.main{margin:0;width:100%;padding:20px 14px}#section-home .topbar{padding-left:85px}#section-home h1{font-size:30px}.classroom-launch .tilegrid{grid-template-columns:1fr!important}#section-home>.hub-home-group>.tilegrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
@@ -233,7 +286,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="logo">LH</div><div>Learning Hub</div></div>
+    <div class="brand"><div class="logo">LH</div><div>Learning<br>Hub</div></div>
 <div class="nav"><button class="active" data-section="home"><span class="ico">⌂</span>Home</button></div>
 <details class="hub-nav-group"><summary>Classroom</summary><div class="nav"><button id="morningNav"><span class="ico">☀</span>Good Morning</button>
 <button id="instructionsNav"><span class="ico">☷</span>Instructions Board</button>
@@ -261,9 +314,9 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
     <section class="section active" id="section-home">
       <div class="topbar">
         <div>
-          <div class="eyebrow">Teacher Learning Hub</div>
+          <div class="eyebrow">✦ Your classroom dashboard</div>
           <h1 id="welcomeHeading">Good morning.</h1>
-          <div class="sub">Pick a classroom tool to get started.</div>
+          <div class="sub">Ready for a great day with your class?</div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end">
           
@@ -274,7 +327,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
           </div>
         </div>
       </div>
-      <div class="classroom-launch"><h2>Classroom</h2><p>Ready for your next lesson.</p><div class="tilegrid"><div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
+      <div class="classroom-launch"><h2>✨ Let’s get started</h2><p><div class="tilegrid"><div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
 <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
 <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
 <div class="tile clickable" id="whiteboardsTile"><div class="tile-icon">✎</div><h3>Student Whiteboards</h3><p>See every student's live whiteboard, use Frost Mode, zoom in and save learning evidence.</p><div class="tile-foot">Open whiteboards →</div></div></div></div>
