@@ -54,6 +54,20 @@ canvas{width:100%;height:100%;display:block;touch-action:none;background:white}
 .layout-choice{display:flex;gap:8px;flex-wrap:wrap}
 .layout-choice label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12px;font-weight:800;cursor:pointer}
 .layout-choice input{accent-color:var(--green)}@media(max-width:900px){.stage{grid-template-columns:1fr}.canvaspanel{min-height:420px}.instruction-title{font-size:34px}.step{font-size:19px}}
+
+/* Learning Hub mock-up inspired visual system. Presentation-only. */
+:root{--bg:#fffefa;--panel:#fff;--ink:#121d4b;--muted:#64708b;--line:#ede9f3;--green:#3dc5a4;--deep:#172554;--sage:#c5f3e3;--mint:#c5f3e3;--lav:#e9d7fb;--gold:#ffe9ad;--yellow:#ffefbd;--blue:#c9eaff;--soft:#effaf5;--shadow:0 8px 25px rgba(45,49,102,.055)}
+body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:var(--ink);background-color:var(--bg)}
+.logo{background:linear-gradient(135deg,#7be7cd,#3cc8ab)!important;color:#152452!important;border-radius:16px!important;box-shadow:none!important}
+.hero{background:linear-gradient(115deg,#b8f2df,#ead6fa)!important;color:#14204c!important;border-radius:26px!important;box-shadow:none!important}
+.hero h1{color:#14204c!important}.hero p{color:#485376!important}
+.panel,.card,.empty-card,.group-card,.job-card,.board-card,.toolbar,.pool,.login-card,.modal-card,.zoom-card{border-radius:23px;box-shadow:var(--shadow);border-color:var(--line)}
+.btn,.back,.tool,.tab,.teacher,button.secondary{border-radius:13px}
+.btn.primary,button.primary{background:#526bd2!important;border-color:#526bd2!important;color:white!important}
+.top a,.back{color:#152454;text-decoration:none}
+input,select,textarea{border-radius:12px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid #a9e8d7;outline-offset:2px}
+.page{background:linear-gradient(130deg,#c5f3e3,#e8d5fa)}.top{color:#16214c}.top small{color:#465276}.badge{background:#ffedb5}.tool{background:#fff;color:#17234f;border-color:#e5ddf0}.panel{background:#fffefa}.step{background:#e8d7fa}.step:nth-child(even){background:#c7f3e2}.num{background:#d3b2f5}.step:nth-child(even) .num{background:#9be8cf}.timer{background:#5966b8}.expand-btn{color:#162451}
 </style>
 </head>
 <body>
