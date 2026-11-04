@@ -100,11 +100,15 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 .group-card:nth-child(4n+4) .group-head,.job-card:nth-child(4n+4) .job-head{background:#cbeafd}
 .chip,.student-check{background:#f8f5ff;border-color:#eae5f6}
 @media print{body{background:#fff}}
+
+/* Clickable Learning Hub wordmark: returns to the appropriate hub */
+.hub-brand-link{display:flex;align-items:center;gap:11px;text-decoration:none!important;color:var(--ink,#15234d)!important;cursor:pointer}
+.hub-brand-link:hover{opacity:.86}.hub-brand-link:focus-visible{outline:3px solid #79dec5;outline-offset:4px;border-radius:15px}
 </style>
 </head>
 <body>
 <div class="shell">
-  <div class="top"><div class="brand"><div class="logo">LH</div><div>Learning Hub · Groups</div></div><a href="../teacher/">⌂ Teacher Hub</a></div>
+  <div class="top"><a class="brand hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><div class="logo">LH</div><div>Learning Hub · Groups</div></a><a href="../teacher/">⌂ Teacher Hub</a></div>
   <div class="hero">
     <h1>Groups</h1>
     <p>Make quick working groups or keep permanent job groups for your class.</p>
