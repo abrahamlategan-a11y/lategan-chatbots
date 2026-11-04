@@ -29,10 +29,15 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .hub-brand-link{display:inline-flex;align-items:center;gap:8px;text-decoration:none!important;color:#172451!important;font-weight:900;font-size:15px;cursor:pointer}
 .hub-brand-link:hover{opacity:.8}.hub-brand-link:focus-visible{outline:3px solid #6ddcbf;outline-offset:3px;border-radius:10px}
 .hub-mark{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#5bd6bc;color:#13234e;font-size:17px;font-weight:950}
+
+/* Shared house-shaped hub home logo */
+.hub-brand-link .logo,.hub-brand-link .hub-mark{display:inline-grid!important;place-items:center!important;flex:0 0 52px!important;width:52px!important;height:54px!important;padding:12px 3px 0!important;box-sizing:border-box!important;background:#58d5bb!important;color:#142450!important;border:0!important;border-radius:0!important;clip-path:polygon(50% 0%,100% 37%,90% 37%,90% 100%,10% 100%,10% 37%,0% 37%)!important;transform:none!important;box-shadow:none!important;font-size:16px!important;font-weight:900!important;line-height:1!important}
+.hub-brand-link{display:inline-flex;align-items:center;gap:10px;text-decoration:none!important;cursor:pointer}
+.hub-brand-link:focus-visible{outline:3px solid #75ddc6;outline-offset:4px}
 </style>
 </head>
 <body>
-<section class="join" id="joinView"><div class="card"><a class="hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><span class="logo">LH</span><span>Learning Hub</span></a><h1>Join a whiteboard</h1><p>You do not need a Learning Hub account. Enter the session code from the teacher and your first name.</p><div class="field"><label>Session code</label><input class="code" id="code" maxlength="5" placeholder="ABCDE"></div><div class="field"><label>Your name</label><input id="name" maxlength="40" placeholder="e.g. Sam"></div><button class="btn primary" id="joinBtn" style="width:100%;margin-top:6px">Join whiteboard</button></div></section>
+<section class="join" id="joinView"><div class="card"><a class="hub-brand-link" href="../student/" aria-label="Student Learning Hub home"><span class="logo">SH</span><span>Student Hub</span></a><h1>Join a whiteboard</h1><p>You do not need a Learning Hub account. Enter the session code from the teacher and your first name.</p><div class="field"><label>Session code</label><input class="code" id="code" maxlength="5" placeholder="ABCDE"></div><div class="field"><label>Your name</label><input id="name" maxlength="40" placeholder="e.g. Sam"></div><button class="btn primary" id="joinBtn" style="width:100%;margin-top:6px">Join whiteboard</button></div></section>
 <section class="board-app" id="boardApp">
   <div class="top"><div><span class="name" id="displayName">Guest</span> <span class="pill" id="sessionPill">Guest</span></div><button class="btn primary" id="shareBtn">🙋 Ask to share</button></div>
   <div class="frost" id="frostNote">❄️ Your answer is hidden until the teacher reveals it.</div>
