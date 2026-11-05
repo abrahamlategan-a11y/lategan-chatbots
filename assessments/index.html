@@ -92,6 +92,11 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 #markingActions .sectionTotalsTop{display:flex;flex-wrap:wrap;gap:7px}
 #markingActions #saveState{flex-basis:100%;font-size:13px;line-height:1.3}
 @media(max-width:680px){#markingActions{top:0;padding:10px;gap:7px;border-radius:14px}#markingActions .sectionTotalsTop span{font-size:12px;padding:6px 8px}#markingActions #saveOnlyTop,#markingActions #saveTop{min-height:38px}}
+
+/* Prominent section score badges in the single sticky marking toolbar */
+#markingActions .sectionTotalsTop span{font-size:16px;font-weight:900;padding:12px 15px;border-radius:13px;background:#e8ddfa;color:#17244b;box-shadow:inset 0 0 0 1px #ded1f6}
+#markingActions #totalTop{font-size:20px;font-weight:900;padding:12px 17px;background:#dff7ee;color:#103e3b;border-radius:13px}
+@media(max-width:680px){#markingActions .sectionTotalsTop span{font-size:14px;padding:9px 10px}#markingActions #totalTop{font-size:17px;padding:9px 12px}}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek Data</h1><small>Learning Hub · Assessment marking and results</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button></div><div id="markingActions" class="panel markingActions" hidden><div id="sectionTotalsTop" class="sectionTotalsTop" aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop">Save and next</button><span id="saveState" role="status" class="sub"></span></div>
@@ -170,8 +175,7 @@ function render(){
   const panel=document.createElement("section");panel.className="panel";
   const title=document.createElement("h2");title.textContent="Part "+(part+1);
   const all=document.createElement("button");all.className="secondary";all.textContent="Mark all correct";
-  const score=document.createElement("div");score.className="partScore";
-  const update=()=>score.textContent=marks.slice(from,to).reduce((sum,n)=>sum+n,0)+" / "+((to-from)*max);
+
   all.onclick=()=>{marks.fill(max,from,to);saveDraft();render()};
   panel.append(title,all);
   for(let i=from;i<to;i++){
@@ -182,11 +186,11 @@ function render(){
     const button=document.createElement("button");button.textContent=n;
     button.setAttribute("aria-label","Question "+(i+1)+", "+n+" marks");
     const select=()=>{for(const item of controls.children){const active=Number(item.textContent)===marks[i];item.className=active?"active":"secondary";item.setAttribute("aria-pressed",active)}};
-    button.onclick=()=>{marks[i]=n;select();update();saveDraft()};controls.append(button);select();
+    button.onclick=()=>{marks[i]=n;select();saveDraft()};controls.append(button);select();
    }
    row.append(label,controls);panel.append(row);
   }
-  update();panel.append(score);root.append(panel);
+  root.append(panel);
  });
  el("saveTop").disabled=el("saveOnlyTop").disabled=!ready;
  updateLiveTotal();
