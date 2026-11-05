@@ -49,7 +49,7 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 @media(max-width:550px){.completionGrid{grid-template-columns:1fr}}
 
 .liveTotal{display:inline-flex;align-items:center;border-radius:13px;padding:11px 15px;background:#e1f8ee;color:#143c44;font-size:19px;font-weight:900;white-space:nowrap}
-#saveOnly,#saveOnlyTop{background:#35b99d;color:#12274b;font-weight:850}
+#saveOnlyTop{background:#35b99d;color:#12274b;font-weight:850}
 #saveState{font-weight:700}
 
 /* Results tiles double as shortcuts to the corresponding student's marking screen */
@@ -76,10 +76,17 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .sectionTotalsTop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sectionTotalsTop span{display:inline-block;padding:9px 11px;border-radius:11px;background:#f0ebfa;color:#17244b;font-size:14px;font-weight:800;white-space:nowrap}
 .sectionTotalsTop[hidden]{display:none!important}
+
+.markingActions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 18px;border-radius:22px;background:#fff;border:1px solid #e6e4f0;box-shadow:0 3px 15px #17274b0a}
+.markingActions[hidden]{display:none!important}
+.markingActions .sectionTotalsTop{display:flex;gap:7px;flex-wrap:wrap}
+.markingActions .sectionTotalsTop span{background:#f0ebfa}
+.markingActions #totalTop{margin-right:2px}
+.markingActions #saveState{font-size:14px}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek Data</h1><small>Learning Hub · Assessment marking and results</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
-<div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button><div id="sectionTotalsTop" class="sectionTotalsTop" hidden aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop" hidden>Save and next</button></div>
-<section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><strong id="totalBottom" class="liveTotal">Total: 0 / 60</strong><button id="saveOnly">Save</button><button id="save">Save and next</button><span id="saveState" role="status" class="sub"></span></div></section>
+<div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button></div><div id="markingActions" class="panel markingActions" hidden><div id="sectionTotalsTop" class="sectionTotalsTop" aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop">Save and next</button><span id="saveState" role="status" class="sub"></span></div>
+<section id="marking" hidden><div class="grid" id="columns"></div></section>
 <dialog id="rollPanel"><h2>Arrange class roll</h2><p class="sub">Use the arrows to put students in your preferred roll order. Only first names are shown. Changes are saved on this device.</p><div id="rollNames" class="rollNames"></div><div class="toolbar"><button type="button" id="saveRoll">Save roll order</button><button type="button" id="alphabeticalRoll" class="secondary">Reset to alphabetical</button><button type="button" id="closeRoll" class="secondary">Cancel</button></div></dialog><dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Marked</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
@@ -127,7 +134,7 @@ function loadMarks(){
  if(!summaryPage&&currentStudent())try{const draft=JSON.parse(localStorage.getItem(draftKey()));if(Array.isArray(draft)&&draft.length===40){marks=draft;dirty=true}}catch{}
  render();if(summaryPage)renderReports();
 }
-function updateLiveTotal(){const total=marks.reduce((sum,n)=>sum+Number(n||0),0);el("totalTop").textContent="Total: "+total+" / 60";el("totalBottom").textContent="Total: "+total+" / 60";for(let i=0;i<parts.length;i++){const [from,to,max]=parts[i];const score=marks.slice(from,to).reduce((sum,n)=>sum+Number(n||0),0);el("part"+(i+1)+"Top").textContent="Part "+(i+1)+": "+score+" / "+((to-from)*max)}}
+function updateLiveTotal(){const total=marks.reduce((sum,n)=>sum+Number(n||0),0);el("totalTop").textContent="Total: "+total+" / 60";for(let i=0;i<parts.length;i++){const [from,to,max]=parts[i];const score=marks.slice(from,to).reduce((sum,n)=>sum+Number(n||0),0);el("part"+(i+1)+"Top").textContent="Part "+(i+1)+": "+score+" / "+((to-from)*max)}}
 function saveDraft(){
  dirty=true;
  try{localStorage.setItem(draftKey(),JSON.stringify(marks))}catch{}
@@ -145,10 +152,10 @@ function render(){
   const active=selectedTest&&Number(button.dataset.test)===currentTest();
   button.classList.toggle("active",active);button.setAttribute("aria-pressed",active);
  }
- el("saveTop").hidden=true;
- el("saveOnlyTop").hidden=true;
+ el("markingActions").hidden=el("marking").hidden;
+ el("saveTop").hidden=el("marking").hidden;
+ el("saveOnlyTop").hidden=el("marking").hidden;
  el("totalTop").hidden=el("marking").hidden;
- el("sectionTotalsTop").hidden=el("marking").hidden;
  if(el("marking").hidden)return;
  parts.forEach(([from,to,max],part)=>{
   const panel=document.createElement("section");panel.className="panel";
@@ -393,7 +400,7 @@ function exportCsv(){
 }
 function setDisabled(disabled){
  document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
- el("saveTop").disabled=el("save").disabled=el("saveOnly").disabled=el("saveOnlyTop").disabled=disabled||!ready;
+ el("saveTop").disabled=el("saveOnlyTop").disabled=disabled||!ready;
 }
 el("custom").onclick=async()=>{
  if(busy)return;
@@ -443,8 +450,8 @@ el("saveRoll").onclick=async()=>{const student=el("student").value;localStorage.
 el("alphabeticalRoll").onclick=async()=>{const student=el("student").value;localStorage.removeItem(rollKey(el("class").value));el("rollPanel").close();await loadStudents();if(Array.from(el("student").options).some(o=>o.value===student)){el("student").value=student;loadMarks()}};
 el("openCompletion").onclick=()=>{renderCompletion();el("completionPanel").showModal()};
 el("closeCompletion").onclick=()=>el("completionPanel").close();
-el("saveTop").onclick=el("save").onclick=()=>save(true);
-el("saveOnlyTop").onclick=el("saveOnly").onclick=()=>save(false);
+el("saveTop").onclick=
+el("saveOnlyTop").onclick=
 el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
 el("pageLink").textContent=summaryPage?"← Back to marking":"View Results Summary →";
 el("pageLink").onclick=e=>{
