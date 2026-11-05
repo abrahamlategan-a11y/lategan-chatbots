@@ -179,7 +179,7 @@ function render(){
   }
   update();panel.append(score);root.append(panel);
  });
- el("saveTop").disabled=el("save").disabled=el("saveOnly").disabled=el("saveOnlyTop").disabled=!ready;
+ el("saveTop").disabled=el("saveOnlyTop").disabled=!ready;
  updateLiveTotal();
  el("saveState").textContent=dirty?"Unsaved changes · draft stored on this device":hasSavedResult(currentStudent(),currentTest())?"Saved to Maths Trek":"Not marked";
 }
