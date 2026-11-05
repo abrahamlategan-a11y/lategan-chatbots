@@ -58,11 +58,18 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .reportTestLink:hover{transform:translateY(-3px);box-shadow:0 7px 20px #26365c20}
 .reportTestLink:focus-visible{outline:3px solid #2fb99d;outline-offset:3px}
 .reportTestHint{font-size:12px;font-weight:800;color:#176d65;margin-top:7px}
+
+/* Favourite class and custom roll order */
+#favouriteClass[aria-pressed="true"]{background:#d6f5e8;color:#124e45;font-weight:850}
+.rollNames{display:grid;gap:7px;max-height:55vh;overflow:auto;margin:16px 0}
+.rollRow{display:flex;align-items:center;justify-content:space-between;gap:15px;border:1px solid #e6e2ee;background:#faf8ff;padding:8px 12px;border-radius:12px}
+.rollRow span{display:flex;gap:7px}
+.rollRow button{min-width:38px}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
-<div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See completed and not yet marked students">View marking status</button><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop" hidden>Save and next</button></div>
+<div class="panel controls"><label>Class<select id="class"></select></label><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See completed and not yet marked students">View marking status</button><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop" hidden>Save and next</button></div>
 <section id="marking" hidden><div class="grid" id="columns"></div><div class="panel toolbar"><strong id="totalBottom" class="liveTotal">Total: 0 / 60</strong><button id="saveOnly">Save</button><button id="save">Save and next</button><span id="saveState" role="status" class="sub"></span></div></section>
-<dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Completed</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not yet marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
+<dialog id="rollPanel"><h2>Arrange class roll</h2><p class="sub">Use the arrows to put students in your preferred roll order. Only first names are shown. Changes are saved on this device.</p><div id="rollNames" class="rollNames"></div><div class="toolbar"><button type="button" id="saveRoll">Save roll order</button><button type="button" id="alphabeticalRoll" class="secondary">Reset to alphabetical</button><button type="button" id="closeRoll" class="secondary">Cancel</button></div></dialog><dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Completed</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not yet marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
 <h2 id="reportHeading">Student progress</h2><p id="reportScope" class="sub" aria-live="polite"></p>
@@ -169,6 +176,7 @@ async function loadStudents(){
   students=(d.students||[]).filter(s=>Number(s.active)!==0);
  }
  students.sort((a,b)=>a.display_name.localeCompare(b.display_name));
+ const roll=readRollOrder(value);if(roll.length){const rank=new Map(roll.map((id,i)=>[String(id),i]));students.sort((a,b)=>(rank.get(String(a.id))??99999)-(rank.get(String(b.id))??99999)||a.display_name.localeCompare(b.display_name))}
  options("student",students,"id","display_name");loadMarks();
 }
 async function loadAccessibleRoster(){
@@ -176,9 +184,20 @@ async function loadAccessibleRoster(){
  return [...new Map(lists.flatMap(d=>d.students||[]).filter(s=>Number(s.active)!==0).map(s=>[s.id,s])).values()];
 }
 async function loadResults(){try{const d=await post({action:"maths_trek_list"});results=d.results||[];ready=true;message("Connected. Results are stored centrally.",true)}catch(e){ready=false;results=[];message("Maths Trek backend not activated yet: "+e.message+". Marking can be explored, but saving is disabled.");}loadMarks()}
+const preferenceKey="maths-trek-favourite-class";
+const rollKey=classId=>"maths-trek-roll-order:"+classId;
+function readRollOrder(classId){try{const v=JSON.parse(localStorage.getItem(rollKey(classId)));return Array.isArray(v)?v:[]}catch{return []}}
+function refreshFavourite(){const chosen=localStorage.getItem(preferenceKey);const active=el("class").value===chosen;el("favouriteClass").textContent=active?"★ Favourite class":"☆ Set as favourite";el("favouriteClass").setAttribute("aria-pressed",String(active))}
+let pendingRoll=[];
+function showRollEditor(){pendingRoll=students.map(s=>s.id);renderRollEditor();el("rollPanel").showModal()}
+function renderRollEditor(){const root=el("rollNames");root.replaceChildren();pendingRoll.forEach((id,index)=>{const student=students.find(s=>String(s.id)===String(id));if(!student)return;const row=document.createElement("div");row.className="rollRow";const name=document.createElement("strong");name.textContent=(index+1)+". "+student.display_name;const actions=document.createElement("span");for(const [symbol,delta,label] of [["↑",-1,"Move up"],["↓",1,"Move down"]]){const btn=document.createElement("button");btn.type="button";btn.textContent=symbol;btn.className="secondary";btn.title=label+" "+student.display_name;btn.disabled=index+delta<0||index+delta>=pendingRoll.length;btn.onclick=()=>{[pendingRoll[index],pendingRoll[index+delta]]=[pendingRoll[index+delta],pendingRoll[index]];renderRollEditor()};actions.append(btn)}row.append(name,actions);root.append(row)})}
 function classOptions(preferred){
  options("class",[...classes,...groups.map(g=>({id:"group:"+g.id,name:g.name}))],"id","name");
- if(Array.from(el("class").options).some(o=>o.value===preferred))el("class").value=preferred;
+ const available=new Set(Array.from(el("class").options,o=>o.value));
+ const favourite=localStorage.getItem(preferenceKey);
+ const chosen=preferred&&available.has(preferred)?preferred:favourite&&available.has(favourite)?favourite:null;
+ if(chosen)el("class").value=chosen;
+ refreshFavourite();
 }
 async function init(){
  if(!code){message("Please sign in through Teacher Hub first.");return}
@@ -396,12 +415,18 @@ for(let test=1;test<=4;test++){
  el("testButtons").append(button);
 }
 el("class").onchange=async()=>{
+ refreshFavourite();
  if(busy)return;
  busy=true;setDisabled(true);
  try{await loadStudents()}catch(e){el("class").value=selection.class;message("Could not load class: "+e.message)}
  finally{busy=false;setDisabled(false)}
 };
 el("student").onchange=loadMarks;
+el("favouriteClass").onclick=()=>{localStorage.setItem(preferenceKey,el("class").value);refreshFavourite()};
+el("rollOrder").onclick=showRollEditor;
+el("closeRoll").onclick=()=>el("rollPanel").close();
+el("saveRoll").onclick=async()=>{const student=el("student").value;localStorage.setItem(rollKey(el("class").value),JSON.stringify(pendingRoll));el("rollPanel").close();await loadStudents();if(Array.from(el("student").options).some(o=>o.value===student)){el("student").value=student;loadMarks()}};
+el("alphabeticalRoll").onclick=async()=>{const student=el("student").value;localStorage.removeItem(rollKey(el("class").value));el("rollPanel").close();await loadStudents();if(Array.from(el("student").options).some(o=>o.value===student)){el("student").value=student;loadMarks()}};
 el("openCompletion").onclick=()=>{renderCompletion();el("completionPanel").showModal()};
 el("closeCompletion").onclick=()=>el("completionPanel").close();
 el("saveTop").onclick=el("save").onclick=()=>save(true);
