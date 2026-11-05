@@ -51,6 +51,12 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .liveTotal{display:inline-flex;align-items:center;border-radius:13px;padding:11px 15px;background:#e1f8ee;color:#143c44;font-size:19px;font-weight:900;white-space:nowrap}
 #saveOnly,#saveOnlyTop{background:#35b99d;color:#12274b;font-weight:850}
 #saveState{font-weight:700}
+
+/* Results tiles double as shortcuts to the corresponding student's marking screen */
+.reportTestLink{display:flex;flex-direction:column;align-items:flex-start;text-align:left;cursor:pointer;font:inherit;width:100%;transition:transform .15s,box-shadow .15s}
+.reportTestLink:hover{transform:translateY(-3px);box-shadow:0 7px 20px #26365c20}
+.reportTestLink:focus-visible{outline:3px solid #2fb99d;outline-offset:3px}
+.reportTestHint{font-size:12px;font-weight:800;color:#176d65;margin-top:7px}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek</h1><small>Learning Hub · Teacher assessments</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><button id="custom" class="secondary">Custom class</button><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See completed and not yet marked students">View marking status</button><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop" hidden>Save and next</button></div>
@@ -195,7 +201,9 @@ async function init(){
   classOptions(new URLSearchParams(location.search).get("class"));
   await loadResults();await loadStudents();
   const params=new URLSearchParams(location.search);
-  if(summaryPage&&students.some(s=>String(s.id)===params.get("student"))){el("student").value=params.get("student");loadMarks()}
+  if(students.some(s=>String(s.id)===params.get("student"))){el("student").value=params.get("student")}
+  if(!summaryPage&&["1","2","3","4"].includes(params.get("test"))){el("test").value=params.get("test");selectedTest=true}
+  loadMarks()
  }catch(e){message("Could not load Maths Trek: "+e.message)}
 }
 async function save(moveNext=true){
@@ -301,8 +309,12 @@ function renderReports(){
  for(let test=1;test<=4;test++){
   if(testFilter&&test!==Number(testFilter))continue;
   const r=results.find(x=>Number(x.student_id)===id&&Number(x.test||x.test_number)===test);
-  const card=reportNode("div",null,"mini");
-  card.append(reportNode("div","Test "+test),reportNode("strong",r?mathsTrekSummary([r],metadata).total+" / 60":"Not marked"));
+  const card=reportNode("button",null,"mini reportTestLink");
+  card.type="button";
+  card.title="Open Test "+test+" to review or correct marks";
+  card.setAttribute("aria-label","Review Test "+test+" marking"+(r?", "+mathsTrekSummary([r],metadata).total+" out of 60":", not marked"));
+  card.append(reportNode("div","Test "+test),reportNode("strong",r?mathsTrekSummary([r],metadata).total+" / 60":"Not marked"),reportNode("span","Review marks →","reportTestHint"));
+  card.onclick=()=>{const params=new URLSearchParams({class:el("class").value,student:String(id),test:String(test)});location.href="?"+params};
   root.append(card);
  }
  const d=mathsTrekSummary(rs,metadata);
