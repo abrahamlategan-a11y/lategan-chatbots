@@ -112,6 +112,38 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 .hub-brand-link .logo,.hub-brand-link .hub-mark{display:inline-grid!important;place-items:center!important;flex:0 0 52px!important;width:52px!important;height:54px!important;padding:12px 3px 0!important;box-sizing:border-box!important;background:#58d5bb!important;color:#142450!important;border:0!important;border-radius:0!important;clip-path:polygon(50% 0%,100% 37%,90% 37%,90% 100%,10% 100%,10% 37%,0% 37%)!important;transform:none!important;box-shadow:none!important;font-size:16px!important;font-weight:900!important;line-height:1!important}
 .hub-brand-link{display:inline-flex;align-items:center;gap:10px;text-decoration:none!important;cursor:pointer}
 .hub-brand-link:focus-visible{outline:3px solid #75ddc6;outline-offset:4px}
+
+/* Group cards: friendly, bold and unified with student membership */
+.points-entry-grid{gap:18px;padding:20px;align-items:stretch}
+.fun-point-card{border:2px solid #e5e8f0;border-radius:25px;padding:22px;background:linear-gradient(145deg,#f0fbf5,#fff);box-shadow:0 10px 25px #143b2812;min-height:315px}
+.fun-point-card.c2{background:linear-gradient(145deg,#f5edff,#fff);border-color:#e9daf9}
+.fun-point-card.c3{background:linear-gradient(145deg,#fff6dc,#fff);border-color:#f1e0a7}
+.fun-point-card.c4{background:linear-gradient(145deg,#e9f5ff,#fff);border-color:#d7e9f8}
+.fun-point-card::before{width:9px}
+.group-rank{font-size:27px;display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.group-rank span{font-size:10px;font-weight:950;letter-spacing:.11em;color:#60746a}
+.point-card-top{align-items:center}
+.point-card-top h3{font-size:clamp(23px,2.2vw,31px);font-weight:950;letter-spacing:-.035em;line-height:1.15}
+.running-pill{padding:10px 14px;font-size:12px;background:#fff;border:1px solid #dce6df;box-shadow:0 3px 10px #153b2910}
+.running-pill b{font-size:24px;color:#126247}
+.group-members-inline{margin-top:18px;padding:14px 15px;border:1px solid #e5e7ec;background:#ffffffc9;border-radius:16px}
+.members-heading{font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.035em;color:#4a6558;display:flex;justify-content:space-between;gap:8px}
+.members-heading span{font-size:11px;font-weight:750;text-transform:none;letter-spacing:0}
+.member-list{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.member-pill{display:inline-flex;padding:9px 12px;border-radius:999px;background:#e8f4ed;border:1px solid #cfe6d9;color:#153d32;font-size:13px;font-weight:850}
+.c2 .member-pill{background:#eee5fc;border-color:#ddcff2}
+.c3 .member-pill{background:#fff0c6;border-color:#efdda8}
+.c4 .member-pill{background:#e2f1fc;border-color:#c9e1f2}
+.point-main-row{margin-top:17px;grid-template-columns:minmax(155px,.8fr) minmax(0,1.3fr)}
+.today-box,.adjust-box{padding:14px;border-radius:15px}
+.today-line input{font-size:24px;width:90px}
+.group-management{margin:18px 0;background:white;border:1px solid var(--line);border-radius:20px;overflow:hidden}
+.group-management>summary{cursor:pointer;padding:19px 23px;font-size:17px;font-weight:900;list-style:none;background:#f5f1fd;color:#1b3b3c}
+.group-management>summary span{font-size:12px;font-weight:600;color:#6e7b75;margin-left:12px}
+.group-management[open]>summary{border-bottom:1px solid var(--line)}
+.group-management .job-layout{padding:16px}
+.leaderboard{padding:15px 20px 2px}
+@media(max-width:760px){.points-entry-grid{grid-template-columns:1fr;padding:12px}.fun-point-card{padding:16px}.point-main-row{grid-template-columns:1fr}.point-card-top h3{font-size:24px}.running-pill b{font-size:19px}.group-management>summary span{display:block;margin:5px 0 0}}
 </style>
 </head>
 <body>
@@ -167,8 +199,8 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
       <div class="points-hero">
         <div>
           <div class="mini-eyebrow">GROUP POINTS</div>
-          <h2>Daily scores & leaderboard</h2>
-          <p>Score each group out of 10. Add catch-up or bonus points anytime. Totals continue until you reset them.</p>
+          <h2>🏆 Our classroom teams</h2>
+          <p>Every team, every student and every point together. Score out of 10, or add bonus points anytime.</p>
         </div>
         <div class="points-controls">
           <span class="live-badge" id="livePointsBadge">● Live</span>
@@ -197,14 +229,14 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
       </div>
     </div>
 
-    <div class="job-layout">
+    <details class="group-management" id="groupManagement"><summary>⚙️ Manage groups & student assignments <span>Change names, move students or remove groups</span></summary><div class="job-layout">
       <aside class="pool">
         <h3>Assign students</h3>
         <p>Choose a group for each student, or use Fill randomly.</p>
         <div class="pool-list" id="studentPool"></div>
       </aside>
       <div class="job-grid" id="jobGroups"></div>
-    </div>
+    </div></details>
   </section>
 </div>
 
@@ -375,11 +407,15 @@ function renderPoints(){
   $("pointsGrid").innerHTML=jobGroups.map((g,i)=>{
     const score=todayMap.has(String(g.id))?todayMap.get(String(g.id)):"";
     const total=totalMap.get(String(g.id))||0;
+    const members=(g.student_ids||[]).map(id=>activeStudents().find(st=>Number(st.id)===Number(id))).filter(Boolean);
+    const rank=ranked.findIndex(x=>x.id===String(g.id));
     return `<div class="fun-point-card c${(i%4)+1}">
+      <div class="group-rank">${["🥇","🥈","🥉"][rank]||"⭐"} <span>GROUP ${i+1}</span></div>
       <div class="point-card-top">
         <h3>${esc(g.name)}</h3>
         <div class="running-pill">Running total <b>${total.toFixed(1)}</b></div>
       </div>
+      <div class="group-members-inline"><div class="members-heading">👥 Team members <span>${members.length} students</span></div><div class="member-list">${members.length?members.map(st=>`<span class="member-pill">${esc(st.display_name)}</span>`).join(""):'<span class="empty">No students assigned yet. Use Manage groups below.</span>'}</div></div>
       <div class="point-main-row">
         <div class="today-box">
           <label>Today's score</label>
