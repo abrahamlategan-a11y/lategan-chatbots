@@ -146,7 +146,7 @@ def smoke_test(sql):
 
     def post(action, expected=200, **payload):
         status, raw, _ = request(LIVE, "POST", json.dumps({"action": action, **payload}).encode(),
-                                 {"Content-Type": "application/json"})
+                                 {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"})
         if status != expected:
             raise RuntimeError(f"{action}: expected HTTP {expected}, got {status}.")
         return json.loads(raw)
