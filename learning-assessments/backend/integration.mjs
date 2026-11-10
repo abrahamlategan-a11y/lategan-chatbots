@@ -48,8 +48,15 @@ const teacherClasses = (_, id) => db.prepare("SELECT c.* FROM classes c JOIN tea
 const teacherClassAccess = (_, id, classId) => teacherClasses(_, id).find(c => c.id === classId);
 let openHours = true;
 let providerCalls = 0;
+let providerFails = false;
+const background = [];
+const context = {waitUntil(work) { background.push(work); }};
+async function drainBackground() {
+  while (background.length) await Promise.all(background.splice(0));
+}
+env.OPENAI_API_KEY = "local-test-only";
 const handle = new Function("getTeacher", "getStudent", "teacherClasses", "teacherClassAccess", "perthStudentAccessOpen",
-  "studentHoursClosedResponse", "fetch", `return async function(body, env) {
+  "studentHoursClosedResponse", "fetch", `return async function(body, env, assessmentContext) {
     const action = body.action;
     const json = (data, status=200) => Response.json(data, {status});
     ${read("./worker-actions.js.txt")}
@@ -60,13 +67,16 @@ const handle = new Function("getTeacher", "getStudent", "teacherClasses", "teach
       assert.equal(url, "https://api.openai.com/v1/chat/completions");
       const payload = JSON.parse(request.body);
       assert.equal(payload.store, false);
-      assert.deepEqual(Object.keys(JSON.parse(payload.messages[1].content)).sort(), ["answer", "guide", "maximum", "question"]);
-      return Response.json({choices: [{message: {content: '{"score":2,"feedback":"Clear answer."}'}}]});
+      const items = JSON.parse(payload.messages[1].content);
+      for (const item of items) assert.deepEqual(Object.keys(item).sort(), ["answer", "guide", "id", "maximum", "question"]);
+      if (providerFails) return new Response(null, {status: 503});
+      const marks = items.map(item => ({id: item.id, score: 2, feedback: "Clear answer."}));
+      return Response.json({choices: [{message: {content: JSON.stringify({marks})}}]});
     });
 const assignment_id = crypto.randomUUID();
 const action = async (role, operation, data, code, expected = 200) => {
   const response = await handle({action: `lh_assessment_${role}_${operation}`,
-    assignment_id, [role + "_code"]: code, ...data}, env);
+    assignment_id, [role + "_code"]: code, ...data}, env, context);
   assert.equal(response.status, expected, await response.clone().text());
   return response.json();
 };
@@ -110,14 +120,29 @@ const result = await teacher("results");
 assert.deepEqual(result.counts, {assigned: 2, started: 1, submitted: 1});
 assert.equal(result.students[0].mcq_score, 1);
 const review = {student_id: 101, question_id: "2"};
-await teacher("suggest", review, 503);
-env.OPENAI_API_KEY = "local-test-only";
-assert.equal((await teacher("suggest", review)).suggestion.score, 2);
+await drainBackground();
 assert.equal(providerCalls, 1);
-assert.deepEqual((await teacher("response", {student_id: 101})).reviews, {});
+const marked = await teacher("response", {student_id: 101});
+assert.equal(marked.ai_status, "marked");
+assert.deepEqual(marked.ai_marks["2"], {score: 2, feedback: "Clear answer."});
+assert.deepEqual(marked.reviews, {});
 await teacher("review", {...review, score: 3}, 400);
 await teacher("review", {...review, score: 1, feedback: "Teacher feedback"});
-assert.equal((await teacher("response", {student_id: 101})).reviews["2"].score, 1);
+const overridden = await teacher("response", {student_id: 101});
+assert.equal(overridden.reviews["2"].score, 1);
+assert.equal(overridden.ai_marks["2"].score, 2);
+assert.equal(providerCalls, 1);
+
+providerFails = true;
+await student("open", {}, 200, "two");
+await student("submit", {revision: 0, answers}, 200, "two");
+await drainBackground();
+assert.equal((await teacher("response", {student_id: 102})).ai_status, "needs_review");
+providerFails = false;
+await teacher("retry_ai", {student_id: 102});
+await drainBackground();
+assert.equal((await teacher("response", {student_id: 102})).ai_marks["2"].score, 2);
+assert.equal(providerCalls, 3);
 const share = {template_id: "template-1", shared: true, assessment};
 await teacher("share_set", share, 401, "bad");
 await teacher("share_set", {...share, assessment: {...assessment, questions: [{type: "mcq"}]}}, 400);
@@ -140,4 +165,4 @@ for (const page of ["../index.html", "../assigned.html", "../../student/index.ht
   if (!existsSync(new URL(page, import.meta.url))) continue;
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 }
-console.log("Assignment integration passed: roster, access, autosave, submit, counts, MCQ and reviewed AI suggestion.");
+console.log("Assignment integration passed: roster, access, autosave, submit, counts, MCQ, automatic AI marks, retry and teacher override.");
