@@ -5,6 +5,9 @@
 .assessmentDialog{width:min(92vw,480px);border:1px solid #dce7e2;border-radius:18px;padding:22px;color:#1c3840}
 .assessmentDialog::backdrop{background:#16342f70}
 .assessmentDialog h2{margin-top:0}.sharePill[aria-pressed="true"]{background:#205846;color:#fff}
+#chooseClassOptions{display:grid;gap:8px;margin:0 0 12px}
+#chooseClassOptions button{display:grid;gap:3px;text-align:left}
+#chooseClassOptions small{font-weight:500}
 #assignmentQrDialog{border:0;margin:0;padding:16px;width:100%;height:100%;max-width:none;max-height:none;background:#fff;color:#1c3840}
 #assignmentQrDialog::backdrop{background:#fff}
 .qrStage{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}
@@ -202,4 +205,4 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=card-results"></script><script src="marking-grid.js?v=card-results"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=assignment-counts"></script><script src="marking-grid.js?v=card-results"></script></body></html>

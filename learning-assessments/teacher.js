@@ -278,16 +278,21 @@ async function chooseClassAssignment(title, sourceIds, includeLegacy, view, trig
   $("chooseClassTitle").textContent = results ? "Assessment results" : "Show assessment QR";
   $("chooseClassStatus").textContent = !available
     ? "Sign in with your teacher code to see class assignments."
-    : matches.length ? "Choose a class assignment."
+    : matches.length ? "Choose an assignment. Each date has its own set of submissions."
     : results ? "Assign this test to a class first to see its results."
     : "Assign this test to a class first to get its QR code.";
   $("chooseClassOptions").replaceChildren(...matches.map(a => {
     const button = document.createElement("button");
     button.type = "button";
     const date = new Date(a.assigned_at.replace(" ", "T") + "Z");
-    button.textContent = a.class_name + " · " + date.toLocaleString("en-AU", {
+    const heading = document.createElement("span");
+    heading.textContent = a.class_name + " · " + date.toLocaleString("en-AU", {
       timeZone: "Australia/Perth", dateStyle: "short", timeStyle: "short"
     });
+    const progress = document.createElement("small");
+    const inProgress = Math.max(0, a.started - a.submitted);
+    progress.textContent = `${a.submitted} of ${a.assigned} submitted · ${inProgress} in progress`;
+    button.append(heading, progress);
     button.onclick = () => {
       $("chooseClassDialog").close();
       open(a);
