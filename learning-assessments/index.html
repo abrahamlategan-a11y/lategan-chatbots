@@ -43,7 +43,7 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   </section>
   <div id="libraryResultsHost"></div>
 </section>
-<section id="create" class="panel hidden"><h2>Assessment builder</h2><div class="grid"><label>Assessment title<input id="title" placeholder="Year 4 Science: Forces and Motion"></label><label>Subject<input id="subject" placeholder="Science"></label><label>Year level<input id="year" placeholder="Year 4"></label><label>Term / year<input id="term" placeholder="Term 4, 2026"></label></div><label>Student instructions<textarea id="instructions" placeholder="Optional instructions for your class"></textarea></label><p class="muted">Paste questions in ordinary text, or use one per line with <strong>MCQ:</strong>, <strong>SHORT:</strong> or <strong>LONG:</strong>. Add <strong>[4]</strong> for marks. MCQ options use | separators and * before the correct option. Example: MCQ: Which force pulls things down? [1] | Friction | *Gravity | Magnetism</p><div class="row"><label style="flex:1;min-width:220px">Import JSON assessment<input type="file" id="jsonFile" accept=".json,application/json"></label><label style="flex:1;min-width:220px">Photograph or scan handwritten questions<input type="file" id="imageFile" accept="image/*" multiple></label></div><div id="imagePreview" class="grid"></div><p class="muted" id="importStatus">JSON imports support multiple choice and written responses. You can also attach handwritten images for reference while you enter questions.</p><label>Paste questions<textarea id="paste" placeholder="SHORT: What is friction? [2]\nLONG: Explain how friction helps a bicycle stop. [4]\nMCQ: Which force pulls objects towards Earth? [1] | Friction | *Gravity | Magnetism"></textarea></label><div class="row"><button id="parse" class="primary">Build questions from text</button><button id="addShort">+ Short answer</button><button id="addLong">+ Long answer</button><button id="addMcq">+ Multiple choice</button></div><div id="editorQuestions"></div><div class="row"><button id="saveTemplate" class="primary">Save assessment to library</button><button id="previewBtn">Preview as student</button></div><p id="editStatus" class="muted" role="status"></p><div class="row">
+<section id="create" class="panel hidden"><h2>Assessment builder</h2><div class="grid"><label>Assessment title<input id="title" placeholder="Year 4 Science: Forces and Motion"></label><label>Subject<input id="subject" placeholder="Science"></label><label>Year level<input id="year" placeholder="Year 4"></label><label>Term / year<input id="term" placeholder="Term 4, 2026"></label></div><label>Student instructions<textarea id="instructions" placeholder="Optional instructions for your class"></textarea></label><p class="muted">Paste questions in ordinary text, or use one per line with <strong>MCQ:</strong>, <strong>SHORT:</strong> or <strong>LONG:</strong>. Add <strong>[4]</strong> for marks. MCQ options use | separators and * before the correct option. Example: MCQ: Which force pulls things down? [1] | Friction | *Gravity | Magnetism</p><div class="row"><label style="flex:1;min-width:220px">Import JSON assessment<input type="file" id="jsonFile" accept=".json,application/json"></label><label style="flex:1;min-width:220px">Photograph or scan handwritten questions<input type="file" id="imageFile" accept="image/*" multiple></label></div><div id="imagePreview" class="grid"></div><p class="muted" id="importStatus" role="status">JSON imports support multiple choice and written responses. You can also attach handwritten images for reference while you enter questions.</p><label>Paste questions<textarea id="paste" placeholder="SHORT: What is friction? [2]\nLONG: Explain how friction helps a bicycle stop. [4]\nMCQ: Which force pulls objects towards Earth? [1] | Friction | *Gravity | Magnetism"></textarea></label><div class="row"><button id="parse" class="primary">Build questions from text</button><button id="addShort">+ Short answer</button><button id="addLong">+ Long answer</button><button id="addMcq">+ Multiple choice</button></div><div id="editorQuestions"></div><div class="row"><button id="saveTemplate" class="primary">Save assessment to library</button><button id="previewBtn">Preview as student</button></div><p id="editStatus" class="muted" role="status"></p><div class="row">
   <button id="assignDraft" class="primary" type="button">Assign to class</button>
   <button id="shareDraft" class="sharePill" type="button" aria-pressed="false">Share with teachers</button>
 </div><p id="sharingStatus" role="status"></p></section>
@@ -53,7 +53,7 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   <p id="sharedStatus" role="status"></p><div id="sharedCards" class="library"></div>
   <div id="sharedResultsHost"></div>
 </section>
-<section id="preview" class="panel hidden"><div class="sectionTitle"><div><h2 id="studentTitle">Student assessment preview</h2><p class="muted">Try the questions as a student would. Responses here are only a local demonstration.</p></div><span id="studentMarks" class="pill"></span></div><label>Student name (preview only)<input id="studentName" placeholder="Sample Student"></label><div id="studentQuestions"></div><div class="row noprint"><button id="saveDraft" class="primary">Save preview answers</button><button id="printPreview">Print / save preview as PDF</button></div><p id="previewStatus" class="muted"></p></section>
+<section id="preview" class="panel hidden"><div class="sectionTitle"><div><h2 id="studentTitle">Student assessment preview</h2><p class="muted">Try the questions as a student would. Responses here are only a local demonstration.</p></div><span id="studentMarks" class="pill"></span></div><label>Student name (preview only)<input id="studentName" placeholder="Sample Student"></label><p id="studentInstructions" class="answerText"></p><div id="studentQuestions"></div><div class="row noprint"><button id="saveDraft" class="primary">Save preview answers</button><button id="printPreview">Print / save preview as PDF</button></div><p id="previewStatus" class="muted"></p></section>
 <section id="assessmentResults" class="panel" hidden aria-labelledby="resultsHeading">
   <div class="sectionTitle">
     <h2 id="resultsHeading" tabindex="-1">Assessment results</h2>
@@ -117,15 +117,24 @@ function drawLibrary(){$('libraryCards').innerHTML=templates.length?templates.ma
 function parseLine(line){const m=line.match(/^\s*(MCQ|SHORT|LONG)\s*:\s*(.*)$/i);if(!m)return null;let text=m[2],marks=Number((text.match(/\[(\d+)\]/)||[])[1]||1);text=text.replace(/\[\d+\]/,'').trim();let options=[],correct='';if(m[1].toUpperCase()==='MCQ'){const parts=text.split('|').map(s=>s.trim());text=parts.shift();options=parts.map(s=>s.replace(/^\*/,'').trim());correct=String(parts.findIndex(s=>s.startsWith('*')))}return {id:uid(),type:m[1].toLowerCase(),text,marks,options,correct,rubric:''}}
 function importJson(data){
  const metadata=data?.assessment??data;
- const source=Array.isArray(data)?data:(metadata?.questions||metadata?.items);
- if(!Array.isArray(source)||!source.length)throw Error('No questions array found in JSON.');
+ const sections=data?.sections??metadata?.sections;
+ const source=Array.isArray(data)?data:(metadata?.questions??metadata?.items??
+   (Array.isArray(sections)?sections.flatMap(section=>{
+     if(!Array.isArray(section?.questions))throw Error('Every assessment section needs a questions array.');
+     return section.questions;
+   }):null));
+ if(!Array.isArray(source)||!source.length)throw Error('No questions found. Use a questions array or sections with a questions array in each.');
+ if(current.questions.length+source.length>100)throw Error('Assessments can have up to 100 questions. Import into a new assessment or split the file.');
  const parsed=source.map((item,i)=>{
   if(typeof item==='string')return {id:uid(),type:'short',text:item,marks:1,options:[],correct:'0',rubric:''};
-  const text=item?.text||item?.question||item?.prompt||item?.question_text||'';
+  const taskPoints=Array.isArray(item?.task_points)?item.task_points.filter(point=>typeof point==='string').map(point=>'• '+point):[];
+  const prompt=item?.text||item?.question||item?.prompt||item?.question_text||item?.stem||item?.task;
+  const text=[item?.scenario,prompt,...taskPoints].filter(part=>typeof part==='string'&&part.trim()).join('\n\n');
   if(!text)throw Error('Question '+(i+1)+' has no text.');
   const rawType=String(item.type||item.question_type||'').toLowerCase();
   const rawOptions=item.options||item.choices||[];
-  const choices=Array.isArray(rawOptions)?rawOptions:[];
+  const choices=Array.isArray(rawOptions)?rawOptions:
+    typeof rawOptions==='object'?Object.entries(rawOptions).map(([id,value])=>({id,text:value})):[];
   const options=choices.map(x=>typeof x==='string'?x:(x?.text||x?.label||String(x?.value??'')));
   const type=options.length||/multi|mcq|choice/.test(rawType)?'mcq':/long|extended|essay|paragraph/.test(rawType)?'long':'short';
   const correctRaw=item.correct??item.correct_answer??item.answer??'';
@@ -137,7 +146,13 @@ function importJson(data){
   if(correct<0 && typeof correctRaw==='string' && /^[A-L]$/i.test(correctRaw)) correct=correctRaw.toUpperCase().charCodeAt(0)-65;
   if(correct<0 && typeof correctRaw==='string' && /^\d+$/.test(correctRaw)) correct=Number(correctRaw)-1;
   if(type==='mcq' && (correct<0 || correct>=options.length)) throw Error('Question '+(i+1)+' needs a valid correct answer.');
-  const guide=item.good_answer||item.model_answer||item.expected_answer||item.rubric||item.marking_guide||'';
+  const criteria=Array.isArray(item.criteria)?item.criteria.map(criterion=>{
+    if(typeof criterion==='string')return criterion;
+    if(!criterion?.descriptor)return JSON.stringify(criterion);
+    const label=[criterion.id,criterion.marks!=null?`${criterion.marks} mark${criterion.marks===1?'':'s'}`:null].filter(Boolean).join(' · ');
+    return label?label+': '+criterion.descriptor:criterion.descriptor;
+  }).join('\n'):'';
+  const guide=item.good_answer||item.model_answer||item.expected_answer||item.rubric||item.marking_guide||criteria;
   return {id:uid(),type,text,marks:Number(item.marks??item.points??item.max_marks??(type==='long'?4:1)),options,correct:String(correct),rubric:typeof guide==='string'?guide:JSON.stringify(guide)};
  });
  if(!Array.isArray(data)){
@@ -145,11 +160,33 @@ function importJson(data){
    current.subject=String(metadata.subject||current.subject);
    current.year=String(metadata.year||metadata.year_level||current.year);
    current.term=String(metadata.term||current.term);
-   current.instructions=String(metadata.instructions||current.instructions||"");
+   const instructions=metadata.instructions??metadata.student_instructions??current.instructions??"";
+   current.instructions=Array.isArray(instructions)?instructions.join('\n\n'):String(instructions);
  }
- current.questions.push(...parsed);currentToFields();drawEditor();$('importStatus').textContent=parsed.length+' questions imported. Review the questions and save the assessment.';
+ current.questions.push(...parsed);currentToFields();drawEditor();
+ const manual=[data?.grade_bands&&'grade bands',data?.marking_prompt&&'assessment-wide marking rules'].filter(Boolean);
+ $('importStatus').textContent=parsed.length+' questions imported. Review the questions and save the assessment.'+
+   (manual.length?' Apply '+manual.join(' and ')+' separately.':'');
 }
-$('jsonFile').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;try{syncEditor();importJson(JSON.parse(await file.text()))}catch(err){$('importStatus').textContent='Could not import JSON: '+err.message}e.target.value=''};
+$('jsonFile').onchange=async event=>{
+ const file=event.target.files?.[0];
+ if(!file)return;
+ const status=$('importStatus');
+ status.classList.remove('danger');
+ status.textContent='Importing '+file.name+'…';
+ event.target.disabled=true;
+ try{
+   const data=JSON.parse(await file.text());
+   syncEditor();
+   importJson(data);
+ }catch(error){
+   status.classList.add('danger');
+   status.textContent='Could not import '+file.name+': '+error.message;
+ }finally{
+   event.target.disabled=false;
+   event.target.value='';
+ }
+};
 $('imageFile').onchange=e=>{const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));const root=$('imagePreview');root.innerHTML='';for(const file of files){const img=document.createElement('img');img.alt='Handwritten question preview';img.style='width:100%;max-height:270px;object-fit:contain;border-radius:12px;border:1px solid #dce7e2';img.src=URL.createObjectURL(file);img.onload=()=>URL.revokeObjectURL(img.src);root.appendChild(img)}$('importStatus').textContent=files.length+' image(s) ready for review. Automatic handwriting transcription is not connected yet; paste the text below for now.'};
 $('parse').onclick=()=>{fieldsToCurrent();const lines=$('paste').value.split('\n').filter(x=>x.trim());const parsed=lines.map(parseLine).filter(Boolean);if(!parsed.length){$('editStatus').textContent='No questions recognised. Begin each line with MCQ:, SHORT: or LONG:.';return}current.questions.push(...parsed);$('paste').value='';$('editStatus').textContent=parsed.length+' questions added. Review each question and its marking guide.';drawEditor()};
 function add(type){fieldsToCurrent();current.questions.push({id:uid(),type,text:'',marks:type==='long'?4:1,options:type==='mcq'?['','','']:[],correct:'0',rubric:''});drawEditor()}
@@ -158,7 +195,7 @@ function drawEditor(){const root=$('editorQuestions');root.innerHTML=current.que
 function syncEditor(){fieldsToCurrent();document.querySelectorAll('#editorQuestions [data-q]').forEach(node=>{const q=current.questions.find(x=>x.id===node.dataset.q);node.querySelectorAll('[data-field]').forEach(el=>{const f=el.dataset.field;q[f]=f==='marks'?Number(el.value):f==='options'?el.value.split('\n').filter(Boolean):f==='correct'?(el.value === '' ? '' : String(Number(el.value)-1)):el.value})})}
 $('saveTemplate').onclick=()=>{syncEditor();if(!current.title.trim()||!current.questions.length){$('editStatus').textContent='Add an assessment title and at least one question before saving.';return}const idx=templates.findIndex(t=>t.id===current.id);if(idx>=0)templates[idx]=structuredClone(current);else templates.push(structuredClone(current));persist();$('editStatus').textContent='Saved to this browser’s Assessment Library.'};
 $('previewBtn').onclick=()=>{syncEditor();tab('preview')};
-function drawStudent(){$('studentTitle').textContent=current.title||'Untitled assessment';$('studentMarks').textContent=current.questions.reduce((a,q)=>a+Number(q.marks||0),0)+' marks';let draft={};try{draft=JSON.parse(localStorage.getItem(DRAFT+current.id))||{}}catch{}$('studentName').value=draft.name||'';$('studentQuestions').innerHTML=current.questions.map((q,i)=>`<div class="question"><h3>Question ${i+1} <span class="pill">${q.marks} marks</span></h3><p>${esc(q.text)}</p>${q.type==='mcq'?q.options.map((o,j)=>`<label style="display:flex;align-items:center;gap:10px;margin:10px 0"><input style="width:auto" type="radio" name="q-${q.id}" value="${j}" ${String(draft[q.id])===String(j)?'checked':''}>${esc(o)}</label>`).join(''):`<textarea data-answer="${q.id}" rows="${q.type==='long'?7:3}" placeholder="Write your answer here...">${esc(draft[q.id]||'')}</textarea>`}</div>`).join('')||'<p class="muted">Add questions in the assessment builder first.</p>'}
+function drawStudent(){$('studentInstructions').textContent=current.instructions||'';$('studentTitle').textContent=current.title||'Untitled assessment';$('studentMarks').textContent=current.questions.reduce((a,q)=>a+Number(q.marks||0),0)+' marks';let draft={};try{draft=JSON.parse(localStorage.getItem(DRAFT+current.id))||{}}catch{}$('studentName').value=draft.name||'';$('studentQuestions').innerHTML=current.questions.map((q,i)=>`<div class="question"><h3>Question ${i+1} <span class="pill">${q.marks} marks</span></h3><p class="answerText">${esc(q.text)}</p>${q.type==='mcq'?q.options.map((o,j)=>`<label style="display:flex;align-items:center;gap:10px;margin:10px 0"><input style="width:auto" type="radio" name="q-${q.id}" value="${j}" ${String(draft[q.id])===String(j)?'checked':''}>${esc(o)}</label>`).join(''):`<textarea data-answer="${q.id}" rows="${q.type==='long'?7:3}" placeholder="Write your answer here...">${esc(draft[q.id]||'')}</textarea>`}</div>`).join('')||'<p class="muted">Add questions in the assessment builder first.</p>'}
 function draftAnswers(){const draft={name:$('studentName').value};current.questions.forEach(q=>{draft[q.id]=q.type==='mcq'?document.querySelector('input[name="q-'+q.id+'"]:checked')?.value??'':document.querySelector('[data-answer="'+q.id+'"]')?.value??''});return draft}
 $('saveDraft').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Preview answers saved on this device.'};
 $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));window.print()};
