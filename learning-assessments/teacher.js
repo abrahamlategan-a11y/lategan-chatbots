@@ -269,7 +269,7 @@ async function chooseClassAssignment(title, sourceIds, includeLegacy, view, trig
   const matches = available ? classAssignments.filter(a => matchesAssignment(a, title, sourceIds, includeLegacy)) : [];
   const open = assignment => {
     if (results) openAssignmentResults(assignment, view, trigger);
-    else showAssignmentQr(assignment.id, title);
+    else showAssignmentQr(assignment.id, assignment.title);
   };
   if (matches.length === 1) {
     open(matches[0]);
@@ -292,7 +292,13 @@ async function chooseClassAssignment(title, sourceIds, includeLegacy, view, trig
     const progress = document.createElement("small");
     const inProgress = Math.max(0, a.started - a.submitted);
     progress.textContent = `${a.submitted} of ${a.assigned} submitted · ${inProgress} in progress`;
-    button.append(heading, progress);
+    button.append(heading);
+    if (a.title !== title) {
+      const originalTitle = document.createElement("small");
+      originalTitle.textContent = a.title;
+      button.append(originalTitle);
+    }
+    button.append(progress);
     button.onclick = () => {
       $("chooseClassDialog").close();
       open(a);
