@@ -326,6 +326,7 @@ function closeAssignmentResults() {
   activeAssignment = null;
   responseRequest++;
   resetWrittenReview();
+  closeClassScoreQuestion();
   closeWrittenGrid();
   $("assessmentResults").hidden = true;
   $("assignmentReport").replaceChildren();
@@ -347,6 +348,7 @@ document.addEventListener("assessment-tab-changed", closeAssignmentResults);
 
 async function showAssignment(id) {
   resetWrittenReview();
+  closeClassScoreQuestion();
   closeWrittenGrid();
   activeAssignment = id;
   const request = ++responseRequest;
@@ -356,13 +358,13 @@ async function showAssignment(id) {
   try {
     const {assessment, counts, students} = await teacherAssessment("results", {assignment_id: id});
     if (request !== responseRequest) return;
-    const maximum = assessment.questions.filter(q => q.type === "mcq").reduce((sum, q) => sum + q.marks, 0);
     const hasWritten = assessment.questions.some(q => q.type !== "mcq");
     $("reportStatus").textContent = "";
     $("assignmentReport").innerHTML = `
       <div class="sectionTitle"><h3>${esc(assessment.title)}</h3>
         <div class="row">
           ${hasWritten ? '<button type="button" id="openWrittenGrid">Written marking grid</button>' : ""}
+          <button type="button" id="exportClassScores">Export CSV</button>
           <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
           ${counts.started === 0 && counts.submitted === 0 ? '<button type="button" id="archiveAssignment">Archive unused assignment</button>' : ""}
         </div>
@@ -372,12 +374,9 @@ async function showAssignment(id) {
         <button id="openWrittenReview" type="button" class="primary" disabled>Review responses</button>
       </div>` : ""}
       <p>${counts.assigned} assigned · ${counts.started} started (including submitted) · ${counts.submitted} submitted</p>
-      <table><thead><tr><th>Student</th><th>Status</th><th>Multiple choice</th>${hasWritten ? "<th>Written marking</th>" : ""}<th>Responses</th></tr></thead>
-      <tbody>${students.map(student => `<tr><td>${esc(student.display_name || "Student")}</td>
-        <td>${student.submitted_at ? "Submitted" : student.started_at ? "Started" : "Assigned"}</td>
-        <td>${student.submitted_at && maximum ? `${student.mcq_score} / ${maximum}` : "—"}</td>
-        ${hasWritten ? `<td data-written-status="${student.student_id}">${student.submitted_at ? writtenStatus(student.ai_status) : "—"}</td>` : ""}
-        <td>${student.started_at ? `<button type="button" data-student="${student.student_id}">View</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
+      <div id="classScoreTable"></div>
+      <p class="muted">* Suggested marks are provisional. Totals and percentages appear when every question has a mark.</p>`;
+    renderClassScores(id, assessment, students);
     $("reportAssignmentQr").onclick = () => showAssignmentQr(id, assessment.title);
     const archive = $("archiveAssignment");
     if (archive) archive.onclick = () => archiveUnusedAssignment(id, assessment.title, archive);
@@ -385,10 +384,6 @@ async function showAssignment(id) {
       $("openWrittenGrid").onclick = () => openWrittenGrid(id, assessment, students);
       prepareWrittenReview(id, assessment, students);
     }
-    $("assignmentReport").querySelectorAll("[data-student]").forEach(button => {
-      const student = students.find(s => String(s.student_id) === button.dataset.student);
-      button.onclick = () => showResponse(id, assessment, student);
-    });
   } catch (error) {
     if (request === responseRequest) $("reportStatus").textContent = error.message;
   }
@@ -497,8 +492,7 @@ async function showResponse(id, assessment, student) {
       progress.textContent = !missing ? "Written marks are ready to review."
         : aiStatus === "marking" ? "AI is marking the written responses…"
         : "Some responses still need a mark. You can mark them yourself or retry AI marking.";
-      const cell = $("assignmentReport").querySelector(`[data-written-status="${student.student_id}"]`);
-      if (cell) cell.textContent = !missing ? "Marked" : writtenStatus(aiStatus);
+
     }
     function applyAi(result) {
       aiStatus = result.ai_status;

@@ -38,6 +38,15 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 .reviewCard .reviewAnswer{background:#f1f6f3;border-radius:10px;padding:14px}
 .reviewCard .reviewSuggestion{border-left:3px solid #246f59;padding-left:12px;margin:16px 0}
 .reviewCard form label{margin:12px 0}.reviewCard input[type=number]{max-width:8rem}.reviewCard textarea{min-height:85px}
+#classScoreTable{overflow-x:auto}
+#classScoreTable th{white-space:nowrap}
+#classScoreTable tbody th{font-weight:600}
+#classScoreTable button{padding:5px 9px;border-radius:7px;white-space:nowrap}
+#classScoreTable .studentScoreLink{white-space:normal;text-align:left}
+#classScoreTable .scoreStatus{display:block;margin-top:3px;font-size:12px;font-weight:400}
+#classScoreTable .provisionalScore{color:#715216}
+#scoreQuestionDialog{width:min(94vw,670px);max-height:90vh;overflow:auto}
+#scoreQuestionDialog textarea{min-height:80px}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -117,6 +126,12 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   </section>
 </section>
 </main>
+<dialog id="scoreQuestionDialog" class="assessmentDialog" aria-labelledby="scoreQuestionTitle">
+  <div class="sectionTitle"><h2 id="scoreQuestionTitle"></h2>
+    <form method="dialog"><button>Close</button></form>
+  </div>
+  <div id="scoreQuestionBody"></div>
+</dialog>
 <dialog id="assignDialog" class="assessmentDialog" aria-labelledby="assignHeading">
   <h2 id="assignHeading">Assign to class</h2>
   <p id="assignTitle"></p>
@@ -244,4 +259,4 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=archive-unused"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=1"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=class-scores"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=class-scores"></script><script src="class-scores.js?v=1"></script></body></html>

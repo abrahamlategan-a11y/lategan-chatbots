@@ -74,6 +74,7 @@ function updateReviewNotification(state) {
   const label = ready.length === 1 ? "1 response ready for review" : `${ready.length} responses ready for review`;
   $("readyReviewCount").textContent = waiting ? `${label} · ${waiting} still marking` : label;
   $("openWrittenReview").disabled = !ready.length;
+  updateClassScores(state.assignmentId, state.entries);
   if (!$("writtenReview").hidden && !state.saving) renderWrittenReview(state, ready);
 }
 
