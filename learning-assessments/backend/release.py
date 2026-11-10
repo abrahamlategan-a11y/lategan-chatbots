@@ -17,7 +17,7 @@ ROOT = Path(__file__).parent
 SCRIPT = "/workers/scripts/lategan-chatbot"
 LIVE = "https://lategan-chatbot.abrahamlategan.workers.dev"
 BASELINE = "76f75a03346f43924b783b7b51a2000289ca45b81a5f9287ee474d1f7d25d2b3"
-ANCHOR = rb"(?m)^      // ================= TEACHER =================\r?$"
+ANCHOR = rb"(?m)^[ \t]*if \(action === "teacher_login"\) \{\r?$"
 
 
 def request(url, method="GET", data=None, headers=None):
@@ -82,7 +82,7 @@ def release(account, token):
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
     anchors = list(re.finditer(ANCHOR, baseline))
     if len(anchors) != 1 or b"lh_assessment_" in baseline:
-        raise RuntimeError("Expected a single Teacher section in the live Worker.")
+        raise RuntimeError("Expected a single teacher login handler in the live Worker.")
     anchor = anchors[0].start()
     candidate = baseline[:anchor] + block + baseline[anchor:]
     with tempfile.TemporaryDirectory() as directory:
