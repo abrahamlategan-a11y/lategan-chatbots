@@ -82,8 +82,8 @@ def release(account, token):
         starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
         if len(starts) == 1:
             start = starts[0].start()
-            end = start + 21503
-            if hashlib.sha256(original[start:end]).hexdigest() == "68e08915537aacc77f4b3668d44e35d1ec7c8fa2466540fe417dbd40f337abc8":
+            end = start + 23218
+            if hashlib.sha256(original[start:end]).hexdigest() == "7a6acd2eb5219b8899efc1bca0e65730a51d8006e3b21582894b56fa49279b5f":
                 baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
     if hashlib.sha256(baseline).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
@@ -197,7 +197,10 @@ def smoke_test(sql):
         assert teacher("share_set", template_id=template_id, assessment=assessment, shared=True)["shared"]
         shared = next(item for item in teacher("shared_list")["assessments"] if item["is_owner"] and item["template_id"] == template_id)
         assert teacher("assign", class_id=c_id, shared_id=shared["id"])["assigned"] == 1
-        assert teacher("assign", class_id=c_id, shared_id=shared["id"])["assigned"] == 1
+        repeated = post("lh_assessment_teacher_assign", teacher_code=teacher_code,
+                        assignment_id=str(uuid.uuid4()), class_id=c_id, shared_id=shared["id"])
+        assert repeated["already_assigned"] and repeated["assignment_id"] == assignment_id
+        assert len(teacher("list")["assignments"]) == 1
         assert not teacher("share_set", template_id=template_id, shared=False)["shared"]
         assert student("list")["assignments"][0]["id"] == assignment_id
         opened = student("open")
