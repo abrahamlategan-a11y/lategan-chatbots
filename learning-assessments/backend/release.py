@@ -78,6 +78,13 @@ def release(account, token):
     block = (ROOT / "worker-actions.js.txt").read_bytes() + b"\n"
     already_installed = original.count(block) == 1
     baseline = original.replace(block, b"", 1) if already_installed else original
+    if not already_installed:
+        starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
+        if len(starts) == 1:
+            start = starts[0].start()
+            end = start + 14104
+            if hashlib.sha256(original[start:end]).hexdigest() == "33e7b498f988e9848700410f660b0ed40da8aa2d29021c8d64d9fded48e0c35a":
+                baseline = original[:start] + original[end:]
     if hashlib.sha256(baseline).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
     anchors = list(re.finditer(ANCHOR, baseline))
@@ -182,8 +189,12 @@ def smoke_test(sql):
             {"type": "mcq", "text": "What is 1 + 1?", "marks": 1, "options": ["1", "2"], "correct": "1"},
             {"type": "short", "text": "Explain your answer.", "marks": 2, "rubric": "Award two marks for explaining addition of two ones."},
         ]}
-        assert teacher("assign", class_id=c_id, assessment=assessment)["assigned"] == 1
-        assert teacher("assign", class_id=c_id, assessment=assessment)["assigned"] == 1
+        template_id = "release-smoke"
+        assert teacher("share_set", template_id=template_id, assessment=assessment, shared=True)["shared"]
+        shared = next(item for item in teacher("shared_list")["assessments"] if item["is_owner"] and item["template_id"] == template_id)
+        assert teacher("assign", class_id=c_id, shared_id=shared["id"])["assigned"] == 1
+        assert teacher("assign", class_id=c_id, shared_id=shared["id"])["assigned"] == 1
+        assert not teacher("share_set", template_id=template_id, shared=False)["shared"]
         assert student("list")["assignments"][0]["id"] == assignment_id
         opened = student("open")
         assert all("correct" not in q and "rubric" not in q for q in opened["assessment"]["questions"])
@@ -211,6 +222,7 @@ def smoke_test(sql):
         sql("DELETE FROM students WHERE student_code=?", student_code)
         sql("DELETE FROM teacher_classes WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM classes WHERE name=? AND created_by_teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", class_name, teacher_code)
+        sql("DELETE FROM lh_assessment_shares WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM teachers WHERE teacher_code=?", teacher_code)
         print("Temporary test data removed.", flush=True)
 

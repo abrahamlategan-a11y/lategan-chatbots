@@ -19,3 +19,12 @@ CREATE TABLE IF NOT EXISTS lh_assessment_responses (
   PRIMARY KEY (assignment_id, student_id)
 );
 CREATE INDEX IF NOT EXISTS lh_assessment_student ON lh_assessment_responses(student_id, assignment_id);
+
+CREATE TABLE IF NOT EXISTS lh_assessment_shares (
+  id TEXT PRIMARY KEY NOT NULL,
+  teacher_id INTEGER NOT NULL,
+  template_id TEXT NOT NULL,
+  assessment_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (teacher_id, template_id)
+);
