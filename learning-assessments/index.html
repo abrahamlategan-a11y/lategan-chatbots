@@ -2,6 +2,13 @@
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#1c3840;background:#f3f7f5}*{box-sizing:border-box}body{margin:0}header{background:#205846;color:#fff;padding:20px 5vw;display:flex;align-items:center;justify-content:space-between;gap:12px}header a{color:#fff;text-decoration:none}h1{margin:0;font-size:27px}main{max-width:1150px;margin:22px auto;padding:0 16px}button,input,textarea,select{font:inherit}button{border:0;background:#e6edf4;border-radius:12px;padding:11px 16px;font-weight:750;cursor:pointer;color:#193b46}button.primary{background:#246f59;color:white}button:disabled{opacity:.5;cursor:not-allowed}input,textarea,select{width:100%;border:1px solid #cddcd8;border-radius:10px;padding:11px;background:white;color:#183b3e}textarea{min-height:120px;resize:vertical}label{font-weight:700;font-size:13px;display:grid;gap:6px}.panel{background:#fff;border:1px solid #dce9e3;border-radius:20px;padding:22px;margin:15px 0;box-shadow:0 6px 20px #153d3010}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.row>*{flex-shrink:0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tabs button.active{background:#246f59;color:white}.muted{color:#61756e;font-size:14px}.pill{display:inline-block;background:#e9f5e9;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:750}.question{border:1px solid #e1e8e5;border-radius:16px;padding:16px;margin:12px 0;background:#fcfdfc}.question h3{margin:0 0 12px}.question .grid{margin:12px 0}.hidden{display:none!important}.library{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.libraryCard{border:1px solid #dce7e2;border-radius:17px;padding:18px;background:linear-gradient(135deg,#eef8f1,#fff)}.libraryCard h3{margin:5px 0}.banner{background:#fff2d7;border:1px solid #efdba6;border-radius:14px;padding:13px 16px;margin:12px 0;color:#62491c}.answer{white-space:pre-wrap;background:#f3f7f4;padding:12px;border-radius:10px}.danger{color:#b63737}.sectionTitle{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}@media print{header,.tabs,.noprint,button,.banner{display:none!important}body{background:white}main{max-width:none;margin:0}.panel,.question{box-shadow:none;break-inside:avoid;border-color:#ddd}textarea,input{border:0;padding:0}} select{font:inherit;padding:9px;border:1px solid #c9d9d1;border-radius:8px}
 #assignmentReport table{width:100%;border-collapse:collapse}#assignmentReport th,#assignmentReport td{text-align:left;border-bottom:1px solid #dce7e2;padding:8px}
 .answerText{white-space:pre-wrap;overflow-wrap:anywhere}#responseReview label{margin-top:8px}
+#assignmentQrDialog{border:0;margin:0;padding:16px;width:100%;height:100%;max-width:none;max-height:none;background:#fff;color:#1c3840}
+#assignmentQrDialog::backdrop{background:#fff}
+.qrStage{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px}
+.qrStage h2{margin:0;font-size:clamp(1.25rem,4vw,3rem);overflow-wrap:anywhere}
+.qrStage p{margin:0}.qrStage form{align-self:flex-end}
+#assignmentQrImage{width:min(78vw,63vh,760px);padding:4%;background:#fff}
+#assignmentQrImage canvas,#assignmentQrImage img{width:100%;height:auto;image-rendering:pixelated}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -22,7 +29,18 @@
   <p id="reportStatus" role="status"></p><div id="assignmentList" class="library"></div>
   <div id="assignmentReport"></div><div id="responseReview"></div>
 </section>
-</main><script>
+</main>
+<dialog id="assignmentQrDialog" class="noprint" aria-labelledby="assignmentQrTitle">
+  <div class="qrStage">
+    <form method="dialog"><button autofocus>Close QR code</button></form>
+    <h2 id="assignmentQrTitle"></h2>
+    <p>Scan with your camera, then sign in with your student code.</p>
+    <div id="assignmentQrImage" role="img" aria-label="QR code for this assessment"></div>
+    <p id="assignmentQrStatus" role="status"></p>
+    <a id="assignmentQrLink" target="_blank" rel="noopener">Open student link</a>
+  </div>
+</dialog>
+<script>
 const KEY='lh-assessment-templates-v1',DRAFT='lh-assessment-preview-v1';const $=id=>document.getElementById(id);
 const uid=()=>Math.random().toString(36).slice(2,11);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -86,4 +104,4 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="teacher.js"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=assignment-qr"></script></body></html>

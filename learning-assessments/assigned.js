@@ -1,6 +1,7 @@
 const byId = id => document.getElementById(id);
 const escapeText = assessmentApi.escape;
 let studentCode = localStorage.getItem("lategan_student_code") || "";
+let linkedAssignment = new URLSearchParams(location.search).get("assignment");
 let attempt = null;
 let timer;
 let saving = null;
@@ -32,6 +33,12 @@ async function loadList() {
       </div>`).join("") || "<p>You have no assigned assessments.</p>";
     list.querySelectorAll("button").forEach(button => button.onclick = () => openAssessment(button.dataset.id, button));
     localStorage.setItem("lategan_student_code", studentCode);
+    if (linkedAssignment) {
+      const button = Array.from(list.querySelectorAll("button")).find(item => item.dataset.id === linkedAssignment);
+      linkedAssignment = null;
+      if (button) await openAssessment(button.dataset.id, button);
+      else byId("listStatus").textContent = "That assessment isn’t assigned to this student.";
+    }
   } catch (error) {
     byId("listStatus").textContent = error.message;
     if (error.status === 401) {

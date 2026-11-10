@@ -28,10 +28,17 @@ async function loadAssignments() {
       <div class="libraryCard">
         <span class="pill">${esc(a.class_name)}</span><h3>${esc(a.title)}</h3>
         <p>${a.assigned} assigned · ${a.started} started · ${a.submitted} submitted</p>
-        <button type="button" data-assignment="${esc(a.id)}">View progress</button>
+        <div class="row">
+          <button type="button" data-assignment="${esc(a.id)}">View progress</button>
+          <button type="button" data-qr="${esc(a.id)}">Show full-screen QR</button>
+        </div>
       </div>`).join("") || "<p>No class assignments yet.</p>";
-    $("assignmentList").querySelectorAll("button").forEach(button =>
-      button.onclick = () => showAssignment(button.dataset.assignment));
+    for (const assignment of result.assignments) {
+      $("assignmentList").querySelector(`[data-assignment="${CSS.escape(assignment.id)}"]`).onclick =
+        () => showAssignment(assignment.id);
+      $("assignmentList").querySelector(`[data-qr="${CSS.escape(assignment.id)}"]`).onclick =
+        () => showAssignmentQr(assignment.id, assignment.title);
+    }
   } catch (error) {
     $("connectionStatus").textContent = error.message;
     if (error.status === 401) {
@@ -98,13 +105,16 @@ async function showAssignment(id) {
     const maximum = assessment.questions.filter(q => q.type === "mcq").reduce((sum, q) => sum + q.marks, 0);
     $("reportStatus").textContent = "";
     $("assignmentReport").innerHTML = `
-      <h3>${esc(assessment.title)}</h3>
+      <div class="sectionTitle"><h3>${esc(assessment.title)}</h3>
+        <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
+      </div>
       <p>${counts.assigned} assigned · ${counts.started} started (including submitted) · ${counts.submitted} submitted</p>
       <table><thead><tr><th>Student</th><th>Status</th><th>Multiple choice</th><th>Responses</th></tr></thead>
       <tbody>${students.map(student => `<tr><td>${esc(student.display_name || "Student")}</td>
         <td>${student.submitted_at ? "Submitted" : student.started_at ? "Started" : "Assigned"}</td>
         <td>${student.submitted_at && maximum ? `${student.mcq_score} / ${maximum}` : "—"}</td>
         <td>${student.started_at ? `<button type="button" data-student="${student.student_id}">View</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
+    $("reportAssignmentQr").onclick = () => showAssignmentQr(id, assessment.title);
     $("assignmentReport").querySelectorAll("[data-student]").forEach(button => {
       const student = students.find(s => String(s.student_id) === button.dataset.student);
       button.onclick = () => showResponse(id, assessment, student);
@@ -113,6 +123,37 @@ async function showAssignment(id) {
     if (activeAssignment === id) $("reportStatus").textContent = error.message;
   }
 }
+
+function showAssignmentQr(id, title) {
+  const dialog = $("assignmentQrDialog");
+  const url = new URL("assigned.html", location.href);
+  url.searchParams.set("assignment", id);
+  $("assignmentQrTitle").textContent = title;
+  $("assignmentQrLink").href = url.href;
+
+  const image = $("assignmentQrImage");
+  const status = $("assignmentQrStatus");
+  image.replaceChildren();
+  image.hidden = false;
+  status.textContent = "";
+  try {
+    new QRCode(image, {
+      text: url.href, width: 640, height: 640, correctLevel: QRCode.CorrectLevel.M
+    });
+  } catch {
+    image.hidden = true;
+    status.textContent = "The QR code couldn’t load. Use the student link below.";
+  }
+
+  dialog.showModal();
+  dialog.requestFullscreen?.().catch(() => {});
+}
+
+$("assignmentQrDialog").addEventListener("close", () => {
+  if (document.fullscreenElement === $("assignmentQrDialog")) {
+    document.exitFullscreen().catch(() => {});
+  }
+});
 
 async function showResponse(id, assessment, student) {
   const request = ++responseRequest;
