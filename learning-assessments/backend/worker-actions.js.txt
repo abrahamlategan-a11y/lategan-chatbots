@@ -141,7 +141,7 @@
               FROM lh_assessment_assignments a JOIN classes c ON c.id=a.class_id AND c.active=1
               JOIN teacher_classes tc ON tc.class_id=a.class_id AND tc.teacher_id=a.teacher_id
               JOIN lh_assessment_responses r ON r.assignment_id=a.id
-              WHERE a.teacher_id=? GROUP BY a.id ORDER BY a.assigned_at DESC,a.id
+              WHERE a.teacher_id=? AND json_extract(a.assessment_json,'$.archived_at') IS NULL GROUP BY a.id ORDER BY a.assigned_at DESC,a.id
             `, teacher.id).all();
             return reply({classes, assignments: results});
           }
@@ -203,7 +203,7 @@
             const assessment = JSON.stringify({...JSON.parse(content), ...(sourceId ? {source_id: sourceId} : {}),
               assignment_key: assignmentKey});
             // Historical rows keep their original IDs. Match their source or exact snapshot before creating anything.
-            const match = `a.class_id=? AND (
+            const match = `a.class_id=? AND json_extract(a.assessment_json,'$.archived_at') IS NULL AND (
               json_extract(a.assessment_json,'$.assignment_key')=?
               OR (json_extract(a.assessment_json,'$.assignment_key') IS NULL AND (
                 (?<>'' AND ((a.teacher_id=? AND json_extract(a.assessment_json,'$.source_id')=?)
@@ -232,6 +232,7 @@
               LIMIT 1`, id, ...matchArgs, id, teacher.id).first();
             if (!saved) return fail("There are no active students in that class.");
             if (saved.id === id && (saved.teacher_id !== teacher.id || saved.class_id !== classId ||
+                JSON.parse(saved.assessment_json).archived_at ||
                 (jsonSnapshot(saved.assessment_json) !== content ||
                 (JSON.parse(saved.assessment_json).assignment_key ?? assignmentKey) !== assignmentKey))) {
               return fail("This assignment reference is already in use.", 409);
@@ -242,6 +243,24 @@
           const assignment = await query("SELECT * FROM lh_assessment_assignments WHERE id=? AND teacher_id=?", id, teacher.id).first();
           if (!assignment || !(await teacherClassAccess(env, teacher.id, assignment.class_id))) return fail("Assignment unavailable.", 404);
           const assessment = JSON.parse(assignment.assessment_json);
+          if (action === "lh_assessment_teacher_archive") {
+            if (assessment.archived_at) return reply({archived: true});
+            const archived = await query(`
+              UPDATE lh_assessment_assignments
+              SET assessment_json=json_set(json_remove(assessment_json,'$.assignment_key'),
+                '$.archived_at',CURRENT_TIMESTAMP)
+              WHERE id=? AND teacher_id=? AND json_extract(assessment_json,'$.archived_at') IS NULL
+                AND NOT EXISTS (SELECT 1 FROM lh_assessment_responses WHERE assignment_id=?
+                  AND (started_at IS NOT NULL OR submitted_at IS NOT NULL OR revision<>0 OR answers_json<>'{}'))
+            `, id, teacher.id, id).run();
+            if (!archived.meta.changes) {
+              const latest = await query(`SELECT json_extract(assessment_json,'$.archived_at') AS archived_at
+                FROM lh_assessment_assignments WHERE id=? AND teacher_id=?`, id, teacher.id).first();
+              if (!latest?.archived_at) return fail("A student has started this assignment. It cannot be archived.", 409);
+            }
+            return reply({archived: true});
+          }
+          if (assessment.archived_at) return fail("Assignment unavailable.", 404);
           if (action === "lh_assessment_teacher_results") {
             const {results} = await query(`
               SELECT r.student_id,r.started_at,r.submitted_at,r.mcq_score,s.display_name,
@@ -331,7 +350,8 @@
             SELECT a.id,json_extract(a.assessment_json,'$.title') AS title,
               json_extract(a.assessment_json,'$.subject') AS subject,r.started_at,r.submitted_at
             FROM lh_assessment_responses r JOIN lh_assessment_assignments a ON a.id=r.assignment_id
-            WHERE r.student_id=? AND a.class_id=? ORDER BY a.assigned_at DESC,a.id
+            WHERE r.student_id=? AND a.class_id=? AND json_extract(a.assessment_json,'$.archived_at') IS NULL
+            ORDER BY a.assigned_at DESC,a.id
           `, student.id, student.class_id).all();
           return reply({assignments: results});
         }
@@ -340,14 +360,18 @@
           SELECT a.assessment_json,r.answers_json,r.revision,r.started_at,r.submitted_at
           FROM lh_assessment_responses r JOIN lh_assessment_assignments a ON a.id=r.assignment_id
           WHERE r.assignment_id=? AND r.student_id=? AND a.class_id=?
+            AND json_extract(a.assessment_json,'$.archived_at') IS NULL
         `, id, student.id, student.class_id).first();
         if (!response) return fail("This assessment is unavailable.", 404);
         const assessment = JSON.parse(response.assessment_json);
         if (action === "lh_assessment_student_open") {
           await query(`UPDATE lh_assessment_responses SET started_at=CURRENT_TIMESTAMP
-            WHERE assignment_id=? AND student_id=? AND started_at IS NULL`, id, student.id).run();
+            WHERE assignment_id=? AND student_id=? AND started_at IS NULL
+              AND EXISTS (SELECT 1 FROM lh_assessment_assignments a WHERE a.id=assignment_id
+                AND json_extract(a.assessment_json,'$.archived_at') IS NULL)`, id, student.id).run();
           const latest = await query(`SELECT answers_json,revision,submitted_at FROM lh_assessment_responses
-            WHERE assignment_id=? AND student_id=?`, id, student.id).first();
+            WHERE assignment_id=? AND student_id=? AND started_at IS NOT NULL`, id, student.id).first();
+          if (!latest) return fail("This assessment is unavailable.", 404);
           const questions = assessment.questions.map(({id, text, type, marks, options}) => ({id, text, type, marks, options}));
           return reply({assessment: {title: assessment.title, subject: assessment.subject, instructions: assessment.instructions, questions}, answers: JSON.parse(latest.answers_json),
             revision: latest.revision, submitted: !!latest.submitted_at});

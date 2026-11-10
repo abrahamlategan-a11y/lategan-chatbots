@@ -364,6 +364,7 @@ async function showAssignment(id) {
         <div class="row">
           ${hasWritten ? '<button type="button" id="openWrittenGrid">Written marking grid</button>' : ""}
           <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
+          ${counts.started === 0 && counts.submitted === 0 ? '<button type="button" id="archiveAssignment">Archive unused assignment</button>' : ""}
         </div>
       </div>
       ${hasWritten ? `<div id="reviewNotification">
@@ -378,6 +379,8 @@ async function showAssignment(id) {
         ${hasWritten ? `<td data-written-status="${student.student_id}">${student.submitted_at ? writtenStatus(student.ai_status) : "—"}</td>` : ""}
         <td>${student.started_at ? `<button type="button" data-student="${student.student_id}">View</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
     $("reportAssignmentQr").onclick = () => showAssignmentQr(id, assessment.title);
+    const archive = $("archiveAssignment");
+    if (archive) archive.onclick = () => archiveUnusedAssignment(id, assessment.title, archive);
     if (hasWritten) {
       $("openWrittenGrid").onclick = () => openWrittenGrid(id, assessment, students);
       prepareWrittenReview(id, assessment, students);
@@ -388,6 +391,25 @@ async function showAssignment(id) {
     });
   } catch (error) {
     if (request === responseRequest) $("reportStatus").textContent = error.message;
+  }
+}
+
+async function archiveUnusedAssignment(id, title, button) {
+  if (!confirm(`Archive the unused assignment for “${title}”? It will be removed from the class list and the assignment picker.`)) return;
+  button.disabled = true;
+  $("reportStatus").textContent = "";
+  try {
+    await teacherAssessment("archive", {assignment_id: id});
+    if (activeAssignment === id) {
+      closeAssignmentResults();
+      if (resultsTrigger?.isConnected) resultsTrigger.focus();
+    }
+    await loadAssignments();
+    $("connectionStatus").textContent = "Unused assignment archived.";
+  } catch (error) {
+    if (activeAssignment === id) $("reportStatus").textContent = error.message;
+  } finally {
+    button.disabled = false;
   }
 }
 
