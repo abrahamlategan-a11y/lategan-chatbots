@@ -302,7 +302,7 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
 <button id="instructionsNav"><span class="ico">☷</span>Instructions Board</button>
 <button data-section="games"><span class="ico">🎮</span>Class Games</button>
 <button id="whiteboardsNav"><span class="ico">✎</span>Student Whiteboards</button></div></details>
-<details class="hub-nav-group"><summary>Teacher tools</summary><div class="nav"><button id="assessmentsNav"><span class="ico">✓</span>Maths Trek</button>
+<details class="hub-nav-group"><summary>Teacher tools</summary><div class="nav"><button id="classAssignmentsNav"><span class="ico">▤</span>Assessments</button><button id="assessmentsNav"><span class="ico">✓</span>Maths Trek</button>
 <button id="groupsNav"><span class="ico">◫</span>Group Maker</button>
 <button id="jobsNav"><span class="ico">✓</span>Classroom Jobs</button>
 <button id="ptiNav"><span class="ico">◷</span>PTI Timer</button>
@@ -341,7 +341,7 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
 <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
 <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
 <div class="tile clickable" id="whiteboardsTile"><div class="tile-icon">✎</div><h3>Student Whiteboards</h3><p>See every student's live whiteboard, use Frost Mode, zoom in and save learning evidence.</p><div class="tile-foot">Open whiteboards →</div></div></div></div>
-<details class="hub-home-group"><summary>Teacher tools</summary><div class="tilegrid"><div class="tile clickable" id="assessmentsTile"><div class="tile-icon">✓</div><h3>Maths Trek</h3><p>Mark tests and review student and class results.</p><div class="tile-foot">Open Maths Trek →</div></div>
+<details class="hub-home-group"><summary>Teacher tools</summary><div class="tilegrid"><div class="tile clickable" id="classAssignmentsTile"><div class="tile-icon">▤</div><h3>Assessments</h3><p>Assign class tests and review student responses.</p></div><div class="tile clickable" id="assessmentsTile"><div class="tile-icon">✓</div><h3>Maths Trek</h3><p>Mark tests and review student and class results.</p><div class="tile-foot">Open Maths Trek →</div></div>
 <div class="tile clickable" id="groupsTile"><div class="tile-icon">◫</div><h3>Group Maker</h3><p>Make quick random groups for a lesson.</p><div class="tile-foot">Open group maker →</div></div>
 <div class="tile clickable" id="jobsTile"><div class="tile-icon">✓</div><h3>Classroom Jobs</h3><p>Set up and manage classroom job groups.</p><div class="tile-foot">Open classroom jobs →</div></div>
 <div class="tile clickable" id="ptiTile"><div class="tile-icon">◷</div><h3>PTI Timer</h3><p>Clock-bound 8-minute parent interview slots with a one-minute visual warning and bell.</p><div class="tile-foot">Open timer →</div></div>
@@ -587,6 +587,9 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
 </div>
 
 <script>
+for (const id of ["classAssignmentsNav","classAssignmentsTile"]) {
+  document.getElementById(id).onclick = () => { location.href = "../learning-assessments/"; };
+}
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 let teacherCode="",teacher=null,teacherClasses=[],activeClassId=null,bots=[],students=[],editingBotId=null,published=false,shared=false,currentStudent=null,hubOwner=false,hubLocked=false;
 const $=id=>document.getElementById(id);

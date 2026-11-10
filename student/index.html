@@ -210,6 +210,12 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
         <div class="go"><span id="botCount">0</span> available · Open →</div>
       </div>
 
+      <a class="action" href="../learning-assessments/assigned.html" id="classAssessmentsTile">
+        <div class="action-icon">▤</div>
+        <h3>My assessments</h3>
+        <p>Open tests assigned by your teacher and continue saved work.</p>
+        <div class="go" id="classAssessmentsStatus">Open assessments →</div>
+      </a>
       <a class="action games" href="../pirate/">
         <div class="action-icon">🎮</div>
         <h3>Class Games</h3>
@@ -331,6 +337,7 @@ function switchStudent(){
   sessionStorage.removeItem("pirate_player_id");
 
   student=null;
+  $("classAssessmentsStatus").textContent="Open assessments →";
   bots=[];
   $("studentCode").value="";
   $("loginError").textContent="";
@@ -363,11 +370,20 @@ async function login(){
     $("studentChip").textContent=`${student.display_name||"Student"} · ${student.class_name||""}`;
     updateGreeting();
     $("loginScreen").style.display="none";
-    await Promise.all([loadBots(),loadDaily()]);
+    await Promise.all([loadBots(),loadDaily(),loadAssignedAssessments(student)]);
   }catch(e){$("loginError").textContent=e.message}
 }
 $("loginBtn").onclick=login;
 $("studentCode").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+
+async function loadAssignedAssessments(signedInStudent){
+  try{
+    const {assignments}=await post({action:"lh_assessment_student_list",student_code:signedInStudent.student_code});
+    if(student!==signedInStudent)return;
+    const open=assignments.filter(assignment=>!assignment.submitted_at).length;
+    $("classAssessmentsStatus").textContent=open?open+" to complete · Open →":"Open assessments →";
+  }catch{}
+}
 
 async function loadBots(){
   try{
