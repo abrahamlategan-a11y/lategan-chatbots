@@ -17,7 +17,7 @@ ROOT = Path(__file__).parent
 SCRIPT = "/workers/scripts/lategan-chatbot"
 LIVE = "https://lategan-chatbot.abrahamlategan.workers.dev"
 BASELINE = "76f75a03346f43924b783b7b51a2000289ca45b81a5f9287ee474d1f7d25d2b3"
-ANCHOR = rb"(?m)^[ \t]*if \(action === "teacher_login"\) \{\r?$"
+ANCHOR = rb"""(?m)^[ \t]*if\s*\(\s*action\s*===\s*["']teacher_login["']\s*\)\s*\{[^\S\n]*$"""
 
 
 def request(url, method="GET", data=None, headers=None):
