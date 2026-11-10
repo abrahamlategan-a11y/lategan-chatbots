@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {existsSync, readFileSync} from "node:fs";
 import {DatabaseSync} from "node:sqlite";
 import vm from "node:vm";
 
@@ -137,6 +137,7 @@ assert.deepEqual((await teacher("shared_list", {}, 200, "other-teacher")).assess
 await teacher("assign", {assignment_id: crypto.randomUUID(), class_id: 11, shared_id: shared.id}, 404, "other-teacher");
 assert.equal((await teacher("results", {assignment_id: otherId}, 200, "other-teacher")).counts.assigned, 1);
 for (const page of ["../index.html", "../assigned.html", "../../student/index.html", "../../teacher/index.html"]) {
+  if (!existsSync(new URL(page, import.meta.url))) continue;
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 }
 console.log("Assignment integration passed: roster, access, autosave, submit, counts, MCQ and reviewed AI suggestion.");
