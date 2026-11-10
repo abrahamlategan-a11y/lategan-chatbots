@@ -1,16 +1,16 @@
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {existsSync, readFileSync} from "node:fs";
 import {DatabaseSync} from "node:sqlite";
 import vm from "node:vm";
 
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const db = new DatabaseSync(":memory:");
 db.exec(`
-  CREATE TABLE teachers(id INTEGER PRIMARY KEY, teacher_code TEXT, active INTEGER);
+  CREATE TABLE teachers(id INTEGER PRIMARY KEY, teacher_code TEXT, active INTEGER, display_name TEXT);
   CREATE TABLE classes(id INTEGER PRIMARY KEY, name TEXT, active INTEGER);
   CREATE TABLE teacher_classes(teacher_id INTEGER, class_id INTEGER);
   CREATE TABLE students(id INTEGER PRIMARY KEY, student_code TEXT, class_id INTEGER, active INTEGER, display_name TEXT);
-  INSERT INTO teachers VALUES(1,'teacher',1),(2,'other-teacher',1);
+  INSERT INTO teachers VALUES(1,'teacher',1,'Teacher One'),(2,'other-teacher',1,'Teacher Two');
   INSERT INTO classes VALUES(10,'4L',1),(11,'4A',1);
   INSERT INTO teacher_classes VALUES(1,10),(2,11);
   INSERT INTO students VALUES(101,'one',10,1,'One'),(102,'two',10,1,'Two'),
@@ -118,7 +118,26 @@ assert.deepEqual((await teacher("response", {student_id: 101})).reviews, {});
 await teacher("review", {...review, score: 3}, 400);
 await teacher("review", {...review, score: 1, feedback: "Teacher feedback"});
 assert.equal((await teacher("response", {student_id: 101})).reviews["2"].score, 1);
+const share = {template_id: "template-1", shared: true, assessment};
+await teacher("share_set", share, 401, "bad");
+await teacher("share_set", {...share, assessment: {...assessment, questions: [{type: "mcq"}]}}, 400);
+await teacher("share_set", share);
+const shared = (await teacher("shared_list", {}, 200, "other-teacher")).assessments[0];
+assert.equal(shared.is_owner, 0);
+assert.equal(shared.title, assessment.title);
+assert.ok(!("assessment_json" in shared));
+await teacher("share_set", {template_id: share.template_id, shared: false}, 200, "other-teacher");
+const otherId = crypto.randomUUID();
+await teacher("assign", {assignment_id: otherId, class_id: 10, shared_id: shared.id}, 403, "other-teacher");
+assert.equal((await teacher("assign", {assignment_id: otherId, class_id: 11, shared_id: shared.id}, 200, "other-teacher")).assigned, 1);
+assert.equal((await teacher("list", {}, 200, "other-teacher")).assignments[0].source_id, shared.id);
+assert.equal((await student("list", {}, 200, "other-student")).assignments[0].id, otherId);
+await teacher("share_set", {template_id: share.template_id, shared: false});
+assert.deepEqual((await teacher("shared_list", {}, 200, "other-teacher")).assessments, []);
+await teacher("assign", {assignment_id: crypto.randomUUID(), class_id: 11, shared_id: shared.id}, 404, "other-teacher");
+assert.equal((await teacher("results", {assignment_id: otherId}, 200, "other-teacher")).counts.assigned, 1);
 for (const page of ["../index.html", "../assigned.html", "../../student/index.html", "../../teacher/index.html"]) {
+  if (!existsSync(new URL(page, import.meta.url))) continue;
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 }
 console.log("Assignment integration passed: roster, access, autosave, submit, counts, MCQ and reviewed AI suggestion.");

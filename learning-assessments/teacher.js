@@ -1,5 +1,8 @@
 let assignmentCode = localStorage.getItem("lategan_teacher_code") || "";
 let assignmentClasses = [];
+let classAssignments = [];
+let sharedAssessments = [];
+let assignmentSource = null;
 let activeAssignment = null;
 let pendingAssignment = null;
 let responseRequest = 0;
@@ -17,11 +20,7 @@ async function loadAssignments() {
   try {
     const result = await teacherAssessment("list");
     assignmentClasses = result.classes;
-    const selector = $("assignmentClass");
-    const selected = selector.value || String(assignmentClasses.find(c => c.name.trim().toUpperCase() === "4L")?.id || "");
-    selector.replaceChildren(new Option("Choose a class", ""), ...assignmentClasses.map(c => new Option(c.name, c.id)));
-    selector.value = selected;
-    $("assignButton").disabled = !assignmentClasses.length;
+    classAssignments = result.assignments;
     $("assessmentLogin").hidden = true;
     $("connectionStatus").textContent = "";
     $("assignmentList").innerHTML = result.assignments.map(a => `
@@ -39,6 +38,7 @@ async function loadAssignments() {
       $("assignmentList").querySelector(`[data-qr="${CSS.escape(assignment.id)}"]`).onclick =
         () => showAssignmentQr(assignment.id, assignment.title);
     }
+    return true;
   } catch (error) {
     $("connectionStatus").textContent = error.message;
     if (error.status === 401) {
@@ -53,30 +53,59 @@ $("assessmentLogin").onsubmit = async event => {
   assignmentCode = $("assessmentTeacherCode").value.trim();
   $("assessmentTeacherCode").value = "";
   await loadAssignments();
-  if ($("assessmentLogin").hidden) localStorage.setItem("lategan_teacher_code", assignmentCode);
+  if ($("assessmentLogin").hidden) {
+    localStorage.setItem("lategan_teacher_code", assignmentCode);
+    await loadSharedAssessments();
+  }
+};
+
+async function openAssign(source) {
+  assignmentSource = source;
+  $("assignTitle").textContent = source.title;
+  $("assignmentStatus").textContent = "Loading classes…";
+  $("assignButton").disabled = true;
+  if (!$("assignDialog").open) $("assignDialog").showModal();
+  const available = await loadAssignments();
+  if (assignmentSource !== source || !$("assignDialog").open) return;
+  if (!available) {
+    $("assignmentStatus").textContent = "Sign in with your teacher code to assign a test.";
+    return;
+  }
+  const selector = $("assignmentClass");
+  const selected = selector.value || String(assignmentClasses.find(c => c.name.trim().toUpperCase() === "4L")?.id || "");
+  selector.replaceChildren(new Option("Choose a class", ""), ...assignmentClasses.map(c => new Option(c.name, c.id)));
+  selector.value = selected;
+  $("assignButton").disabled = !assignmentClasses.length;
+  $("assignmentStatus").textContent = assignmentClasses.length ? "This test will appear in Student Hub for the selected class." : "You have no classes available.";
+}
+
+$("closeAssign").onclick = () => $("assignDialog").close();
+$("assignDraft").onclick = () => {
+  syncEditor();
+  if (!current.title.trim() || !current.questions.length) {
+    $("editStatus").textContent = "Add a title and at least one question first.";
+    return;
+  }
+  openAssign({title: current.title, assessment: structuredClone(current), template_id: current.id});
 };
 
 $("assignForm").onsubmit = async event => {
   event.preventDefault();
-  syncEditor();
   const classId = Number($("assignmentClass").value);
   const target = assignmentClasses.find(c => Number(c.id) === classId);
-  if (!target || !current.title.trim() || !current.questions.length) {
-    $("assignmentStatus").textContent = "Add a title and questions, and choose a class.";
-    return;
-  }
-  if (!confirm(`Assign “${current.title}” to ${target.name}? It will appear in Student Hub for the current class roll.`)) return;
-  const assessment = structuredClone(current);
-  const payload = JSON.stringify({classId, assessment});
+  if (!assignmentSource || !target) return;
+  const {title, ...source} = assignmentSource;
+  const payload = JSON.stringify({classId, source});
   if (pendingAssignment?.payload !== payload) pendingAssignment = {payload, id: crypto.randomUUID()};
   $("assignButton").disabled = true;
+  $("closeAssign").disabled = true;
   $("assignmentStatus").textContent = "Assigning…";
   try {
     const result = await teacherAssessment("assign", {
-      assignment_id: pendingAssignment.id, class_id: classId, assessment
+      assignment_id: pendingAssignment.id, class_id: classId, ...source
     });
     pendingAssignment = null;
-    $("assignmentStatus").textContent = `Assigned to ${result.assigned} students in ${target.name}.`;
+    $("assignDialog").close();
     tab("reports");
     await loadAssignments();
     await showAssignment(result.assignment_id);
@@ -84,8 +113,152 @@ $("assignForm").onsubmit = async event => {
     $("assignmentStatus").textContent = error.message;
   } finally {
     $("assignButton").disabled = false;
+    $("closeAssign").disabled = false;
   }
 };
+$("assignDialog").addEventListener("cancel", event => {
+  if ($("closeAssign").disabled) event.preventDefault();
+});
+
+async function loadSharedAssessments() {
+  if (!assignmentCode) {
+    $("sharedStatus").textContent = "Sign in with your teacher code to see shared assessments.";
+    return;
+  }
+  try {
+    const {assessments} = await teacherAssessment("shared_list");
+    sharedAssessments = assessments;
+    $("sharedStatus").textContent = "";
+    $("sharedCards").innerHTML = assessments.map(item => `
+      <div class="libraryCard"><span class="pill">${esc(item.subject || "Assessment")}</span>
+      <h3>${esc(item.title)}</h3>
+      <p class="muted">${esc(item.teacher_name || "Teacher")} · ${item.year ? esc(item.year) + " · " : ""}${item.question_count} questions</p>
+      <div class="row">
+        <button type="button" class="primary" data-shared-assign="${esc(item.id)}">Assign to class</button>
+        <button type="button" data-shared-qr="${esc(item.id)}">Show QR</button>
+        ${item.is_owner ? `<button type="button" data-unshare="${esc(item.id)}">Stop sharing</button>` : ""}
+      </div></div>`).join("") || "<p>No assessments have been shared yet.</p>";
+    updateSharingPill();
+  } catch (error) {
+    $("sharedCards").replaceChildren();
+    $("sharedStatus").textContent = error.message;
+  }
+}
+document.querySelector('[data-tab="shared"]').addEventListener("click", loadSharedAssessments);
+document.addEventListener("assessment-editor-opened", () => {
+  $("sharingStatus").textContent = "";
+  updateSharingPill();
+});
+
+function ownedShare(id) {
+  return sharedAssessments.find(item => item.is_owner && item.template_id === id);
+}
+
+function updateSharingPill() {
+  const shared = Boolean(ownedShare(current.id));
+  $("shareDraft").setAttribute("aria-pressed", String(shared));
+  $("shareDraft").textContent = shared ? "Shared with teachers" : "Share with teachers";
+}
+
+async function saveSharing(template, shared, status) {
+  await teacherAssessment("share_set", {template_id: template.id, shared, assessment: shared ? template : undefined});
+  status.textContent = shared ? "Available in Shared assessments." : "Removed from Shared assessments.";
+  await loadSharedAssessments();
+}
+
+$("shareDraft").onclick = async () => {
+  syncEditor();
+  const template = structuredClone(current);
+  const shared = !ownedShare(template.id);
+  if (!assignmentCode) {
+    $("sharingStatus").textContent = "Sign in with your teacher code to share a test.";
+    return;
+  }
+  if (shared && !confirm(`Share “${template.title}” with Learning Hub teachers? They can assign it to their classes.`)) return;
+  $("shareDraft").disabled = true;
+  try {
+    await saveSharing(template, shared, $("sharingStatus"));
+    if (shared) {
+      const index = templates.findIndex(t => t.id === template.id);
+      if (index < 0) templates.push(template);
+      else templates[index] = template;
+      persist();
+      drawLibrary();
+    }
+  } catch (error) {
+    $("sharingStatus").textContent = error.message;
+  } finally {
+    $("shareDraft").disabled = false;
+  }
+};
+
+$("saveTemplate").addEventListener("click", async () => {
+  if (!ownedShare(current.id) || !current.title.trim() || !current.questions.length) return;
+  try {
+    await saveSharing(structuredClone(current), true, $("sharingStatus"));
+  } catch (error) {
+    $("sharingStatus").textContent = "Saved in this browser. Shared version could not update. " + error.message;
+  }
+});
+
+$("libraryCards").addEventListener("click", event => {
+  const button = event.target.closest("[data-assign-template], [data-qr-template]");
+  if (!button) return;
+  const template = templates.find(t => t.id === (button.dataset.assignTemplate || button.dataset.qrTemplate));
+  if (!template) return;
+  if (button.dataset.assignTemplate) openAssign({title: template.title, assessment: structuredClone(template), template_id: template.id});
+  else chooseAssignmentQr(template.title, [template.id, ownedShare(template.id)?.id]);
+});
+
+$("sharedCards").addEventListener("click", async event => {
+  const button = event.target.closest("[data-shared-assign], [data-shared-qr], [data-unshare]");
+  if (!button) return;
+  const item = sharedAssessments.find(a => a.id === (button.dataset.sharedAssign || button.dataset.sharedQr || button.dataset.unshare));
+  if (!item) return;
+  if (button.dataset.sharedAssign) openAssign({title: item.title, shared_id: item.id});
+  else if (button.dataset.sharedQr) chooseAssignmentQr(item.title, [item.id, item.is_owner ? item.template_id : null], Boolean(item.is_owner));
+  else {
+    button.disabled = true;
+    try {
+      await saveSharing({id: item.template_id}, false, $("sharedStatus"));
+    } catch (error) {
+      $("sharedStatus").textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  }
+});
+
+async function chooseAssignmentQr(title, sourceIds, includeLegacy = true) {
+  if (!await loadAssignments()) {
+    $("chooseQrStatus").textContent = "Sign in with your teacher code to see your assignment QR codes.";
+    $("chooseQrOptions").replaceChildren();
+    if (!$("chooseQrDialog").open) $("chooseQrDialog").showModal();
+    return;
+  }
+  const matches = classAssignments.filter(a => a.source_id
+    ? sourceIds.includes(a.source_id)
+    : includeLegacy && a.title === title);
+  if (matches.length === 1) {
+    showAssignmentQr(matches[0].id, title);
+    return;
+  }
+  $("chooseQrStatus").textContent = matches.length ? "Choose the class assignment to project." : "Assign this test to a class first to get its QR code.";
+  $("chooseQrOptions").replaceChildren(...matches.map(a => {
+    const button = document.createElement("button");
+    button.type = "button";
+    const date = new Date(a.assigned_at.replace(" ", "T") + "Z");
+    button.textContent = a.class_name + " · " + date.toLocaleString("en-AU", {
+      timeZone: "Australia/Perth", dateStyle: "short", timeStyle: "short"
+    });
+    button.onclick = () => {
+      $("chooseQrDialog").close();
+      showAssignmentQr(a.id, title);
+    };
+    return button;
+  }));
+  if (!$("chooseQrDialog").open) $("chooseQrDialog").showModal();
+}
 
 $("refreshAssignments").onclick = async () => {
   await loadAssignments();
@@ -145,7 +318,7 @@ function showAssignmentQr(id, title) {
     status.textContent = "The QR code couldn’t load. Use the student link below.";
   }
 
-  dialog.showModal();
+  if (!dialog.open) dialog.showModal();
   dialog.requestFullscreen?.().catch(() => {});
 }
 
@@ -223,3 +396,4 @@ function addMarking(panel, question, identity, review) {
 }
 
 loadAssignments();
+loadSharedAssessments();
