@@ -82,8 +82,8 @@ def release(account, token):
         starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
         if len(starts) == 1:
             start = starts[0].start()
-            end = start + 23218
-            if hashlib.sha256(original[start:end]).hexdigest() == "7a6acd2eb5219b8899efc1bca0e65730a51d8006e3b21582894b56fa49279b5f":
+            end = start + 25652
+            if hashlib.sha256(original[start:end]).hexdigest() == "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e":
                 baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
     if hashlib.sha256(baseline).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
@@ -154,6 +154,7 @@ def smoke_test(sql):
     teacher_code, student_code = "LH" + test + "T", "LH" + test + "S"
     class_name = "Assessment smoke test " + test
     assignment_id = str(uuid.uuid4())
+    empty_assignment_id = str(uuid.uuid4())
 
     def post(action, expected=200, **payload):
         status, raw, _ = request(LIVE, "POST", json.dumps({"action": action, **payload}).encode(),
@@ -231,9 +232,19 @@ def smoke_test(sql):
         row = grid["rows"][0]
         assert row["student_id"] == s_id and row["answers"] == {"2": answers["2"]}
         assert row["ai_marks"] == response["ai_marks"] and row["reviews"] == reviewed["reviews"]
+        post("lh_assessment_teacher_archive", 409, teacher_code=teacher_code, assignment_id=assignment_id)
+        post("lh_assessment_teacher_assign", teacher_code=teacher_code, assignment_id=empty_assignment_id,
+             class_id=c_id, assessment={**assessment, "title": "Unused release check"})
+        assert post("lh_assessment_teacher_archive", teacher_code=teacher_code,
+                    assignment_id=empty_assignment_id)["archived"]
+        assert all(row["id"] != empty_assignment_id for row in student("list")["assignments"])
+        post("lh_assessment_student_open", 404, student_code=student_code, assignment_id=empty_assignment_id)
+        print("Live archive hides unused assignments and protects started or submitted work.", flush=True)
         print("Live written grid matches saved AI rationale and teacher override.", flush=True)
         print("Live student submission, automatic written marks and teacher override verified.", flush=True)
     finally:
+        sql("DELETE FROM lh_assessment_responses WHERE assignment_id=?", empty_assignment_id)
+        sql("DELETE FROM lh_assessment_assignments WHERE id=?", empty_assignment_id)
         sql("DELETE FROM lh_assessment_ai_marks WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_responses WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_assignments WHERE id=?", assignment_id)

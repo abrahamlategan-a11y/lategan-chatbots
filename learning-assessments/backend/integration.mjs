@@ -187,6 +187,21 @@ const legacy = await teacher("assign", {...templateArgs, assignment_id: crypto.r
   assessment: {...uniqueTemplate, title: "Edited title"}});
 assert.equal(legacy.assignment_id, firstId);
 assert.equal(legacy.already_assigned, true);
+await teacher("archive", {}, 409);
+const empty = crypto.randomUUID();
+const unused = {class_id: 10, template_id: "unused-template", assessment: {...uniqueTemplate, title: "Unused assessment"}};
+await teacher("assign", {...unused, assignment_id: empty});
+await teacher("archive", {assignment_id: empty}, 404, "other-teacher");
+assert.equal((await teacher("archive", {assignment_id: empty})).archived, true);
+assert.equal((await teacher("archive", {assignment_id: empty})).archived, true);
+await student("open", {assignment_id: empty}, 404);
+await teacher("results", {assignment_id: empty}, 404);
+assert.ok(!(await student("list")).assignments.some(row => row.id === empty));
+assert.ok(!(await teacher("list")).assignments.some(row => row.id === empty));
+const replacement = crypto.randomUUID();
+assert.equal((await teacher("assign", {...unused, assignment_id: replacement})).assignment_id, replacement);
+await student("open", {assignment_id: replacement});
+await teacher("archive", {assignment_id: replacement}, 409);
 for (const page of ["../index.html", "../assigned.html", "../../student/index.html", "../../teacher/index.html"]) {
   if (!existsSync(new URL(page, import.meta.url))) continue;
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
