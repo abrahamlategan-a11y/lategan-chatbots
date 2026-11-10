@@ -12,6 +12,21 @@
 .qrStage p{margin:0}.qrStage form{align-self:flex-end}
 #assignmentQrImage{width:min(78vw,63vh,760px);padding:4%;background:#fff}
 #assignmentQrImage canvas,#assignmentQrImage img{width:100%;height:auto;image-rendering:pixelated}
+main:has(#writtenGrid:not([hidden])){max-width:1640px}
+.markingGridScroll{max-height:72vh;overflow:auto;border:1px solid #dce7e2;border-radius:12px}
+.markingGridScroll table{border-collapse:separate;border-spacing:0;min-width:100%;table-layout:fixed}
+.markingGridScroll th,.markingGridScroll td{padding:12px;border-right:1px solid #e4ede8;border-bottom:1px solid #e4ede8;vertical-align:top;text-align:left}
+.markingGridScroll thead th{position:sticky;top:0;z-index:2;background:#e9f5ed}
+.markingGridScroll th:first-child{position:sticky;left:0;min-width:145px;max-width:190px;background:#f1f8f3;z-index:1;overflow-wrap:anywhere}
+.markingGridScroll thead th:first-child{z-index:3}
+.markingGridScroll th:not(:first-child),.markingGridScroll td{min-width:255px}
+.markingGridScroll td p,.markingGridScroll th p{margin:0 0 8px}
+.markingGridScroll .gridQuestion{display:block;max-height:6rem;overflow:auto;overflow-wrap:anywhere}
+.markingGridScroll .gridAnswer{max-height:8rem;overflow:auto;background:#f3f7f4;padding:8px;border-radius:6px}
+.markingGridScroll form{display:grid;gap:7px;margin-top:8px}
+.markingGridScroll input{width:5.5rem}
+.markingGridScroll textarea{min-height:64px;padding:8px}
+.markingGridScroll button{justify-self:start;padding:7px 10px}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -36,6 +51,17 @@
   <div class="sectionTitle"><h2>Class assignments</h2><button id="refreshAssignments">Refresh</button></div>
   <p id="reportStatus" role="status"></p><div id="assignmentList" class="library"></div>
   <div id="assignmentReport"></div><div id="responseReview"></div>
+  <section id="writtenGrid" hidden aria-labelledby="writtenGridTitle">
+    <div class="sectionTitle">
+      <div><h3 id="writtenGridTitle">Written marking grid</h3><p id="writtenGridAssessment" class="muted"></p></div>
+      <div class="row"><button id="refreshWrittenGrid" type="button">Refresh marks</button>
+        <button id="closeWrittenGrid" type="button">Back to progress</button></div>
+    </div>
+    <p id="writtenGridStatus" role="status"></p>
+    <div class="markingGridScroll" tabindex="0" role="region" aria-label="Written responses by student and question">
+      <table id="writtenGridTable" aria-labelledby="writtenGridTitle"></table>
+    </div>
+  </section>
 </section>
 </main>
 <dialog id="assignDialog" class="assessmentDialog" aria-labelledby="assignHeading">
@@ -128,4 +154,4 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=automatic-written-marks"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=written-marking-grid"></script><script src="marking-grid.js?v=1"></script></body></html>

@@ -267,6 +267,7 @@ $("refreshAssignments").onclick = async () => {
 document.querySelector('[data-tab="reports"]').addEventListener("click", loadAssignments);
 
 async function showAssignment(id) {
+  closeWrittenGrid();
   activeAssignment = id;
   responseRequest++;
   $("assignmentReport").replaceChildren();
@@ -280,7 +281,10 @@ async function showAssignment(id) {
     $("reportStatus").textContent = "";
     $("assignmentReport").innerHTML = `
       <div class="sectionTitle"><h3>${esc(assessment.title)}</h3>
-        <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
+        <div class="row">
+          ${hasWritten ? '<button type="button" class="primary" id="openWrittenGrid">Written marking grid</button>' : ""}
+          <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
+        </div>
       </div>
       <p>${counts.assigned} assigned · ${counts.started} started (including submitted) · ${counts.submitted} submitted</p>
       <table><thead><tr><th>Student</th><th>Status</th><th>Multiple choice</th>${hasWritten ? "<th>Written marking</th>" : ""}<th>Responses</th></tr></thead>
@@ -290,6 +294,7 @@ async function showAssignment(id) {
         ${hasWritten ? `<td data-written-status="${student.student_id}">${student.submitted_at ? writtenStatus(student.ai_status) : "—"}</td>` : ""}
         <td>${student.started_at ? `<button type="button" data-student="${student.student_id}">View</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
     $("reportAssignmentQr").onclick = () => showAssignmentQr(id, assessment.title);
+    if (hasWritten) $("openWrittenGrid").onclick = () => openWrittenGrid(id, assessment, students);
     $("assignmentReport").querySelectorAll("[data-student]").forEach(button => {
       const student = students.find(s => String(s.student_id) === button.dataset.student);
       button.onclick = () => showResponse(id, assessment, student);
@@ -431,16 +436,16 @@ async function showResponse(id, assessment, student) {
   }
 }
 
-function addMarking(panel, question, identity, review, onSave) {
-  if (question.rubric) panel.insertAdjacentHTML("beforeend", `<p class="answerText">Marking guide: ${esc(question.rubric)}</p>`);
+function addMarking(panel, question, identity, review, onSave, compact = false) {
+  if (question.rubric && !compact) panel.insertAdjacentHTML("beforeend", `<p class="answerText">Marking guide: ${esc(question.rubric)}</p>`);
   const automatic = document.createElement("p");
   automatic.className = "answerText muted";
   automatic.hidden = true;
   panel.append(automatic);
   const form = document.createElement("form");
-  form.innerHTML = `<label>Mark out of ${question.marks}<input name="mark" type="number" min="0" max="${question.marks}" required></label>
-    <label>Feedback<textarea name="feedback" maxlength="1000"></textarea></label>
-    <button class="primary">Save teacher mark</button>
+  form.innerHTML = `<label>${compact ? "Teacher mark / " : "Mark out of "}${question.marks}<input name="mark" type="number" min="0" max="${question.marks}" required></label>
+    <label>${compact ? "Teacher feedback" : "Feedback"}<textarea name="feedback" maxlength="1000"></textarea></label>
+    <button class="primary">${compact ? "Save override" : "Save teacher mark"}</button>
     <p class="muted" role="status"></p>`;
   panel.append(form);
   const mark = form.elements.mark;
@@ -451,7 +456,8 @@ function addMarking(panel, question, identity, review, onSave) {
   feedback.value = review?.feedback ?? "";
   let edited = false;
   form.addEventListener("input", () => { edited = true; });
-  if (review) status.textContent = "Teacher mark saved and used for this response.";
+  const savedMessage = compact ? "Override saved" : "Teacher mark saved and used for this response.";
+  if (review) status.textContent = savedMessage;
   const run = async work => {
     const controls = Array.from(form.elements);
     controls.forEach(control => { control.disabled = true; });
@@ -463,7 +469,7 @@ function addMarking(panel, question, identity, review, onSave) {
     run(async () => {
       const saved = await teacherAssessment("review", {...data, score: Number(mark.value), feedback: feedback.value});
       review = saved.review;
-      status.textContent = "Teacher mark saved and used for this response.";
+      status.textContent = savedMessage;
       onSave(review);
     });
   };
