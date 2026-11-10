@@ -28,3 +28,13 @@ CREATE TABLE IF NOT EXISTS lh_assessment_shares (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (teacher_id, template_id)
 );
+
+CREATE TABLE IF NOT EXISTS lh_assessment_ai_marks (
+  assignment_id TEXT NOT NULL,
+  student_id INTEGER NOT NULL,
+  state TEXT NOT NULL CHECK(state IN ('marking','marked','needs_review')),
+  lease TEXT NOT NULL,
+  marks_json TEXT NOT NULL DEFAULT '{}',
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (assignment_id, student_id)
+);

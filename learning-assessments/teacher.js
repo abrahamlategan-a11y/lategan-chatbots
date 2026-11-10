@@ -276,16 +276,18 @@ async function showAssignment(id) {
     const {assessment, counts, students} = await teacherAssessment("results", {assignment_id: id});
     if (activeAssignment !== id) return;
     const maximum = assessment.questions.filter(q => q.type === "mcq").reduce((sum, q) => sum + q.marks, 0);
+    const hasWritten = assessment.questions.some(q => q.type !== "mcq");
     $("reportStatus").textContent = "";
     $("assignmentReport").innerHTML = `
       <div class="sectionTitle"><h3>${esc(assessment.title)}</h3>
         <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
       </div>
       <p>${counts.assigned} assigned · ${counts.started} started (including submitted) · ${counts.submitted} submitted</p>
-      <table><thead><tr><th>Student</th><th>Status</th><th>Multiple choice</th><th>Responses</th></tr></thead>
+      <table><thead><tr><th>Student</th><th>Status</th><th>Multiple choice</th>${hasWritten ? "<th>Written marking</th>" : ""}<th>Responses</th></tr></thead>
       <tbody>${students.map(student => `<tr><td>${esc(student.display_name || "Student")}</td>
         <td>${student.submitted_at ? "Submitted" : student.started_at ? "Started" : "Assigned"}</td>
         <td>${student.submitted_at && maximum ? `${student.mcq_score} / ${maximum}` : "—"}</td>
+        ${hasWritten ? `<td data-written-status="${student.student_id}">${student.submitted_at ? writtenStatus(student.ai_status) : "—"}</td>` : ""}
         <td>${student.started_at ? `<button type="button" data-student="${student.student_id}">View</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
     $("reportAssignmentQr").onclick = () => showAssignmentQr(id, assessment.title);
     $("assignmentReport").querySelectorAll("[data-student]").forEach(button => {
@@ -328,6 +330,13 @@ $("assignmentQrDialog").addEventListener("close", () => {
   }
 });
 
+function writtenStatus(state) {
+  if (state === "marked") return "Marked";
+  if (state === "marking") return "Marking…";
+  if (state === "needs_review") return "Check marks";
+  return "Pending";
+}
+
 async function showResponse(id, assessment, student) {
   const request = ++responseRequest;
   const target = $("responseReview");
@@ -337,6 +346,15 @@ async function showResponse(id, assessment, student) {
     const result = await teacherAssessment("response", identity);
     if (request !== responseRequest) return;
     target.innerHTML = `<h3>${esc(student.display_name || "Student")}</h3><p>${result.submitted_at ? "Submitted responses" : "Draft responses"}</p>`;
+    const writtenForms = new Map();
+    const reviews = result.reviews;
+    const progress = document.createElement("p");
+    const retry = document.createElement("button");
+    retry.type = "button";
+    retry.textContent = "Retry missing AI marks";
+    retry.hidden = true;
+    progress.setAttribute("role", "status");
+    if (result.submitted_at && assessment.questions.some(q => q.type !== "mcq")) target.append(progress, retry);
     assessment.questions.forEach((q, index) => {
       const panel = document.createElement("div");
       panel.className = "question";
@@ -348,21 +366,81 @@ async function showResponse(id, assessment, student) {
         panel.insertAdjacentHTML("beforeend", `<p>Answer key: ${esc(q.options[Number(q.correct)])}${result.submitted_at ? ` · ${raw === q.correct ? q.marks : 0} / ${q.marks}` : ""}</p>`);
         return;
       }
-      if (result.submitted_at) addMarking(panel, q, identity, result.reviews[q.id]);
+      if (result.submitted_at) {
+        writtenForms.set(q.id, addMarking(panel, q, identity, reviews[q.id], review => {
+          reviews[q.id] = review;
+          displayStatus();
+        }));
+      }
     });
+    let aiStatus = result.ai_status;
+    let aiMarks = result.ai_marks || {};
+    function displayStatus() {
+      if (!writtenForms.size) return;
+      const missing = [...writtenForms.keys()].filter(q => !reviews[q] && !aiMarks[q]).length;
+      retry.hidden = aiStatus !== "needs_review" || !missing;
+      progress.textContent = !missing ? "Written marks are ready to review."
+        : aiStatus === "marking" ? "AI is marking the written responses…"
+        : "Some responses still need a mark. You can mark them yourself or retry AI marking.";
+      const cell = $("assignmentReport").querySelector(`[data-written-status="${student.student_id}"]`);
+      if (cell) cell.textContent = !missing ? "Marked" : writtenStatus(aiStatus);
+    }
+    function applyAi(result) {
+      aiStatus = result.ai_status;
+      aiMarks = result.ai_marks || {};
+      for (const [id, update] of writtenForms) update(aiMarks[id]);
+      displayStatus();
+    }
+    async function pollAi() {
+      for (let attempt = 0; attempt < 14 && aiStatus === "marking"; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 2200));
+        if (request !== responseRequest) return;
+        try {
+          const update = await teacherAssessment("response", identity);
+          if (request !== responseRequest) return;
+          applyAi(update);
+        } catch {
+          break;
+        }
+      }
+      if (request === responseRequest && aiStatus === "marking") {
+        progress.textContent = "AI is still marking. Reopen this response to check again.";
+      }
+    }
+    retry.onclick = async () => {
+      retry.disabled = true;
+      progress.textContent = "Retrying AI marking…";
+      try {
+        const update = await teacherAssessment("retry_ai", identity);
+        if (request !== responseRequest) return;
+        applyAi(update);
+        await pollAi();
+      } catch (error) {
+        progress.textContent = error.message;
+      } finally {
+        retry.disabled = false;
+      }
+    };
+    if (writtenForms.size) {
+      applyAi(result);
+      pollAi();
+    }
     target.scrollIntoView({block: "start"});
   } catch (error) {
     if (request === responseRequest) target.textContent = error.message;
   }
 }
 
-function addMarking(panel, question, identity, review) {
+function addMarking(panel, question, identity, review, onSave) {
   if (question.rubric) panel.insertAdjacentHTML("beforeend", `<p class="answerText">Marking guide: ${esc(question.rubric)}</p>`);
+  const automatic = document.createElement("p");
+  automatic.className = "answerText muted";
+  automatic.hidden = true;
+  panel.append(automatic);
   const form = document.createElement("form");
   form.innerHTML = `<label>Mark out of ${question.marks}<input name="mark" type="number" min="0" max="${question.marks}" required></label>
     <label>Feedback<textarea name="feedback" maxlength="1000"></textarea></label>
-    <div class="row"><button class="primary">Save teacher mark</button>
-    ${question.rubric ? '<button type="button" class="suggest" title="Sends the question, marking guide and written response to the AI marking service">Suggest with AI</button>' : ""}</div>
+    <button class="primary">Save teacher mark</button>
     <p class="muted" role="status"></p>`;
   panel.append(form);
   const mark = form.elements.mark;
@@ -371,7 +449,9 @@ function addMarking(panel, question, identity, review) {
   const data = {...identity, question_id: question.id};
   mark.value = review?.score ?? "";
   feedback.value = review?.feedback ?? "";
-  if (review) status.textContent = "Teacher mark saved.";
+  let edited = false;
+  form.addEventListener("input", () => { edited = true; });
+  if (review) status.textContent = "Teacher mark saved and used for this response.";
   const run = async work => {
     const controls = Array.from(form.elements);
     controls.forEach(control => { control.disabled = true; });
@@ -381,18 +461,21 @@ function addMarking(panel, question, identity, review) {
   form.onsubmit = event => {
     event.preventDefault();
     run(async () => {
-      await teacherAssessment("review", {...data, score: Number(mark.value), feedback: feedback.value});
-      status.textContent = "Teacher mark saved.";
+      const saved = await teacherAssessment("review", {...data, score: Number(mark.value), feedback: feedback.value});
+      review = saved.review;
+      status.textContent = "Teacher mark saved and used for this response.";
+      onSave(review);
     });
   };
-  const suggest = form.querySelector(".suggest");
-  if (suggest) suggest.onclick = () => run(async () => {
-    status.textContent = "Requesting a suggested mark…";
-    const {suggestion} = await teacherAssessment("suggest", data);
-    mark.value = suggestion.score;
-    feedback.value = suggestion.feedback;
-    status.textContent = "AI suggestion ready. Review it and save the teacher mark.";
-  });
+  return ai => {
+    if (!ai) return;
+    automatic.hidden = false;
+    automatic.textContent = `${ai.blank ? "Automatic mark" : "AI mark"}: ${ai.score} / ${question.marks} · ${ai.feedback}`;
+    if (!review && !edited) {
+      mark.value = ai.score;
+      feedback.value = ai.feedback;
+    }
+  };
 }
 
 loadAssignments();

@@ -77,13 +77,13 @@ def release(account, token):
     name, original = source()
     block = (ROOT / "worker-actions.js.txt").read_bytes() + b"\n"
     already_installed = original.count(block) == 1
-    baseline = original.replace(block, b"", 1) if already_installed else original
+    baseline = original.replace(block, b"", 1).replace(b", assessmentContext", b"", 1) if already_installed else original
     if not already_installed:
         starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
         if len(starts) == 1:
             start = starts[0].start()
-            end = start + 14104
-            if hashlib.sha256(original[start:end]).hexdigest() == "33e7b498f988e9848700410f660b0ed40da8aa2d29021c8d64d9fded48e0c35a":
+            end = start + 17172
+            if hashlib.sha256(original[start:end]).hexdigest() == "1ad3d88f55b6e8008e0d5ab0a64213c296e61c5300455674c6851147768e6f81":
                 baseline = original[:start] + original[end:]
     if hashlib.sha256(baseline).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
@@ -92,6 +92,10 @@ def release(account, token):
         raise RuntimeError("Expected a single teacher login handler in the live Worker.")
     anchor = anchors[0].start()
     candidate = baseline[:anchor] + block + baseline[anchor:]
+    candidate, changed = re.subn(rb"(async fetch\(\s*request\s*,\s*env)(\s*\))",
+                                 rb"\1, assessmentContext\2", candidate)
+    if changed != 1:
+        raise RuntimeError("Expected one Worker fetch handler accepting request and env.")
     with tempfile.TemporaryDirectory() as directory:
         module = Path(directory) / "worker.mjs"
         module.write_bytes(candidate)
@@ -206,17 +210,22 @@ def smoke_test(sql):
         results = teacher("results")
         assert results["counts"] == {"assigned": 1, "started": 1, "submitted": 1}
         assert results["students"][0]["mcq_score"] == 1
-        assert teacher("response", student_id=s_id)["answers"] == answers
-        teacher("review", student_id=s_id, question_id="2", score=2, feedback="Clear explanation.")
-        assert teacher("response", student_id=s_id)["reviews"]["2"]["score"] == 2
-        print("Live teacher-to-student workflow verified with a temporary class and codes.", flush=True)
-        try:
-            suggestion = teacher("suggest", student_id=s_id, question_id="2")["suggestion"]
-            assert 0 <= suggestion["score"] <= 2
-            print("Live AI suggestion verified.", flush=True)
-        except (RuntimeError, AssertionError, KeyError):
-            print("Live AI suggestion unavailable; teacher review verified.", flush=True)
+        for _ in range(30):
+            marks = sql("SELECT state FROM lh_assessment_ai_marks WHERE assignment_id=? AND student_id=?", assignment_id, s_id)
+            if marks and marks[0]["state"] != "marking":
+                break
+            time.sleep(1)
+        assert marks and marks[0]["state"] == "marked", "Automatic AI marking did not complete."
+        response = teacher("response", student_id=s_id)
+        assert response["answers"] == answers
+        assert 0 <= response["ai_marks"]["2"]["score"] <= 2
+        teacher("review", student_id=s_id, question_id="2", score=1, feedback="Teacher override.")
+        reviewed = teacher("response", student_id=s_id)
+        assert reviewed["reviews"]["2"] == {"score": 1, "feedback": "Teacher override."}
+        assert reviewed["ai_marks"] == response["ai_marks"]
+        print("Live student submission, automatic written marks and teacher override verified.", flush=True)
     finally:
+        sql("DELETE FROM lh_assessment_ai_marks WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_responses WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_assignments WHERE id=?", assignment_id)
         sql("DELETE FROM students WHERE student_code=?", student_code)
