@@ -325,6 +325,7 @@ function openAssignmentResults(assignment, view, trigger, notice = "") {
 function closeAssignmentResults() {
   activeAssignment = null;
   responseRequest++;
+  resetWrittenReview();
   closeWrittenGrid();
   $("assessmentResults").hidden = true;
   $("assignmentReport").replaceChildren();
@@ -345,6 +346,7 @@ $("refreshAssignments").onclick = async () => {
 document.addEventListener("assessment-tab-changed", closeAssignmentResults);
 
 async function showAssignment(id) {
+  resetWrittenReview();
   closeWrittenGrid();
   activeAssignment = id;
   const request = ++responseRequest;
@@ -360,10 +362,14 @@ async function showAssignment(id) {
     $("assignmentReport").innerHTML = `
       <div class="sectionTitle"><h3>${esc(assessment.title)}</h3>
         <div class="row">
-          ${hasWritten ? '<button type="button" class="primary" id="openWrittenGrid">Written marking grid</button>' : ""}
+          ${hasWritten ? '<button type="button" id="openWrittenGrid">Written marking grid</button>' : ""}
           <button type="button" id="reportAssignmentQr">Show full-screen QR</button>
         </div>
       </div>
+      ${hasWritten ? `<div id="reviewNotification">
+        <span id="readyReviewCount" role="status">Checking written responses…</span>
+        <button id="openWrittenReview" type="button" class="primary" disabled>Review responses</button>
+      </div>` : ""}
       <p>${counts.assigned} assigned · ${counts.started} started (including submitted) · ${counts.submitted} submitted</p>
       <table><thead><tr><th>Student</th><th>Status</th><th>Multiple choice</th>${hasWritten ? "<th>Written marking</th>" : ""}<th>Responses</th></tr></thead>
       <tbody>${students.map(student => `<tr><td>${esc(student.display_name || "Student")}</td>
@@ -372,7 +378,10 @@ async function showAssignment(id) {
         ${hasWritten ? `<td data-written-status="${student.student_id}">${student.submitted_at ? writtenStatus(student.ai_status) : "—"}</td>` : ""}
         <td>${student.started_at ? `<button type="button" data-student="${student.student_id}">View</button>` : "—"}</td></tr>`).join("")}</tbody></table>`;
     $("reportAssignmentQr").onclick = () => showAssignmentQr(id, assessment.title);
-    if (hasWritten) $("openWrittenGrid").onclick = () => openWrittenGrid(id, assessment, students);
+    if (hasWritten) {
+      $("openWrittenGrid").onclick = () => openWrittenGrid(id, assessment, students);
+      prepareWrittenReview(id, assessment, students);
+    }
     $("assignmentReport").querySelectorAll("[data-student]").forEach(button => {
       const student = students.find(s => String(s.student_id) === button.dataset.student);
       button.onclick = () => showResponse(id, assessment, student);
@@ -452,6 +461,7 @@ async function showResponse(id, assessment, student) {
       if (result.submitted_at) {
         writtenForms.set(q.id, addMarking(panel, q, identity, reviews[q.id], review => {
           reviews[q.id] = review;
+          recordWrittenReview(id, student.student_id, q.id, review);
           displayStatus();
         }));
       }

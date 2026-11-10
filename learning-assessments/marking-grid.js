@@ -72,9 +72,10 @@ function applyWrittenGridRow(grid, entry) {
       let overridden = Boolean(review);
       const updateMark = addMarking(cell, question, {
         assignment_id: grid.assignmentId, student_id: entry.student_id
-      }, review, () => {
+      }, review, review => {
         overridden = true;
         pending.hidden = true;
+        recordWrittenReview(grid.assignmentId, entry.student_id, question.id, review);
       }, true);
       item.update = (mark, state) => {
         updateMark(mark);
@@ -86,6 +87,18 @@ function applyWrittenGridRow(grid, entry) {
   }
 }
 
+async function readWrittenPages(assignmentId, onEntry, isCurrent) {
+  let after = null;
+  do {
+    const page = await teacherAssessment("written_grid", {
+      assignment_id: assignmentId, after_student_id: after
+    });
+    if (!isCurrent()) return;
+    page.rows.forEach(onEntry);
+    after = page.next_student_id;
+  } while (after !== null);
+}
+
 async function refreshWrittenGrid(grid, poll = false) {
   if (!grid || grid !== writtenGrid || grid.loading) return;
   grid.loading = true;
@@ -93,18 +106,11 @@ async function refreshWrittenGrid(grid, poll = false) {
   $("writtenGridStatus").textContent = "Loading written marks…";
   try {
     let pending = false;
-    let after = null;
-    do {
-      const page = await teacherAssessment("written_grid", {
-        assignment_id: grid.assignmentId, after_student_id: after
-      });
-      if (grid !== writtenGrid) return;
-      for (const entry of page.rows) {
-        applyWrittenGridRow(grid, entry);
-        if (entry.ai_status === "marking") pending = true;
-      }
-      after = page.next_student_id;
-    } while (after !== null);
+    await readWrittenPages(grid.assignmentId, entry => {
+      applyWrittenGridRow(grid, entry);
+      if (entry.ai_status === "marking") pending = true;
+    }, () => grid === writtenGrid);
+    if (grid !== writtenGrid) return;
     grid.pending = pending;
     $("writtenGridStatus").textContent = pending
       ? "AI is still marking some responses. You can review or override marks as they arrive."

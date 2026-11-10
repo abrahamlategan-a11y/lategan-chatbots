@@ -30,6 +30,14 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 .markingGridScroll input{width:5.5rem}
 .markingGridScroll textarea{min-height:64px;padding:8px}
 .markingGridScroll button{justify-self:start;padding:7px 10px}
+#reviewNotification{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;background:#eff8f2;border:1px solid #d5e9dd;border-radius:14px;padding:12px 16px;margin:14px 0}
+#reviewNotification[hidden]{display:none}
+#writtenReview{max-width:760px;margin:0 auto}
+.reviewCard{border:1px solid #dce7e2;border-radius:16px;padding:clamp(14px,3vw,24px);margin:14px 0;background:#fcfdfc}
+.reviewCard h3,.reviewCard h4,.reviewCard p{margin:0 0 12px}
+.reviewCard .reviewAnswer{background:#f1f6f3;border-radius:10px;padding:14px}
+.reviewCard .reviewSuggestion{border-left:3px solid #246f59;padding-left:12px;margin:16px 0}
+.reviewCard form label{margin:12px 0}.reviewCard input[type=number]{max-width:8rem}.reviewCard textarea{min-height:85px}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -66,6 +74,36 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   <p id="assignmentNotice" role="status" hidden></p>
   <p id="reportStatus" role="status"></p>
   <div id="assignmentReport"></div><div id="responseReview"></div>
+  <section id="writtenReview" hidden aria-labelledby="writtenReviewTitle">
+    <div class="sectionTitle">
+      <h3 id="writtenReviewTitle" tabindex="-1">Review responses</h3>
+      <button id="closeWrittenReview" type="button">Back to results</button>
+    </div>
+    <p id="writtenReviewProgress" class="muted" role="status"></p>
+    <div id="writtenReviewCard" class="reviewCard" hidden>
+      <p id="reviewQuestionNumber" class="pill"></p>
+      <h4 id="reviewQuestionText" class="answerText"></h4>
+      <h4 id="reviewStudent"></h4>
+      <p id="reviewAnswer" class="answerText reviewAnswer"></p>
+      <div class="reviewSuggestion">
+        <p id="reviewSuggestedMark"></p>
+        <p id="reviewReason" class="answerText"></p>
+      </div>
+      <div class="row" id="reviewActions">
+        <button id="confirmWrittenReview" class="primary" type="button">Confirm &amp; next</button>
+        <button id="overrideWrittenReview" type="button">Override</button>
+      </div>
+      <form id="writtenOverrideForm" hidden>
+        <label for="writtenOverrideMark">Mark</label>
+        <input id="writtenOverrideMark" type="number" min="0" required>
+        <label for="writtenOverrideFeedback">Feedback</label>
+        <textarea id="writtenOverrideFeedback" maxlength="1000"></textarea>
+        <div class="row"><button class="primary">Save &amp; next</button>
+          <button id="cancelWrittenOverride" type="button">Cancel</button></div>
+      </form>
+      <p id="writtenReviewError" role="status" class="danger"></p>
+    </div>
+  </section>
   <section id="writtenGrid" hidden aria-labelledby="writtenGridTitle">
     <div class="sectionTitle">
       <div><h3 id="writtenGridTitle">Written marking grid</h3><p id="writtenGridAssessment" class="muted"></p></div>
@@ -206,4 +244,4 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=one-assignment-per-class"></script><script src="marking-grid.js?v=card-results"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=written-review"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=1"></script></body></html>
