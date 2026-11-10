@@ -63,6 +63,7 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
     <div class="row"><button id="refreshAssignments" type="button">Refresh results</button>
       <button id="closeAssignmentResults" type="button">Back to assessments</button></div>
   </div>
+  <p id="assignmentNotice" role="status" hidden></p>
   <p id="reportStatus" role="status"></p>
   <div id="assignmentReport"></div><div id="responseReview"></div>
   <section id="writtenGrid" hidden aria-labelledby="writtenGridTitle">
@@ -205,4 +206,4 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=assignment-progress"></script><script src="marking-grid.js?v=card-results"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=one-assignment-per-class"></script><script src="marking-grid.js?v=card-results"></script></body></html>

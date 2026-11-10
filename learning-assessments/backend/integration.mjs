@@ -169,6 +169,24 @@ await teacher("share_set", {template_id: share.template_id, shared: false});
 assert.deepEqual((await teacher("shared_list", {}, 200, "other-teacher")).assessments, []);
 await teacher("assign", {assignment_id: crypto.randomUUID(), class_id: 11, shared_id: shared.id}, 404, "other-teacher");
 assert.equal((await teacher("results", {assignment_id: otherId}, 200, "other-teacher")).counts.assigned, 1);
+const uniqueTemplate = {title: "Once per class", questions: assessment.questions};
+const firstId = crypto.randomUUID();
+const templateArgs = {class_id: 10, template_id: "unique-template", assessment: uniqueTemplate};
+assert.equal((await teacher("assign", {...templateArgs, assignment_id: firstId})).already_assigned, false);
+const again = await teacher("assign", {...templateArgs, assignment_id: crypto.randomUUID()});
+assert.equal(again.assignment_id, firstId);
+assert.equal(again.already_assigned, true);
+await teacher("share_set", {template_id: "unique-template", shared: true, assessment: uniqueTemplate});
+const uniqueShared = (await teacher("shared_list")).assessments.find(item => item.template_id === "unique-template");
+assert.equal((await teacher("assign", {class_id: 10, assignment_id: crypto.randomUUID(), shared_id: uniqueShared.id})).assignment_id, firstId);
+db.exec("INSERT INTO teacher_classes VALUES(2,10)");
+await teacher("assign", {class_id: 10, assignment_id: crypto.randomUUID(), shared_id: uniqueShared.id}, 409, "other-teacher");
+assert.equal((await teacher("assign", {class_id: 11, assignment_id: crypto.randomUUID(), shared_id: uniqueShared.id}, 200, "other-teacher")).already_assigned, false);
+db.prepare("UPDATE lh_assessment_assignments SET assessment_json=json_remove(assessment_json,'$.assignment_key') WHERE id=?").run(firstId);
+const legacy = await teacher("assign", {...templateArgs, assignment_id: crypto.randomUUID(),
+  assessment: {...uniqueTemplate, title: "Edited title"}});
+assert.equal(legacy.assignment_id, firstId);
+assert.equal(legacy.already_assigned, true);
 for (const page of ["../index.html", "../assigned.html", "../../student/index.html", "../../teacher/index.html"]) {
   if (!existsSync(new URL(page, import.meta.url))) continue;
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);

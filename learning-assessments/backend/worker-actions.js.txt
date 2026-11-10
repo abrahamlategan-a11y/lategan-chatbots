@@ -43,6 +43,10 @@
           return {assessment};
         }
         const isTemplateId = value => typeof value === "string" && /^[a-z0-9-]{1,64}$/.test(value);
+        const jsonSnapshot = value => {
+          const {source_id, assignment_key, ...content} = JSON.parse(value);
+          return JSON.stringify(content);
+        };
         const counts = rows => ({
           assigned: rows.length,
           started: rows.filter(r => r.started_at).length,
@@ -175,36 +179,65 @@
               return fail("That class is unavailable.", 403);
             }
             let draft = body.assessment;
-            let sourceId = isTemplateId(body.template_id) ? body.template_id : "";
+            let templateId = isTemplateId(body.template_id) ? body.template_id : "";
+            let originTeacherId = teacher.id;
+            let sourceId = templateId;
             if (body.shared_id !== undefined) {
               if (!isId(body.shared_id)) return fail("Invalid shared assessment.");
-              const shared = await query(`SELECT h.assessment_json FROM lh_assessment_shares h
+              const shared = await query(`SELECT h.teacher_id,h.template_id,h.assessment_json FROM lh_assessment_shares h
                 JOIN teachers t ON t.id=h.teacher_id AND t.active=1 WHERE h.id=?`, body.shared_id).first();
               if (!shared) return fail("This assessment is no longer shared.", 404);
               draft = JSON.parse(shared.assessment_json);
               sourceId = body.shared_id;
+              templateId = shared.template_id;
+              originTeacherId = shared.teacher_id;
             }
             const prepared = prepareAssessment(draft);
             if (prepared.error) return fail(prepared.error);
-            const assessment = sourceId
-              ? JSON.stringify({...JSON.parse(prepared.assessment), source_id: sourceId})
-              : prepared.assessment;
-            // changes() restricts roster capture to the transaction that created the assignment.
-            await db.batch([
+            const content = prepared.assessment;
+            let assignmentKey = templateId ? `template:${originTeacherId}:${templateId}` : "";
+            if (!assignmentKey) {
+              const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(content));
+              assignmentKey = "content:" + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+            }
+            const assessment = JSON.stringify({...JSON.parse(content), ...(sourceId ? {source_id: sourceId} : {}),
+              assignment_key: assignmentKey});
+            // Historical rows keep their original IDs. Match their source or exact snapshot before creating anything.
+            const match = `a.class_id=? AND (
+              json_extract(a.assessment_json,'$.assignment_key')=?
+              OR (json_extract(a.assessment_json,'$.assignment_key') IS NULL AND (
+                (?<>'' AND ((a.teacher_id=? AND json_extract(a.assessment_json,'$.source_id')=?)
+                  OR json_extract(a.assessment_json,'$.source_id') IN (
+                    SELECT h.id FROM lh_assessment_shares h WHERE h.teacher_id=? AND h.template_id=?
+                  )))
+                OR json_remove(a.assessment_json,'$.source_id')=?
+              ))
+            )`;
+            const matchArgs = [classId, assignmentKey, templateId, originTeacherId, templateId,
+              originTeacherId, templateId, content];
+            // D1 serialises writes. Capture the roster only for the transaction that creates the assignment.
+            const [inserted] = await db.batch([
               query(`INSERT INTO lh_assessment_assignments(id,teacher_id,class_id,assessment_json)
                 SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM students WHERE class_id=? AND active=1)
-                ON CONFLICT(id) DO NOTHING`, id, teacher.id, classId, assessment, classId),
+                  AND NOT EXISTS(SELECT 1 FROM lh_assessment_assignments a WHERE ${match})
+                ON CONFLICT DO NOTHING`, id, teacher.id, classId, assessment, classId, ...matchArgs),
               query(`INSERT INTO lh_assessment_responses(assignment_id,student_id)
                 SELECT ?,id FROM students WHERE class_id=? AND active=1 AND changes()=1`, id, classId)
             ]);
-            const saved = await query(`SELECT teacher_id,class_id,assessment_json,
-              (SELECT COUNT(*) FROM lh_assessment_responses WHERE assignment_id=a.id) AS assigned
-              FROM lh_assessment_assignments a WHERE id=?`, id).first();
+            const saved = await query(`SELECT a.id,a.teacher_id,a.class_id,a.assessment_json,
+                (SELECT COUNT(*) FROM lh_assessment_responses r WHERE r.assignment_id=a.id) AS assigned,
+                (SELECT COUNT(r.submitted_at) FROM lh_assessment_responses r WHERE r.assignment_id=a.id) AS submitted
+              FROM lh_assessment_assignments a WHERE a.id=? OR (${match})
+              ORDER BY (a.id=?) DESC,(a.teacher_id=?) DESC,submitted DESC,a.assigned_at DESC,a.id
+              LIMIT 1`, id, ...matchArgs, id, teacher.id).first();
             if (!saved) return fail("There are no active students in that class.");
-            if (saved.teacher_id !== teacher.id || saved.class_id !== classId || saved.assessment_json !== assessment) {
+            if (saved.id === id && (saved.teacher_id !== teacher.id || saved.class_id !== classId ||
+                (jsonSnapshot(saved.assessment_json) !== content ||
+                (JSON.parse(saved.assessment_json).assignment_key ?? assignmentKey) !== assignmentKey))) {
               return fail("This assignment reference is already in use.", 409);
             }
-            return reply({assignment_id: id, assigned: saved.assigned});
+            if (saved.teacher_id !== teacher.id) return fail("Another teacher has already assigned this assessment to that class.", 409);
+            return reply({assignment_id: saved.id, assigned: saved.assigned, already_assigned: !inserted.meta.changes});
           }
           const assignment = await query("SELECT * FROM lh_assessment_assignments WHERE id=? AND teacher_id=?", id, teacher.id).first();
           if (!assignment || !(await teacherClassAccess(env, teacher.id, assignment.class_id))) return fail("Assignment unavailable.", 404);

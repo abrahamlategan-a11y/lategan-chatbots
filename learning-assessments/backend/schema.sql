@@ -6,6 +6,9 @@ CREATE TABLE IF NOT EXISTS lh_assessment_assignments (
   assigned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS lh_assessment_teacher ON lh_assessment_assignments(teacher_id, assigned_at);
+CREATE UNIQUE INDEX IF NOT EXISTS lh_assessment_once_per_class
+  ON lh_assessment_assignments(class_id, json_extract(assessment_json,'$.assignment_key'))
+  WHERE json_extract(assessment_json,'$.assignment_key') IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS lh_assessment_responses (
   assignment_id TEXT NOT NULL REFERENCES lh_assessment_assignments(id),

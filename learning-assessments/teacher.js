@@ -134,7 +134,8 @@ $("assignForm").onsubmit = async event => {
     await loadAssignments();
     if (!$(view).classList.contains("hidden")) {
       const assignment = classAssignments.find(a => a.id === result.assignment_id);
-      await openAssignmentResults(assignment || {id: result.assignment_id, class_name: target.name}, view);
+      const notice = result.already_assigned ? `Already assigned to ${target.name}. Showing the existing results.` : "";
+      await openAssignmentResults(assignment || {id: result.assignment_id, class_name: target.name}, view, null, notice);
     }
   } catch (error) {
     $("assignmentStatus").textContent = error.message;
@@ -308,11 +309,13 @@ async function chooseClassAssignment(title, sourceIds, includeLegacy, view, trig
   if (!$("chooseClassDialog").open) $("chooseClassDialog").showModal();
 }
 
-function openAssignmentResults(assignment, view, trigger) {
+function openAssignmentResults(assignment, view, trigger, notice = "") {
   resultsTrigger = trigger;
   const panel = $("assessmentResults");
   $(view === "shared" ? "sharedResultsHost" : "libraryResultsHost").append(panel);
   $("resultsHeading").textContent = assignment.class_name ? `Assessment results · ${assignment.class_name}` : "Assessment results";
+  $("assignmentNotice").textContent = notice;
+  $("assignmentNotice").hidden = !notice;
   panel.hidden = false;
   $("resultsHeading").focus({preventScroll: true});
   panel.scrollIntoView({block: "start"});
