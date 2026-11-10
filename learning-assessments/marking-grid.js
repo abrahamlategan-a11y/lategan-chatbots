@@ -119,7 +119,7 @@ async function refreshWrittenGrid(grid, poll = false) {
   if (!poll) return;
   for (let attempt = 0; attempt < 6 && grid.pending; attempt++) {
     await new Promise(resolve => setTimeout(resolve, 4000));
-    if (grid !== writtenGrid || $("reports").classList.contains("hidden")) return;
+    if (grid !== writtenGrid || $("assessmentResults").hidden) return;
     await refreshWrittenGrid(grid);
   }
 }

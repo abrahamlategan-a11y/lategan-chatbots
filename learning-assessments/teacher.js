@@ -4,6 +4,7 @@ let classAssignments = [];
 let sharedAssessments = [];
 let assignmentSource = null;
 let activeAssignment = null;
+let resultsTrigger = null;
 let pendingAssignment = null;
 let responseRequest = 0;
 
@@ -23,30 +24,52 @@ async function loadAssignments() {
     classAssignments = result.assignments;
     $("assessmentLogin").hidden = true;
     $("connectionStatus").textContent = "";
-    $("assignmentList").innerHTML = result.assignments.map(a => `
-      <div class="libraryCard">
-        <span class="pill">${esc(a.class_name)}</span><h3>${esc(a.title)}</h3>
-        <p>${a.assigned} assigned · ${a.started} started · ${a.submitted} submitted</p>
-        <div class="row">
-          <button type="button" data-assignment="${esc(a.id)}">View progress</button>
-          <button type="button" data-qr="${esc(a.id)}">Show full-screen QR</button>
-        </div>
-      </div>`).join("") || "<p>No class assignments yet.</p>";
-    for (const assignment of result.assignments) {
-      $("assignmentList").querySelector(`[data-assignment="${CSS.escape(assignment.id)}"]`).onclick =
-        () => showAssignment(assignment.id);
-      $("assignmentList").querySelector(`[data-qr="${CSS.escape(assignment.id)}"]`).onclick =
-        () => showAssignmentQr(assignment.id, assignment.title);
-    }
+    renderOtherAssignments();
     return true;
   } catch (error) {
     $("connectionStatus").textContent = error.message;
     if (error.status === 401) {
       assignmentCode = "";
+      classAssignments = [];
+      renderOtherAssignments();
+      closeAssignmentResults();
       $("assessmentLogin").hidden = false;
     }
   }
 }
+
+function matchesAssignment(assignment, title, sourceIds, includeLegacy = true) {
+  return assignment.source_id ? sourceIds.includes(assignment.source_id) : includeLegacy && assignment.title === title;
+}
+
+function renderOtherAssignments() {
+  const other = classAssignments.filter(assignment =>
+    !templates.some(template => matchesAssignment(assignment, template.title, [template.id, ownedShare(template.id)?.id])) &&
+    !sharedAssessments.some(item => matchesAssignment(assignment, item.title,
+      [item.id, item.is_owner ? item.template_id : null], Boolean(item.is_owner)))
+  );
+  $("otherAssignments").hidden = !other.length;
+  $("assignmentList").innerHTML = other.map(a => `
+    <div class="libraryCard">
+      <span class="pill">${esc(a.class_name)}</span><h3>${esc(a.title)}</h3>
+      <p>${a.assigned} assigned · ${a.started} started · ${a.submitted} submitted</p>
+      <div class="row">
+        <button type="button" data-other-results="${esc(a.id)}">Results</button>
+        <button type="button" data-other-qr="${esc(a.id)}">Show QR</button>
+      </div>
+    </div>`).join("");
+}
+
+$("assignmentList").addEventListener("click", event => {
+  const button = event.target.closest("[data-other-results], [data-other-qr]");
+  if (!button) return;
+  const assignment = classAssignments.find(a => a.id === (button.dataset.otherResults || button.dataset.otherQr));
+  if (!assignment) return;
+  if (button.dataset.otherResults) openAssignmentResults(assignment, "library", button);
+  else showAssignmentQr(assignment.id, assignment.title);
+});
+
+document.addEventListener("assessment-library-updated", renderOtherAssignments);
 
 $("assessmentLogin").onsubmit = async event => {
   event.preventDefault();
@@ -106,9 +129,13 @@ $("assignForm").onsubmit = async event => {
     });
     pendingAssignment = null;
     $("assignDialog").close();
-    tab("reports");
+    const view = source.shared_id ? "shared" : "library";
+    tab(view);
     await loadAssignments();
-    await showAssignment(result.assignment_id);
+    if (!$(view).classList.contains("hidden")) {
+      const assignment = classAssignments.find(a => a.id === result.assignment_id);
+      await openAssignmentResults(assignment || {id: result.assignment_id, class_name: target.name}, view);
+    }
   } catch (error) {
     $("assignmentStatus").textContent = error.message;
   } finally {
@@ -136,9 +163,11 @@ async function loadSharedAssessments() {
       <div class="row">
         <button type="button" class="primary" data-shared-assign="${esc(item.id)}">Assign to class</button>
         <button type="button" data-shared-qr="${esc(item.id)}">Show QR</button>
+        <button type="button" data-shared-results="${esc(item.id)}">Results</button>
         ${item.is_owner ? `<button type="button" data-unshare="${esc(item.id)}">Stop sharing</button>` : ""}
       </div></div>`).join("") || "<p>No assessments have been shared yet.</p>";
     updateSharingPill();
+    renderOtherAssignments();
   } catch (error) {
     $("sharedCards").replaceChildren();
     $("sharedStatus").textContent = error.message;
@@ -184,6 +213,7 @@ $("shareDraft").onclick = async () => {
       else templates[index] = template;
       persist();
       drawLibrary();
+      renderOtherAssignments();
     }
   } catch (error) {
     $("sharingStatus").textContent = error.message;
@@ -202,21 +232,25 @@ $("saveTemplate").addEventListener("click", async () => {
 });
 
 $("libraryCards").addEventListener("click", event => {
-  const button = event.target.closest("[data-assign-template], [data-qr-template]");
+  const button = event.target.closest("[data-assign-template], [data-qr-template], [data-results-template]");
   if (!button) return;
-  const template = templates.find(t => t.id === (button.dataset.assignTemplate || button.dataset.qrTemplate));
+  const template = templates.find(t => t.id === (button.dataset.assignTemplate || button.dataset.qrTemplate || button.dataset.resultsTemplate));
   if (!template) return;
   if (button.dataset.assignTemplate) openAssign({title: template.title, assessment: structuredClone(template), template_id: template.id});
-  else chooseAssignmentQr(template.title, [template.id, ownedShare(template.id)?.id]);
+  else chooseClassAssignment(template.title, [template.id, ownedShare(template.id)?.id], true,
+    "library", button, Boolean(button.dataset.resultsTemplate));
 });
 
 $("sharedCards").addEventListener("click", async event => {
-  const button = event.target.closest("[data-shared-assign], [data-shared-qr], [data-unshare]");
+  const button = event.target.closest("[data-shared-assign], [data-shared-qr], [data-shared-results], [data-unshare]");
   if (!button) return;
-  const item = sharedAssessments.find(a => a.id === (button.dataset.sharedAssign || button.dataset.sharedQr || button.dataset.unshare));
+  const item = sharedAssessments.find(a => a.id === (button.dataset.sharedAssign || button.dataset.sharedQr || button.dataset.sharedResults || button.dataset.unshare));
   if (!item) return;
   if (button.dataset.sharedAssign) openAssign({title: item.title, shared_id: item.id});
-  else if (button.dataset.sharedQr) chooseAssignmentQr(item.title, [item.id, item.is_owner ? item.template_id : null], Boolean(item.is_owner));
+  else if (button.dataset.sharedQr || button.dataset.sharedResults) {
+    chooseClassAssignment(item.title, [item.id, item.is_owner ? item.template_id : null], Boolean(item.is_owner),
+      "shared", button, Boolean(button.dataset.sharedResults));
+  }
   else {
     button.disabled = true;
     try {
@@ -229,22 +263,25 @@ $("sharedCards").addEventListener("click", async event => {
   }
 });
 
-async function chooseAssignmentQr(title, sourceIds, includeLegacy = true) {
-  if (!await loadAssignments()) {
-    $("chooseQrStatus").textContent = "Sign in with your teacher code to see your assignment QR codes.";
-    $("chooseQrOptions").replaceChildren();
-    if (!$("chooseQrDialog").open) $("chooseQrDialog").showModal();
-    return;
-  }
-  const matches = classAssignments.filter(a => a.source_id
-    ? sourceIds.includes(a.source_id)
-    : includeLegacy && a.title === title);
+async function chooseClassAssignment(title, sourceIds, includeLegacy, view, trigger, results) {
+  const available = await loadAssignments();
+  if ($(view).classList.contains("hidden")) return;
+  const matches = available ? classAssignments.filter(a => matchesAssignment(a, title, sourceIds, includeLegacy)) : [];
+  const open = assignment => {
+    if (results) openAssignmentResults(assignment, view, trigger);
+    else showAssignmentQr(assignment.id, title);
+  };
   if (matches.length === 1) {
-    showAssignmentQr(matches[0].id, title);
+    open(matches[0]);
     return;
   }
-  $("chooseQrStatus").textContent = matches.length ? "Choose the class assignment to project." : "Assign this test to a class first to get its QR code.";
-  $("chooseQrOptions").replaceChildren(...matches.map(a => {
+  $("chooseClassTitle").textContent = results ? "Assessment results" : "Show assessment QR";
+  $("chooseClassStatus").textContent = !available
+    ? "Sign in with your teacher code to see class assignments."
+    : matches.length ? "Choose a class assignment."
+    : results ? "Assign this test to a class first to see its results."
+    : "Assign this test to a class first to get its QR code.";
+  $("chooseClassOptions").replaceChildren(...matches.map(a => {
     const button = document.createElement("button");
     button.type = "button";
     const date = new Date(a.assigned_at.replace(" ", "T") + "Z");
@@ -252,30 +289,57 @@ async function chooseAssignmentQr(title, sourceIds, includeLegacy = true) {
       timeZone: "Australia/Perth", dateStyle: "short", timeStyle: "short"
     });
     button.onclick = () => {
-      $("chooseQrDialog").close();
-      showAssignmentQr(a.id, title);
+      $("chooseClassDialog").close();
+      open(a);
     };
     return button;
   }));
-  if (!$("chooseQrDialog").open) $("chooseQrDialog").showModal();
+  if (!$("chooseClassDialog").open) $("chooseClassDialog").showModal();
 }
 
-$("refreshAssignments").onclick = async () => {
-  await loadAssignments();
-  if (activeAssignment) await showAssignment(activeAssignment);
+function openAssignmentResults(assignment, view, trigger) {
+  resultsTrigger = trigger;
+  const panel = $("assessmentResults");
+  $(view === "shared" ? "sharedResultsHost" : "libraryResultsHost").append(panel);
+  $("resultsHeading").textContent = assignment.class_name ? `Assessment results · ${assignment.class_name}` : "Assessment results";
+  panel.hidden = false;
+  $("resultsHeading").focus({preventScroll: true});
+  panel.scrollIntoView({block: "start"});
+  return showAssignment(assignment.id);
+}
+
+function closeAssignmentResults() {
+  activeAssignment = null;
+  responseRequest++;
+  closeWrittenGrid();
+  $("assessmentResults").hidden = true;
+  $("assignmentReport").replaceChildren();
+  $("responseReview").replaceChildren();
+}
+
+$("closeAssignmentResults").onclick = () => {
+  closeAssignmentResults();
+  if (resultsTrigger?.isConnected) resultsTrigger.focus();
+  else document.querySelector(".tabs button.active")?.focus();
 };
-document.querySelector('[data-tab="reports"]').addEventListener("click", loadAssignments);
+$("refreshAssignments").onclick = async () => {
+  const id = activeAssignment;
+  if (!id) return;
+  await loadAssignments();
+  if (activeAssignment === id) await showAssignment(id);
+};
+document.addEventListener("assessment-tab-changed", closeAssignmentResults);
 
 async function showAssignment(id) {
   closeWrittenGrid();
   activeAssignment = id;
-  responseRequest++;
+  const request = ++responseRequest;
   $("assignmentReport").replaceChildren();
   $("responseReview").replaceChildren();
   $("reportStatus").textContent = "Loading progress…";
   try {
     const {assessment, counts, students} = await teacherAssessment("results", {assignment_id: id});
-    if (activeAssignment !== id) return;
+    if (request !== responseRequest) return;
     const maximum = assessment.questions.filter(q => q.type === "mcq").reduce((sum, q) => sum + q.marks, 0);
     const hasWritten = assessment.questions.some(q => q.type !== "mcq");
     $("reportStatus").textContent = "";
@@ -300,7 +364,7 @@ async function showAssignment(id) {
       button.onclick = () => showResponse(id, assessment, student);
     });
   } catch (error) {
-    if (activeAssignment === id) $("reportStatus").textContent = error.message;
+    if (request === responseRequest) $("reportStatus").textContent = error.message;
   }
 }
 
@@ -484,5 +548,7 @@ function addMarking(panel, question, identity, review, onSave, compact = false) 
   };
 }
 
-loadAssignments();
-loadSharedAssessments();
+document.addEventListener("DOMContentLoaded", () => {
+  loadAssignments();
+  loadSharedAssessments();
+});
