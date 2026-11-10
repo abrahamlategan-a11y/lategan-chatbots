@@ -82,9 +82,9 @@ def release(account, token):
         starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
         if len(starts) == 1:
             start = starts[0].start()
-            end = start + 17172
-            if hashlib.sha256(original[start:end]).hexdigest() == "1ad3d88f55b6e8008e0d5ab0a64213c296e61c5300455674c6851147768e6f81":
-                baseline = original[:start] + original[end:]
+            end = start + 21503
+            if hashlib.sha256(original[start:end]).hexdigest() == "68e08915537aacc77f4b3668d44e35d1ec7c8fa2466540fe417dbd40f337abc8":
+                baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
     if hashlib.sha256(baseline).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
     anchors = list(re.finditer(ANCHOR, baseline))
@@ -223,6 +223,12 @@ def smoke_test(sql):
         reviewed = teacher("response", student_id=s_id)
         assert reviewed["reviews"]["2"] == {"score": 1, "feedback": "Teacher override."}
         assert reviewed["ai_marks"] == response["ai_marks"]
+        grid = teacher("written_grid")
+        assert grid["next_student_id"] is None and len(grid["rows"]) == 1
+        row = grid["rows"][0]
+        assert row["student_id"] == s_id and row["answers"] == {"2": answers["2"]}
+        assert row["ai_marks"] == response["ai_marks"] and row["reviews"] == reviewed["reviews"]
+        print("Live written grid matches saved AI rationale and teacher override.", flush=True)
         print("Live student submission, automatic written marks and teacher override verified.", flush=True)
     finally:
         sql("DELETE FROM lh_assessment_ai_marks WHERE assignment_id=?", assignment_id)

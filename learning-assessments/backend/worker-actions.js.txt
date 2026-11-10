@@ -220,6 +220,34 @@
             `, id).all();
             return reply({assessment, counts: counts(results), students: results});
           }
+          if (action === "lh_assessment_teacher_written_grid") {
+            const after = Number(body.after_student_id ?? 0);
+            if (!Number.isSafeInteger(after) || after < 0) return fail("Invalid marking grid page.");
+            const questions = writtenQuestions(assessment);
+            if (!questions.length) return reply({rows: [], next_student_id: null});
+            const {results} = await query(`
+              SELECT r.student_id,r.answers_json,r.review_json,m.state,m.marks_json
+              FROM lh_assessment_responses r
+              LEFT JOIN lh_assessment_ai_marks m ON m.assignment_id=r.assignment_id AND m.student_id=r.student_id
+              WHERE r.assignment_id=? AND r.submitted_at IS NOT NULL AND r.student_id>?
+              ORDER BY r.student_id LIMIT 6
+            `, id, after).all();
+            const rows = results.slice(0, 5).map(row => {
+              const answers = JSON.parse(row.answers_json);
+              const reviews = JSON.parse(row.review_json);
+              if (!row.state || row.state === "marking") {
+                assessmentContext.waitUntil(queueWrittenMarking(assessment, row.student_id, answers, reviews)
+                  .catch(() => console.error("Could not start grid AI marking.")));
+              }
+              return {
+                student_id: row.student_id,
+                answers: Object.fromEntries(questions.map(q => [q.id, answers[q.id] || ""])),
+                reviews, ai_status: row.state ?? "marking",
+                ai_marks: row.marks_json ? JSON.parse(row.marks_json) : {}
+              };
+            });
+            return reply({rows, next_student_id: results.length > 5 ? rows.at(-1).student_id : null});
+          }
           const studentId = Number(body.student_id);
           if (!Number.isSafeInteger(studentId)) return fail("Invalid student.");
           const response = await query(`SELECT answers_json,review_json,started_at,submitted_at,mcq_score
