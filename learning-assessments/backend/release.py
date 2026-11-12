@@ -75,16 +75,29 @@ def release(account, token):
         cloudflare(SCRIPT + "/content", "PUT", body, f"multipart/form-data; boundary={boundary}")
 
     name, original = source()
-    block = (ROOT / "worker-actions.js.txt").read_bytes() + b"\n"
+    metadata = json.loads((ROOT.parents[1] / "assessments/question-metadata.json").read_text())
+    if len(metadata) != 4 or any(len(test) != 40 for test in metadata):
+        raise RuntimeError("Unexpected Maths Trek question metadata.")
+    template = (ROOT / "worker-actions.js.txt").read_bytes()
+    marker = b"/* MATHS_TREK_QUESTION_METADATA */ []"
+    if template.count(marker) != 1:
+        raise RuntimeError("Expected one Maths Trek metadata marker.")
+    block = template.replace(marker, json.dumps(metadata, separators=(",", ":")).encode()) + b"\n"
     already_installed = original.count(block) == 1
     baseline = original.replace(block, b"", 1).replace(b", assessmentContext", b"", 1) if already_installed else original
     if not already_installed:
         starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
         if len(starts) == 1:
             start = starts[0].start()
-            end = start + 25652
-            if hashlib.sha256(original[start:end]).hexdigest() == "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e":
-                baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
+            previous_blocks = {
+                25652: "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e",
+                27496: "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e",
+            }
+            for length, digest in previous_blocks.items():
+                end = start + length
+                if hashlib.sha256(original[start:end]).hexdigest() == digest:
+                    baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
+                    break
     if hashlib.sha256(baseline).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
     anchors = list(re.finditer(ANCHOR, baseline))
@@ -189,6 +202,11 @@ def smoke_test(sql):
         s_id = sql("""INSERT INTO students(student_code,display_name,class_name,teacher_id,class_id,active)
             VALUES(?,? ,?,?,?,1) RETURNING id""", student_code, "Assessment Test Student", class_name, t_id, c_id)[0]["id"]
 
+        post("maths_trek_save", teacher_code=teacher_code, student_id=s_id, test_number=1, marks=[1] * 40)
+        assert teacher("maths_comment", student_id=s_id, test_number=1)["comment"].strip()
+        teacher("maths_comment", expected=404, student_id=s_id, test_number=2)
+        print("Live Maths Trek AI comment verified using a synthetic test result.", flush=True)
+
         assert any(item["id"] == c_id for item in teacher("list")["classes"])
         assessment = {"title": "Temporary release check", "questions": [
             {"type": "mcq", "text": "What is 1 + 1?", "marks": 1, "options": ["1", "2"], "correct": "1"},
@@ -248,6 +266,7 @@ def smoke_test(sql):
         sql("DELETE FROM lh_assessment_ai_marks WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_responses WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_assignments WHERE id=?", assignment_id)
+        sql("DELETE FROM maths_trek_results WHERE student_id=(SELECT id FROM students WHERE student_code=?)", student_code)
         sql("DELETE FROM students WHERE student_code=?", student_code)
         sql("DELETE FROM teacher_classes WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM classes WHERE name=? AND created_by_teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", class_name, teacher_code)

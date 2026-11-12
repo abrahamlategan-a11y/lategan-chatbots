@@ -131,6 +131,66 @@
         if (action.startsWith("lh_assessment_teacher_")) {
           const teacher = await getTeacher(env, body.teacher_code);
           if (!teacher) return fail("Teacher access denied.", 401);
+          if (action === "lh_assessment_teacher_maths_comment") {
+            const studentId = Number(body.student_id), test = Number(body.test_number);
+            if (!Number.isSafeInteger(studentId) || studentId <= 0 || ![1, 2, 3, 4].includes(test)) {
+              return fail("Choose a valid student and test.");
+            }
+            const row = await query(`
+              SELECT r.marks_json FROM maths_trek_results r JOIN students s ON s.id=r.student_id
+              WHERE r.student_id=? AND r.test_number=? AND r.teacher_id=s.teacher_id AND s.active=1
+              AND (?=1 OR (s.teacher_id=? AND EXISTS(
+                SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id
+              )))
+            `, studentId, test, Number(Number(teacher.is_admin) === 1), teacher.id, teacher.id).first();
+            if (!row) return fail("No saved marks are available for this student and test.", 404);
+            if (!env.OPENAI_API_KEY) return fail("AI comments are currently unavailable.", 503);
+            try {
+              const marks = JSON.parse(row.marks_json);
+              const metadata = /* MATHS_TREK_QUESTION_METADATA */ [];
+              const topics = new Map();
+              let total = 0;
+              if (!Array.isArray(marks) || marks.length !== 40) throw Error("Invalid marks");
+              for (const [i, [strand, topic]] of metadata[test - 1].entries()) {
+                const maximum = i < 24 ? 1 : i < 36 ? 2 : 3;
+                const score = marks[i];
+                if (!Number.isInteger(score) || score < 0 || score > maximum) throw Error("Invalid marks");
+                const key = strand + " · " + topic;
+                const evidence = topics.get(key) || {topic, score: 0, maximum: 0};
+                evidence.score += score;
+                evidence.maximum += maximum;
+                topics.set(key, evidence);
+                total += score;
+              }
+              const ranked = [...topics.values()].filter(item => item.maximum >= 2)
+                .sort((a, b) => b.score / b.maximum - a.score / a.maximum || b.maximum - a.maximum);
+              const evidence = {
+                test, score: total, maximum: 60,
+                strengths: ranked.filter(item => item.score / item.maximum >= 0.75).slice(0, 3),
+                nextSteps: ranked.filter(item => item.score / item.maximum < 0.6)
+                  .sort((a, b) => a.score / a.maximum - b.score / b.maximum || b.maximum - a.maximum).slice(0, 3)
+              };
+              const ai = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {Authorization: "Bearer " + env.OPENAI_API_KEY, "Content-Type": "application/json"},
+                signal: AbortSignal.timeout(20000),
+                body: JSON.stringify({
+                  model: "gpt-4.1-mini", store: false, max_completion_tokens: 240, temperature: 0.8,
+                  messages: [
+                    {role: "system", content: "Write a warm, plain Australian English comment to a parent about a Year 4 Maths Trek test. Refer to the student as [[STUDENT]] and use they/their pronouns. Write one short paragraph of up to three sentences. Include the test number and exact overall mark. Use one or two supplied strengths and one actionable practice suggestion for a supplied next step. Skip any category with no evidence. Describe performance on this test only. Never infer effort, confidence, progress over time, or the reasons for missed marks. Return only the comment."},
+                    {role: "user", content: JSON.stringify(evidence)}
+                  ]
+                })
+              });
+              if (!ai.ok) throw Error("AI provider error");
+              const output = await ai.json();
+              const comment = clean(output.choices?.[0]?.message?.content, 1200);
+              if (!comment) throw Error("No comment returned");
+              return reply({comment});
+            } catch {
+              return fail("AI could not draft a comment. Try again or use Suggestions.", 503);
+            }
+          }
           if (action === "lh_assessment_teacher_list") {
             const classes = await teacherClasses(env, teacher.id);
             const {results} = await query(`
