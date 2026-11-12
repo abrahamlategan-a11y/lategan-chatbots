@@ -124,8 +124,16 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <label for="testCommentDraft">Comment draft</label>
 <textarea id="testCommentDraft" rows="5"></textarea>
 <div class="toolbar"><button type="button" id="copyTestComment">Copy comment</button><form method="dialog"><button class="secondary">Close</button></form></div>
+<div class="toolbar">
+<button type="button" id="generateTestComment" class="secondary">Generate with AI</button>
+</div>
+<div id="aiTestCommentPreview" class="commentSuggestion" hidden>
+<strong>AI suggestion</strong>
+<p id="aiTestCommentText"></p>
+<button type="button" id="useAiTestComment" class="secondary">Use AI suggestion</button>
+</div>
 <details id="testCommentSuggestions">
-<summary>Suggestions</summary>
+<summary>Template suggestions</summary>
 <div id="testCommentOptions"></div>
 </details>
 <p id="testCommentStatus" class="sub" role="status"></p>
@@ -314,7 +322,14 @@ function reportNode(tag,text,css){
  return node;
 }
 function reportPercent(score,max){return max?Math.round(score/max*100)+"%":"—"}
-function openTestComment(studentName,test,summary){
+let activeTestComment;
+function openTestComment(studentId,studentName,test,summary){
+ activeTestComment={studentId,studentName,test};
+ const generate=el("generateTestComment");
+ generate.disabled=false;
+ generate.textContent="Generate with AI";
+ el("aiTestCommentPreview").hidden=true;
+ el("aiTestCommentText").textContent="";
  const draft=el("testCommentDraft");
  el("testCommentTitle").textContent=studentName+" · Test "+test;
  el("testCommentStatus").textContent="";
@@ -339,6 +354,34 @@ function openTestComment(studentName,test,summary){
  el("testCommentDialog").showModal();
  draft.focus();
 }
+el("generateTestComment").onclick=async()=>{
+ const context=activeTestComment;
+ const button=el("generateTestComment"),status=el("testCommentStatus");
+ button.disabled=true;
+ status.textContent="Drafting a comment with AI…";
+ try{
+  const result=await post({
+   action:"lh_assessment_teacher_maths_comment",
+   student_id:context.studentId,
+   test_number:context.test
+  });
+  if(context!==activeTestComment||!el("testCommentDialog").open)return;
+  el("aiTestCommentText").textContent=result.comment.replaceAll("[[STUDENT]]",()=>context.studentName);
+  el("aiTestCommentPreview").hidden=false;
+  button.textContent="Regenerate with AI";
+  status.textContent="AI suggestion ready to review.";
+ }catch(error){
+  if(context===activeTestComment&&el("testCommentDialog").open)status.textContent=error.message;
+ }finally{
+  if(context===activeTestComment&&el("testCommentDialog").open)button.disabled=false;
+ }
+};
+el("useAiTestComment").onclick=()=>{
+ const draft=el("testCommentDraft");
+ draft.value=el("aiTestCommentText").textContent;
+ el("testCommentStatus").textContent="AI suggestion applied.";
+ draft.focus();
+};
 el("copyTestComment").onclick=async()=>{
  const draft=el("testCommentDraft"),status=el("testCommentStatus");
  try{
@@ -433,7 +476,7 @@ function renderReports(){
    const comment=reportNode("button","Draft comment","secondary commentButton");
    comment.type="button";
    comment.setAttribute("aria-label","Draft comment for Test "+test);
-   comment.onclick=()=>openTestComment(studentName,test,summary);
+   comment.onclick=()=>openTestComment(id,studentName,test,summary);
    testCard.append(comment);
   }
   root.append(testCard);
