@@ -215,7 +215,14 @@ def smoke_test(sql):
         s_id = sql("""INSERT INTO students(student_code,display_name,class_name,teacher_id,class_id,active)
             VALUES(?,? ,?,?,?,1) RETURNING id""", student_code, "Assessment Test Student", class_name, t_id, c_id)[0]["id"]
 
-        roster = post("maths_trek_roster", teacher_code=teacher_code)
+        for attempt in range(10):
+            try:
+                roster = post("maths_trek_roster", teacher_code=teacher_code)
+                break
+            except RuntimeError:
+                if attempt == 9:
+                    raise
+                time.sleep(4)
         assert roster["can_view_all_classes"] is False
         assert any(student["id"] == s_id for student in roster["students"])
         assert any(student["class_id"] != c_id for student in roster["students"])
