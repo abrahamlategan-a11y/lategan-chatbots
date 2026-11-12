@@ -586,8 +586,8 @@ el("saveRoll").onclick=async()=>{const student=el("student").value;localStorage.
 el("alphabeticalRoll").onclick=async()=>{const student=el("student").value;localStorage.removeItem(rollKey(el("class").value));el("rollPanel").close();await loadStudents();if(Array.from(el("student").options).some(o=>o.value===student)){el("student").value=student;loadMarks()}};
 el("openCompletion").onclick=()=>{renderCompletion();el("completionPanel").showModal()};
 el("closeCompletion").onclick=()=>el("completionPanel").close();
-el("saveTop").onclick=
-el("saveOnlyTop").onclick=
+el("saveTop").onclick=()=>save(true);
+el("saveOnlyTop").onclick=()=>save(false);
 el("export").onclick=exportCsv;el("reportTest").onchange=renderReports;el("printReport").onclick=()=>window.print();
 el("pageLink").textContent=summaryPage?"← Back to marking":"View Results Summary →";
 el("pageLink").onclick=e=>{
