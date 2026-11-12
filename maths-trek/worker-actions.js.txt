@@ -10,17 +10,22 @@ if (action === "maths_trek_roster" || action === "maths_trek_list" || action ===
   if (!teacher) return json({error:"Teacher access denied."},401);
   const teacherId = Number(teacher.id);
   const isAdmin = Number(teacher.is_admin) === 1;
+  const assignedStudent = "s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)";
+  const customMember = "EXISTS(SELECT 1 FROM maths_trek_group_students m JOIN maths_trek_groups g ON g.id=m.group_id WHERE m.student_id=s.id AND g.teacher_id=?)";
   if (action === "maths_trek_roster") {
-    if (!isAdmin) return json({error:"Admin access required."},403);
     const {results} = await env.DB.prepare(
       "SELECT id,display_name,class_name,class_id,active FROM students WHERE active=1 ORDER BY class_name COLLATE NOCASE,display_name COLLATE NOCASE"
     ).all();
-    return json({students:results||[]});
+    return json({students:results||[],can_view_all_classes:isAdmin});
   }
   if (action === "maths_trek_list") {
     const rows = await env.DB.prepare(
-      "SELECT r.student_id,r.test_number,r.marks_json,r.feedback_json,r.total_score,r.updated_at,s.display_name,s.class_name,s.class_id FROM maths_trek_results r JOIN students s ON s.id=r.student_id WHERE r.teacher_id=s.teacher_id AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id))) ORDER BY s.display_name COLLATE NOCASE,r.test_number"
-    ).bind(Number(isAdmin),teacherId,teacherId).all();
+      `SELECT r.student_id,r.test_number,r.marks_json,r.total_score,r.updated_at,s.display_name,s.class_name,s.class_id
+       FROM maths_trek_results r JOIN students s ON s.id=r.student_id
+       WHERE s.active=1 AND ((r.teacher_id=s.teacher_id AND (?=1 OR (${assignedStudent})))
+        OR (r.teacher_id=? AND r.teacher_id<>s.teacher_id AND ?=0 AND ${customMember}))
+       ORDER BY s.display_name COLLATE NOCASE,r.test_number`
+    ).bind(Number(isAdmin),teacherId,teacherId,teacherId,Number(isAdmin),teacherId).all();
     return json({ok:true,results:(rows.results||[]).map(r=>({
       student_id:r.student_id,test:r.test_number,marks:JSON.parse(r.marks_json),total:r.total_score,
       name:r.display_name,class_name:r.class_name,class_id:r.class_id,updated:r.updated_at
@@ -31,8 +36,10 @@ if (action === "maths_trek_roster" || action === "maths_trek_list" || action ===
     if(!Number.isSafeInteger(studentId)||studentId<=0||![1,2,3,4].includes(test))
       return json({error:"Invalid student or test."},400);
     const allowed=await env.DB.prepare(
-      "SELECT s.id,s.teacher_id FROM students s WHERE s.id=? AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.class_id=s.class_id AND tc.teacher_id=?)))"
-    ).bind(studentId,Number(isAdmin),teacherId,teacherId).first();
+      `SELECT s.teacher_id, (?=1 OR (${assignedStudent})) AS regular_access
+       FROM students s WHERE s.id=? AND s.active=1 AND
+        (?=1 OR (${assignedStudent}) OR ${customMember})`
+    ).bind(Number(isAdmin),teacherId,teacherId,studentId,Number(isAdmin),teacherId,teacherId,teacherId).first();
     if(!allowed)return json({error:"Student not available to this teacher."},403);
     const marks=body.marks;
     if(!Array.isArray(marks)||marks.length!==40||marks.some((v,i)=>!Number.isInteger(v)||v<0||v>(i<24?1:i<36?2:3)))
@@ -41,14 +48,14 @@ if (action === "maths_trek_roster" || action === "maths_trek_list" || action ===
     const cleanFeedback={parts:[marks.slice(0,24).reduce((a,b)=>a+b,0),marks.slice(24,36).reduce((a,b)=>a+b,0),marks.slice(36).reduce((a,b)=>a+b,0)]};
     await env.DB.prepare(
       "INSERT INTO maths_trek_results(teacher_id,student_id,test_number,marks_json,feedback_json,total_score) VALUES(?,?,?,?,?,?) ON CONFLICT(teacher_id,student_id,test_number) DO UPDATE SET marks_json=excluded.marks_json,feedback_json=excluded.feedback_json,total_score=excluded.total_score,updated_at=CURRENT_TIMESTAMP"
-    ).bind(allowed.teacher_id,studentId,test,JSON.stringify(marks),JSON.stringify(cleanFeedback),total).run();
+    ).bind(allowed.regular_access?allowed.teacher_id:teacherId,studentId,test,JSON.stringify(marks),JSON.stringify(cleanFeedback),total).run();
     return json({ok:true,total});
   }
   if(action==="maths_trek_groups_list"){
     const rows=await env.DB.prepare("SELECT id,group_name FROM maths_trek_groups WHERE teacher_id=? ORDER BY group_name COLLATE NOCASE").bind(teacherId).all();
     const groups=[];
     for(const g of rows.results||[]){
-      const members=await env.DB.prepare("SELECT m.student_id FROM maths_trek_group_students m JOIN students s ON s.id=m.student_id WHERE m.group_id=? AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)))").bind(g.id,Number(isAdmin),teacherId,teacherId).all();
+      const members=await env.DB.prepare("SELECT m.student_id FROM maths_trek_group_students m JOIN students s ON s.id=m.student_id WHERE m.group_id=? AND s.active=1").bind(g.id).all();
       groups.push({id:g.id,name:g.group_name,ids:(members.results||[]).map(x=>String(x.student_id))});
     }
     return json({ok:true,groups});
@@ -58,7 +65,7 @@ if (action === "maths_trek_roster" || action === "maths_trek_list" || action ===
     const ids=[...new Set((Array.isArray(body.student_ids)?body.student_ids:[]).map(Number))];
     if(!name||!ids.length||ids.length>200||ids.some(x=>!Number.isSafeInteger(x)||x<=0))return json({error:"Invalid group."},400);
     for(const id of ids){
-      const allowed=await env.DB.prepare("SELECT s.id FROM students s WHERE s.id=? AND s.active=1 AND (?=1 OR (s.teacher_id=? AND EXISTS(SELECT 1 FROM teacher_classes tc WHERE tc.teacher_id=? AND tc.class_id=s.class_id)))").bind(id,Number(isAdmin),teacherId,teacherId).first();
+      const allowed=await env.DB.prepare("SELECT id FROM students WHERE id=? AND active=1").bind(id).first();
       if(!allowed)return json({error:"One or more students are not available to this teacher."},403);
     }
     let groupId=Number(body.group_id||0);

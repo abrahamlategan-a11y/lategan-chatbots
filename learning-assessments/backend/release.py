@@ -93,8 +93,25 @@ def release(account, token):
                 if hashlib.sha256(original[start:end]).hexdigest() == digest:
                     baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
                     break
-    if hashlib.sha256(baseline).hexdigest() != BASELINE:
+    maths_block = (ROOT.parents[1] / "maths-trek/worker-actions.js.txt").read_bytes() + b"\n"
+    previous_maths_sha = "db84ab90ee31946a293e3cbd8cfe0b9a81a6eb6a8a3bf588bcff89a8a572adbc"
+    maths_anchor = b"// Maths Trek isolated API block."
+    previous_maths = None
+    if hashlib.sha256(baseline).hexdigest() == BASELINE:
+        start = baseline.index(maths_anchor)
+        previous_maths = baseline[start:start + 6681]
+    elif baseline.count(maths_block) == 1:
+        url = ("https://raw.githubusercontent.com/abrahamlategan-a11y/lategan-chatbots/"
+               "ede1eb06f7ddd5cf31461ebd75f79bc895e3257e/maths-trek/worker-actions.js.txt")
+        status, raw, _ = request(url)
+        if status == 200:
+            previous_maths = raw + b"\n"
+    if previous_maths is None or hashlib.sha256(previous_maths).hexdigest() != previous_maths_sha:
+        raise RuntimeError("Could not verify the previous Maths Trek Worker block.")
+    verified = baseline.replace(maths_block, previous_maths, 1)
+    if hashlib.sha256(verified).hexdigest() != BASELINE:
         raise RuntimeError("Live Worker differs from the inspected baseline. Inspect before deploying.")
+    baseline = verified.replace(previous_maths, maths_block, 1)
     anchors = list(re.finditer(ANCHOR, baseline))
     if len(anchors) != 1 or b"lh_assessment_" in baseline:
         raise RuntimeError("Expected a single teacher login handler in the live Worker.")
@@ -144,14 +161,15 @@ def release(account, token):
     sql((ROOT / "schema.sql").read_text())
     if source() != (name, original):
         raise RuntimeError("Live Worker changed during the migration.")
-    if not already_installed:
+    updating = candidate != original
+    if updating:
         upload(name, candidate)
     try:
         if source() != (name, candidate) or cloudflare(SCRIPT + "/settings") != settings:
             raise RuntimeError("Live Worker source or settings failed verification.")
         smoke_test(sql)
     except Exception:
-        if not already_installed and source() == (name, candidate):
+        if updating and source() == (name, candidate):
             upload(name, original)
             print("Restored the original Worker after failed verification.", flush=True)
         raise
@@ -196,6 +214,12 @@ def smoke_test(sql):
         sql("INSERT INTO teacher_classes(teacher_id,class_id,is_default,role) VALUES(?,?,1,'teacher')", t_id, c_id)
         s_id = sql("""INSERT INTO students(student_code,display_name,class_name,teacher_id,class_id,active)
             VALUES(?,? ,?,?,?,1) RETURNING id""", student_code, "Assessment Test Student", class_name, t_id, c_id)[0]["id"]
+
+        roster = post("maths_trek_roster", teacher_code=teacher_code)
+        assert roster["can_view_all_classes"] is False
+        assert any(student["id"] == s_id for student in roster["students"])
+        assert any(student["class_id"] != c_id for student in roster["students"])
+        print("Live school-wide custom class roster verified for a regular teacher.", flush=True)
 
         assert any(item["id"] == c_id for item in teacher("list")["classes"])
         assessment = {"title": "Temporary release check", "questions": [
