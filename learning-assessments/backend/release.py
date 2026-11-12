@@ -93,6 +93,7 @@ def release(account, token):
                 (25652, "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e"),
                 (27496, "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e"),
                 (36725, "6f3e2e4f29aa27128af413bc7443fc9a6013594cc36a267b2551d2e4749de1e6"),
+                (37189, "240a0247de267b10d12e143bbd8d1348e1c1e84146e04b369dfd9996955a7779"),
             ]
             for length, digest in previous_blocks:
                 end = start + length

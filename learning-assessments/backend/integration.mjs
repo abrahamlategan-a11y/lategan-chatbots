@@ -77,7 +77,7 @@ const handle = new Function("getTeacher", "getStudent", "teacherClasses", "teach
       const items = JSON.parse(payload.messages[1].content);
       if (items.test === 1) {
         assert.equal(items.score, 40);
-        const {teacherFeedback, ...results} = items;
+        const {teacherFeedback, previousDraft, ...results} = items;
         assert.deepEqual(Object.keys(results).sort(), ["maximum", "nextSteps", "score", "strengths", "test"]);
         receivedCommentEvidence = items;
         if (providerFails) return new Response(null, {status: 503});
@@ -231,8 +231,10 @@ await teacher("maths_comment", {...commentInput, test_number: 2}, 404);
 assert.equal(providerCalls, callsBeforeComment);
 assert.equal((await teacher("maths_comment", commentInput)).comment, "[[STUDENT]] scored 40 out of 60.");
 assert.equal(receivedCommentEvidence.teacherFeedback, undefined);
-await teacher("maths_comment", {...commentInput, teacher_feedback: "  She needs to check her work.  "});
+await teacher("maths_comment", {...commentInput, teacher_feedback: "  She needs to check her work.  ",
+  previous_draft: "[[STUDENT]], well done!"});
 assert.equal(receivedCommentEvidence.teacherFeedback, "She needs to check her work.");
+assert.equal(receivedCommentEvidence.previousDraft, "[[STUDENT]], well done!");
 providerFails = true;
 await teacher("maths_comment", commentInput, 503);
 console.log("Maths Trek AI comment access, evidence and provider failure checks passed.");
