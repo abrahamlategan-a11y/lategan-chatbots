@@ -75,14 +75,7 @@ def release(account, token):
         cloudflare(SCRIPT + "/content", "PUT", body, f"multipart/form-data; boundary={boundary}")
 
     name, original = source()
-    metadata = json.loads((ROOT.parents[1] / "assessments/question-metadata.json").read_text())
-    if len(metadata) != 4 or any(len(test) != 40 for test in metadata):
-        raise RuntimeError("Unexpected Maths Trek question metadata.")
-    template = (ROOT / "worker-actions.js.txt").read_bytes()
-    marker = b"/* MATHS_TREK_QUESTION_METADATA */ []"
-    if template.count(marker) != 1:
-        raise RuntimeError("Expected one Maths Trek metadata marker.")
-    block = template.replace(marker, json.dumps(metadata, separators=(",", ":")).encode()) + b"\n"
+    block = (ROOT / "worker-actions.js.txt").read_bytes() + b"\n"
     already_installed = original.count(block) == 1
     baseline = original.replace(block, b"", 1).replace(b", assessmentContext", b"", 1) if already_installed else original
     if not already_installed:
@@ -91,9 +84,9 @@ def release(account, token):
             start = starts[0].start()
             previous_blocks = [
                 (25652, "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e"),
-                (27496, "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e"),
                 (36725, "6f3e2e4f29aa27128af413bc7443fc9a6013594cc36a267b2551d2e4749de1e6"),
                 (37189, "240a0247de267b10d12e143bbd8d1348e1c1e84146e04b369dfd9996955a7779"),
+                (37611, "ef7b21578ba8926214c445d2a65435005fd3f7ceae052af0473577bd22486d94"),
             ]
             for length, digest in previous_blocks:
                 end = start + length
@@ -204,12 +197,6 @@ def smoke_test(sql):
         s_id = sql("""INSERT INTO students(student_code,display_name,class_name,teacher_id,class_id,active)
             VALUES(?,? ,?,?,?,1) RETURNING id""", student_code, "Assessment Test Student", class_name, t_id, c_id)[0]["id"]
 
-        post("maths_trek_save", teacher_code=teacher_code, student_id=s_id, test_number=1, marks=[1] * 40)
-        assert teacher("maths_comment", student_id=s_id, test_number=1,
-                       teacher_feedback="Remind them to check their work before handing it in.")["comment"].strip()
-        teacher("maths_comment", expected=404, student_id=s_id, test_number=2)
-        print("Live Maths Trek AI comment verified using a synthetic test result.", flush=True)
-
         assert any(item["id"] == c_id for item in teacher("list")["classes"])
         assessment = {"title": "Temporary release check", "questions": [
             {"type": "mcq", "text": "What is 1 + 1?", "marks": 1, "options": ["1", "2"], "correct": "1"},
@@ -269,7 +256,6 @@ def smoke_test(sql):
         sql("DELETE FROM lh_assessment_ai_marks WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_responses WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_assignments WHERE id=?", assignment_id)
-        sql("DELETE FROM maths_trek_results WHERE student_id=(SELECT id FROM students WHERE student_code=?)", student_code)
         sql("DELETE FROM students WHERE student_code=?", student_code)
         sql("DELETE FROM teacher_classes WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM classes WHERE name=? AND created_by_teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", class_name, teacher_code)

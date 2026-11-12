@@ -16,12 +16,6 @@ db.exec(`
   INSERT INTO students VALUES(101,'one',10,1,'One'),(102,'two',10,1,'Two'),
     (103,'other-student',11,1,'Other'),(104,'inactive',10,0,'Inactive');
 `);
-db.exec(`
-  ALTER TABLE students ADD COLUMN teacher_id INTEGER;
-  UPDATE students SET teacher_id=CASE class_id WHEN 10 THEN 1 ELSE 2 END;
-  CREATE TABLE maths_trek_results(student_id INTEGER, teacher_id INTEGER, test_number INTEGER, marks_json TEXT);
-  INSERT INTO maths_trek_results VALUES(101,1,1,'${JSON.stringify(Array(40).fill(1))}');
-`);
 for (let n = 0; n < 2; n++) db.exec(read("./schema.sql"));
 
 const env = {DB: {
@@ -55,7 +49,6 @@ const teacherClassAccess = (_, id, classId) => teacherClasses(_, id).find(c => c
 let openHours = true;
 let providerCalls = 0;
 let providerFails = false;
-let receivedCommentEvidence;
 const background = [];
 const context = {waitUntil(work) { background.push(work); }};
 async function drainBackground() {
@@ -66,7 +59,7 @@ const handle = new Function("getTeacher", "getStudent", "teacherClasses", "teach
   "studentHoursClosedResponse", "fetch", `return async function(body, env, assessmentContext) {
     const action = body.action;
     const json = (data, status=200) => Response.json(data, {status});
-    ${read("./worker-actions.js.txt").replace("/* MATHS_TREK_QUESTION_METADATA */ []", read("../../assessments/question-metadata.json"))}
+    ${read("./worker-actions.js.txt")}
     throw Error("Unhandled action");
   }`)(getTeacher, getStudent, teacherClasses, teacherClassAccess, () => openHours,
     json => json({error: "Closed"}, 403), async (url, request) => {
@@ -75,14 +68,6 @@ const handle = new Function("getTeacher", "getStudent", "teacherClasses", "teach
       const payload = JSON.parse(request.body);
       assert.equal(payload.store, false);
       const items = JSON.parse(payload.messages[1].content);
-      if (items.test === 1) {
-        assert.equal(items.score, 40);
-        const {teacherFeedback, previousDraft, ...results} = items;
-        assert.deepEqual(Object.keys(results).sort(), ["maximum", "nextSteps", "score", "strengths", "test"]);
-        receivedCommentEvidence = items;
-        if (providerFails) return new Response(null, {status: 503});
-        return Response.json({choices: [{message: {content: "[[STUDENT]] scored 40 out of 60."}}]});
-      }
       for (const item of items) assert.deepEqual(Object.keys(item).sort(), ["answer", "guide", "id", "maximum", "question"]);
       if (providerFails) return new Response(null, {status: 503});
       const marks = items.map(item => ({id: item.id, score: 2, feedback: "Clear answer."}));
@@ -106,7 +91,7 @@ await teacher("list", {}, 401, "bad");
 await teacher("assign", {...assignment, class_id: 11}, 403);
 assert.equal((await teacher("list")).classes[0].name, "4L");
 assert.equal((await teacher("assign", assignment)).assigned, 2);
-db.exec("INSERT INTO students(id,student_code,class_id,active,display_name) VALUES(105,'new',10,1,'New')");
+db.exec("INSERT INTO students VALUES(105,'new',10,1,'New')");
 assert.equal((await teacher("assign", assignment)).assigned, 2);
 await teacher("assign", {...assignment, assessment: {...assessment, title: "Changed"}}, 409);
 await teacher("results", {}, 404, "other-teacher");
@@ -222,19 +207,3 @@ for (const page of ["../index.html", "../assigned.html", "../../student/index.ht
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 }
 console.log("Assignment integration passed: roster, access, autosave, submit, counts, MCQ, automatic AI marks, retry and teacher override.");
-
-const commentInput = {student_id: 101, test_number: 1};
-const callsBeforeComment = providerCalls;
-await teacher("maths_comment", commentInput, 401, "bad");
-await teacher("maths_comment", commentInput, 404, "other-teacher");
-await teacher("maths_comment", {...commentInput, test_number: 2}, 404);
-assert.equal(providerCalls, callsBeforeComment);
-assert.equal((await teacher("maths_comment", commentInput)).comment, "[[STUDENT]] scored 40 out of 60.");
-assert.equal(receivedCommentEvidence.teacherFeedback, undefined);
-await teacher("maths_comment", {...commentInput, teacher_feedback: "  She needs to check her work.  ",
-  previous_draft: "[[STUDENT]], well done!"});
-assert.equal(receivedCommentEvidence.teacherFeedback, "She needs to check her work.");
-assert.equal(receivedCommentEvidence.previousDraft, "[[STUDENT]], well done!");
-providerFails = true;
-await teacher("maths_comment", commentInput, 503);
-console.log("Maths Trek AI comment access, evidence and provider failure checks passed.");
