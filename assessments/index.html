@@ -97,21 +97,10 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 #markingActions .sectionTotalsTop span{font-size:16px;font-weight:900;padding:12px 15px;border-radius:13px;background:#e8ddfa;color:#17244b;box-shadow:inset 0 0 0 1px #ded1f6}
 #markingActions #totalTop{font-size:20px;font-weight:900;padding:12px 17px;background:#dff7ee;color:#103e3b;border-radius:13px}
 @media(max-width:680px){#markingActions .sectionTotalsTop span{font-size:14px;padding:9px 10px}#markingActions #totalTop{font-size:17px;padding:9px 12px}}
-.reportTestCard{display:flex;flex-direction:column;gap:8px}
-.reportTestCard .commentButton{align-self:flex-start}
-#testCommentDialog{width:min(540px,calc(100% - 32px));box-sizing:border-box}
-#testCommentDraft,#testCommentFeedback{display:block;width:100%;box-sizing:border-box;margin:8px 0 14px;font:inherit;padding:10px;resize:vertical}
-#testCommentSuggestions{margin:12px 0}
-#testCommentSuggestions summary{cursor:pointer;font-weight:750}
-.commentSuggestion{border-top:1px solid #e7e3f1;margin-top:12px;padding-top:12px}
-.commentSuggestion p{margin:6px 0}
-@media print{.commentButton,#testCommentDialog{display:none!important}}
-#classComments h2,#classComments h3{margin:0}
-.classCommentRow{border-top:1px solid #e7e3f1;padding:16px 0}
-.classCommentRow h3{margin-bottom:8px}
-.classCommentRow textarea{display:block;width:100%;box-sizing:border-box;margin:6px 0 10px;padding:10px;font:inherit;resize:vertical}
-.classCommentRow details{margin:10px 0}
-.classCommentRow summary{cursor:pointer}
+#openTestJson{margin-bottom:12px}
+#testJsonDialog{width:min(440px,calc(100% - 32px));box-sizing:border-box}
+#testJsonForm{display:grid;gap:12px}
+@media print{#openTestJson{display:none!important}}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek Data</h1><small>Learning Hub · Assessment marking and results</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button></div><div id="markingActions" class="panel markingActions" hidden><div id="sectionTotalsTop" class="sectionTotalsTop" aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop">Save and next</button><span id="saveState" role="status" class="sub"></span></div>
@@ -120,51 +109,22 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
 <h2 id="reportHeading">Student progress</h2><p id="reportScope" class="sub" aria-live="polite"></p>
-<button type="button" id="openClassComments">Generate comments for this test</button>
+<button type="button" id="openTestJson">Download test JSON for AI</button>
 <div class="cards" id="reportCards"></div><div id="reportTotal"></div>
 <div class="controls reportFilters"><label id="studentTestFilter">Show results for<select id="reportTest" aria-describedby="filterHelp"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><div id="classTestFilter" hidden><strong>Include tests in class results</strong><div id="classTestButtons" class="testButtons" role="group" aria-label="Tests included in class results"></div></div><button id="printReport" class="secondary">Print / save PDF</button><p id="filterHelp" class="sub">Applies to the entire report: scores, overall result, strands, test parts, strengths and areas to consolidate.</p></div>
 <div id="reportDetails"></div><div id="classReport" class="tableScroll" hidden></div>
 <div class="toolbar reportActions"><button id="classView" class="secondary" aria-pressed="false">Whole class summary</button><button id="studentView" class="secondary" hidden>← Back to student results</button><button id="export" hidden>Export class results (CSV)</button></div>
 </div></section>
-<dialog id="commentTestPicker" aria-labelledby="commentTestPickerTitle">
-<h2 id="commentTestPickerTitle">Choose a test for comments</h2>
-<form id="commentTestForm" class="controls">
-<label>Test<select id="commentTestNumber"></select></label>
-<button type="submit">Generate comments</button>
-<button type="button" id="cancelCommentTest" class="secondary">Cancel</button>
+<dialog id="testJsonDialog" aria-labelledby="testJsonTitle">
+<h2 id="testJsonTitle">Download test JSON for AI</h2>
+<form id="testJsonForm">
+<label>Test<select id="testJsonNumber"></select></label>
+<label><input type="checkbox" id="testJsonNames"> Include student first names</label>
+<p class="sub">Upload the file to your AI chat. It will ask about the audience and tone before writing comments.</p>
+<div class="toolbar"><button type="submit">Download JSON</button><button type="button" id="closeTestJson" class="secondary">Cancel</button></div>
 </form>
 </dialog>
-<section id="classComments" class="panel" hidden aria-labelledby="classCommentsTitle">
-<button type="button" id="backFromComments" class="secondary">← Back to results</button>
-<h2 id="classCommentsTitle" tabindex="-1"></h2>
-<p id="classCommentProgress" class="sub" role="status"></p>
-<div class="toolbar"><button type="button" id="downloadClassComments">Download approved comments (CSV)</button></div>
-<p class="sub">Drafts stay on this page until you refresh or leave Maths Trek. Download approved comments to keep them.</p>
-<div id="classCommentRows"></div>
-</section>
-<dialog id="testCommentDialog" aria-labelledby="testCommentTitle">
-<h2 id="testCommentTitle"></h2>
-<label for="testCommentDraft">Comment draft</label>
-<textarea id="testCommentDraft" rows="5"></textarea>
-<div class="toolbar"><button type="button" id="copyTestComment">Copy comment</button><form method="dialog"><button class="secondary">Close</button></form></div>
-<label for="testCommentFeedback">Teacher feedback <span class="sub">(optional)</span></label>
-<textarea id="testCommentFeedback" rows="2" maxlength="500" aria-describedby="testCommentFeedbackHint" placeholder="She could check each answer before handing in her work."></textarea>
-<p id="testCommentFeedbackHint" class="sub">The AI uses this feedback alongside the test marks. Leave out names and other identifying details.</p>
-<div class="toolbar">
-<button type="button" id="generateTestComment" class="secondary">Generate with AI</button>
-</div>
-<div id="aiTestCommentPreview" class="commentSuggestion" hidden>
-<strong>AI suggestion</strong>
-<p id="aiTestCommentText"></p>
-<button type="button" id="useAiTestComment" class="secondary">Use AI suggestion</button>
-</div>
-<details id="testCommentSuggestions">
-<summary>Template suggestions</summary>
-<div id="testCommentOptions"></div>
-</details>
-<p id="testCommentStatus" class="sub" role="status"></p>
-</dialog>
-</main><script src="./reporting.js?v=class-comments-1"></script><script>
+</main><script src="./reporting.js?v=test-json-1"></script><script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev",code=localStorage.getItem("lategan_teacher_code")||"";
 const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1"};
 async function post(data){const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...data,teacher_code:code})});const j=await response.json();if(!response.ok||j.error)throw Error(j.error||"Server error");return j}
@@ -348,87 +308,6 @@ function reportNode(tag,text,css){
  return node;
 }
 function reportPercent(score,max){return max?Math.round(score/max*100)+"%":"—"}
-let activeTestComment;
-function openTestComment(studentId,studentName,test,summary){
- activeTestComment={studentId,studentName,test};
- const generate=el("generateTestComment");
- generate.disabled=false;
- const feedback=el("testCommentFeedback");
- feedback.value="";
- feedback.disabled=false;
- generate.textContent="Generate with AI";
- el("aiTestCommentPreview").hidden=true;
- el("aiTestCommentText").textContent="";
- const draft=el("testCommentDraft");
- el("testCommentTitle").textContent=studentName+" · Test "+test;
- el("testCommentStatus").textContent="";
- const suggestions=mathsTrekCommentSuggestions(studentName,test,summary);
- draft.value=suggestions[0][1];
- el("testCommentSuggestions").open=false;
- const options=el("testCommentOptions");
- options.replaceChildren();
- for(const [label,comment] of suggestions){
-  const option=reportNode("div",null,"commentSuggestion");
-  const use=reportNode("button","Use this version","secondary");
-  use.type="button";
-  use.setAttribute("aria-label","Use "+label.toLowerCase()+" comment");
-  use.onclick=()=>{
-   draft.value=comment;
-   el("testCommentStatus").textContent=label+" comment applied.";
-   draft.focus();
-  };
-  option.append(reportNode("strong",label),reportNode("p",comment),use);
-  options.append(option);
- }
- el("testCommentDialog").showModal();
- draft.focus();
-}
-el("generateTestComment").onclick=async()=>{
- const context=activeTestComment;
- const button=el("generateTestComment"),status=el("testCommentStatus");
- const feedback=el("testCommentFeedback");
- const teacherFeedback=feedback.value.trim();
- button.disabled=true;
- feedback.disabled=true;
- status.textContent="Drafting a comment with AI…";
- try{
-  const result=await post({
-   action:"lh_assessment_teacher_maths_comment",
-   student_id:context.studentId,
-   test_number:context.test,
-   ...(teacherFeedback ? {teacher_feedback:teacherFeedback} : {})
-  });
-  if(context!==activeTestComment||!el("testCommentDialog").open)return;
-  el("aiTestCommentText").textContent=result.comment.replaceAll("[[STUDENT]]",()=>context.studentName);
-  el("aiTestCommentPreview").hidden=false;
-  button.textContent="Regenerate with AI";
-  status.textContent="AI suggestion ready to review.";
- }catch(error){
-  if(context===activeTestComment&&el("testCommentDialog").open)status.textContent=error.message;
- }finally{
-  if(context===activeTestComment&&el("testCommentDialog").open){
-   button.disabled=false;
-   feedback.disabled=false;
-  }
- }
-};
-el("useAiTestComment").onclick=()=>{
- const draft=el("testCommentDraft");
- draft.value=el("aiTestCommentText").textContent;
- el("testCommentStatus").textContent="AI suggestion applied.";
- draft.focus();
-};
-el("copyTestComment").onclick=async()=>{
- const draft=el("testCommentDraft"),status=el("testCommentStatus");
- try{
-  await navigator.clipboard.writeText(draft.value);
-  status.textContent="Comment copied.";
- }catch{
-  draft.focus();
-  draft.select();
-  status.textContent="Use your device’s copy command to copy the selected comment.";
- }
-};
 function renderReports(){
  const testFilter=el("reportTest").value;
  const selectedTests=selectedReportTests();
@@ -506,16 +385,7 @@ function renderReports(){
   card.setAttribute("aria-label","Review Test "+test+" marking"+(summary?.available?", "+summary.total+" out of 60":", not marked"));
   card.append(reportNode("div","Test "+test),reportNode("strong",summary?.available?summary.total+" / 60":"Not marked"),reportNode("span","Review marks →","reportTestHint"));
   card.onclick=()=>{const params=new URLSearchParams({class:el("class").value,student:String(id),test:String(test)});location.href="?"+params};
-  const testCard=reportNode("div",null,"reportTestCard");
-  testCard.append(card);
-  if(summary?.available){
-   const comment=reportNode("button","Draft comment","secondary commentButton");
-   comment.type="button";
-   comment.setAttribute("aria-label","Draft comment for Test "+test);
-   comment.onclick=()=>openTestComment(id,studentName,test,summary);
-   testCard.append(comment);
-  }
-  root.append(testCard);
+  root.append(card);
  }
  const d=mathsTrekSummary(rs,metadata);
  const hero=reportNode("div",null,"reportHero");
@@ -556,6 +426,36 @@ function exportCsv(){
  }
  mathsTrekDownloadCsv(rows,"maths-trek-"+(group?"group":"class")+"-results.csv");
 }
+el("openTestJson").onclick=()=>{
+ const tests=[1,2,3,4].flatMap(test=>{
+  const count=students.filter(student=>hasSavedResult(student.id,test)).length;
+  return count?[{test,label:"Test "+test+" · "+count+" marked"}]:[];
+ });
+ if(!tests.length){
+  message("This class has no saved test marks to export.");
+  return;
+ }
+ options("testJsonNumber",tests,"test","label");
+ const selected=selectedReportTests();
+ if(selected.length===1&&tests.some(item=>item.test===selected[0])){
+  el("testJsonNumber").value=String(selected[0]);
+ }
+ el("testJsonNames").checked=false;
+ el("testJsonDialog").showModal();
+};
+el("closeTestJson").onclick=()=>el("testJsonDialog").close();
+el("testJsonForm").onsubmit=event=>{
+ event.preventDefault();
+ const test=Number(el("testJsonNumber").value);
+ const data=mathsTrekTestJson(test,students,results,metadata,el("testJsonNames").checked);
+ if(!data.students.length){
+  message("There are no saved marks for this test.");
+  el("testJsonDialog").close();
+  return;
+ }
+ mathsTrekDownload(JSON.stringify(data,null,2),"application/json;charset=utf-8","maths-trek-test-"+test+"-for-ai.json");
+ el("testJsonDialog").close();
+};
 function setDisabled(disabled){
  document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
  el("saveTop").disabled=el("saveOnlyTop").disabled=disabled||!ready;
@@ -623,4 +523,4 @@ el("assessmentControls").hidden=summaryPage;
 el("custom").hidden=summaryPage;
 el("reports").classList.toggle("hidden",!summaryPage);
 setDisabled(true);busy=true;init().finally(()=>{busy=false;setDisabled(false)});
-</script><script src="./class-comments.js?v=1"></script></body></html>
+</script></body></html>
