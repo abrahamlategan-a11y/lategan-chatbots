@@ -31,21 +31,21 @@ function mathsTrekCommentSuggestions(studentName, test, summary) {
   const topics = items => items.slice(0, 2).map(topic).join(' and ');
   const [strength] = summary.strengths;
   const [growth] = summary.growth;
-  const result = `${studentName} scored ${summary.total} out of ${summary.available} on Maths Trek Test ${test}.`;
-  const strengths = strength ? `Their strongest results were in ${topics(summary.strengths)}.` : '';
-  const nextStep = growth ? `A useful next step is to practise ${topics(summary.growth)}.` : '';
+  const result = `${studentName}, you scored ${summary.total} out of ${summary.available} on Maths Trek Test ${test}.`;
+  const strengths = strength ? `You did especially well in ${topics(summary.strengths)}.` : '';
+  const nextStep = growth ? `Next time, make sure you practise ${topics(summary.growth)}.` : '';
   const combine = (...sentences) => sentences.filter(Boolean).join(' ');
   return [
     ['Balanced', combine(result, strengths, nextStep)],
     ['Short', combine(
-      `Maths Trek Test ${test} — ${studentName} scored ${summary.total}/${summary.available}.`,
-      strength && `Strength in ${topic(strength)}.`,
-      growth && `Next step is to practise ${topic(growth)}.`
+      `${studentName}, you scored ${summary.total}/${summary.available} on Test ${test}.`,
+      strength && `Well done on your work with ${topic(strength)}.`,
+      growth && `Keep practising ${topic(growth)}.`
     )],
     ['With marks by topic', combine(
       result,
-      strength && `They earned ${strength.score} out of ${strength.max} marks on questions about ${topic(strength)}.`,
-      growth && `They earned ${growth.score} out of ${growth.max} marks on questions about ${topic(growth)}, which gives them a focus for further practice.`
+      strength && `You earned ${strength.score} out of ${strength.max} marks on questions about ${topic(strength)}.`,
+      growth && `You earned ${growth.score} out of ${growth.max} marks on questions about ${topic(growth)}, which gives you a focus for further practice.`
     )]
   ].filter(([, comment], index, suggestions) => suggestions.findIndex(([, text]) => text === comment) === index);
 }
@@ -53,4 +53,14 @@ function mathsTrekCsvCell(value) {
   let text = String(value ?? '');
   if (/^[\s]*[=+@-]/.test(text)) text = "'" + text;
   return '"' + text.replaceAll('"', '""') + '"';
+}
+
+function mathsTrekDownloadCsv(rows, filename) {
+  const csv = "\uFEFF" + rows.map(row => row.map(mathsTrekCsvCell).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

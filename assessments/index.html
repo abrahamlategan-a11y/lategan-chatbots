@@ -106,6 +106,12 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .commentSuggestion{border-top:1px solid #e7e3f1;margin-top:12px;padding-top:12px}
 .commentSuggestion p{margin:6px 0}
 @media print{.commentButton,#testCommentDialog{display:none!important}}
+#classComments h2,#classComments h3{margin:0}
+.classCommentRow{border-top:1px solid #e7e3f1;padding:16px 0}
+.classCommentRow h3{margin-bottom:8px}
+.classCommentRow textarea{display:block;width:100%;box-sizing:border-box;margin:6px 0 10px;padding:10px;font:inherit;resize:vertical}
+.classCommentRow details{margin:10px 0}
+.classCommentRow summary{cursor:pointer}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek Data</h1><small>Learning Hub · Assessment marking and results</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button></div><div id="markingActions" class="panel markingActions" hidden><div id="sectionTotalsTop" class="sectionTotalsTop" aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop">Save and next</button><span id="saveState" role="status" class="sub"></span></div>
@@ -114,11 +120,28 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
 <h2 id="reportHeading">Student progress</h2><p id="reportScope" class="sub" aria-live="polite"></p>
+<button type="button" id="openClassComments">Generate comments for this test</button>
 <div class="cards" id="reportCards"></div><div id="reportTotal"></div>
 <div class="controls reportFilters"><label id="studentTestFilter">Show results for<select id="reportTest" aria-describedby="filterHelp"><option value="">All completed tests</option><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label><div id="classTestFilter" hidden><strong>Include tests in class results</strong><div id="classTestButtons" class="testButtons" role="group" aria-label="Tests included in class results"></div></div><button id="printReport" class="secondary">Print / save PDF</button><p id="filterHelp" class="sub">Applies to the entire report: scores, overall result, strands, test parts, strengths and areas to consolidate.</p></div>
 <div id="reportDetails"></div><div id="classReport" class="tableScroll" hidden></div>
 <div class="toolbar reportActions"><button id="classView" class="secondary" aria-pressed="false">Whole class summary</button><button id="studentView" class="secondary" hidden>← Back to student results</button><button id="export" hidden>Export class results (CSV)</button></div>
 </div></section>
+<dialog id="commentTestPicker" aria-labelledby="commentTestPickerTitle">
+<h2 id="commentTestPickerTitle">Choose a test for comments</h2>
+<form id="commentTestForm" class="controls">
+<label>Test<select id="commentTestNumber"></select></label>
+<button type="submit">Generate comments</button>
+<button type="button" id="cancelCommentTest" class="secondary">Cancel</button>
+</form>
+</dialog>
+<section id="classComments" class="panel" hidden aria-labelledby="classCommentsTitle">
+<button type="button" id="backFromComments" class="secondary">← Back to results</button>
+<h2 id="classCommentsTitle" tabindex="-1"></h2>
+<p id="classCommentProgress" class="sub" role="status"></p>
+<div class="toolbar"><button type="button" id="downloadClassComments">Download approved comments (CSV)</button></div>
+<p class="sub">Drafts stay on this page until you refresh or leave Maths Trek. Download approved comments to keep them.</p>
+<div id="classCommentRows"></div>
+</section>
 <dialog id="testCommentDialog" aria-labelledby="testCommentTitle">
 <h2 id="testCommentTitle"></h2>
 <label for="testCommentDraft">Comment draft</label>
@@ -141,7 +164,7 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 </details>
 <p id="testCommentStatus" class="sub" role="status"></p>
 </dialog>
-</main><script src="./reporting.js?v=test-comments-2"></script><script>
+</main><script src="./reporting.js?v=class-comments-1"></script><script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev",code=localStorage.getItem("lategan_teacher_code")||"";
 const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1"};
 async function post(data){const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...data,teacher_code:code})});const j=await response.json();if(!response.ok||j.error)throw Error(j.error||"Server error");return j}
@@ -531,8 +554,7 @@ function exportCsv(){
   if(!r){rows.push([s.display_name,s.class_name||"",test,...Array(13).fill("")]);continue}
   const d=mathsTrekSummary([r],metadata);rows.push([s.display_name,s.class_name||"",test,...d.parts.map(x=>x.score),d.total,Math.round(d.total/60*100),...Object.values(d.strands).flatMap(x=>[x.score,x.max]),d.strengths.map(x=>x.name).join("; "),d.growth.map(x=>x.name).join("; ")]);
  }
- const csv="\uFEFF"+rows.map(row=>row.map(mathsTrekCsvCell).join(",")).join("\r\n");
- const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="maths-trek-"+(group?"group":"class")+"-results.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ mathsTrekDownloadCsv(rows,"maths-trek-"+(group?"group":"class")+"-results.csv");
 }
 function setDisabled(disabled){
  document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
@@ -601,4 +623,4 @@ el("assessmentControls").hidden=summaryPage;
 el("custom").hidden=summaryPage;
 el("reports").classList.toggle("hidden",!summaryPage);
 setDisabled(true);busy=true;init().finally(()=>{busy=false;setDisabled(false)});
-</script></body></html>
+</script><script src="./class-comments.js?v=1"></script></body></html>
