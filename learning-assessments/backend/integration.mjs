@@ -55,6 +55,7 @@ const teacherClassAccess = (_, id, classId) => teacherClasses(_, id).find(c => c
 let openHours = true;
 let providerCalls = 0;
 let providerFails = false;
+let receivedCommentEvidence;
 const background = [];
 const context = {waitUntil(work) { background.push(work); }};
 async function drainBackground() {
@@ -76,7 +77,9 @@ const handle = new Function("getTeacher", "getStudent", "teacherClasses", "teach
       const items = JSON.parse(payload.messages[1].content);
       if (items.test === 1) {
         assert.equal(items.score, 40);
-        assert.deepEqual(Object.keys(items).sort(), ["maximum", "nextSteps", "score", "strengths", "test"]);
+        const {teacherFeedback, ...results} = items;
+        assert.deepEqual(Object.keys(results).sort(), ["maximum", "nextSteps", "score", "strengths", "test"]);
+        receivedCommentEvidence = items;
         if (providerFails) return new Response(null, {status: 503});
         return Response.json({choices: [{message: {content: "[[STUDENT]] scored 40 out of 60."}}]});
       }
@@ -227,6 +230,9 @@ await teacher("maths_comment", commentInput, 404, "other-teacher");
 await teacher("maths_comment", {...commentInput, test_number: 2}, 404);
 assert.equal(providerCalls, callsBeforeComment);
 assert.equal((await teacher("maths_comment", commentInput)).comment, "[[STUDENT]] scored 40 out of 60.");
+assert.equal(receivedCommentEvidence.teacherFeedback, undefined);
+await teacher("maths_comment", {...commentInput, teacher_feedback: "  She needs to check her work.  "});
+assert.equal(receivedCommentEvidence.teacherFeedback, "She needs to check her work.");
 providerFails = true;
 await teacher("maths_comment", commentInput, 503);
 console.log("Maths Trek AI comment access, evidence and provider failure checks passed.");

@@ -89,11 +89,12 @@ def release(account, token):
         starts = list(re.finditer(rb"(?m)^      // Learning Hub class assignments\n", original))
         if len(starts) == 1:
             start = starts[0].start()
-            previous_blocks = {
-                25652: "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e",
-                27496: "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e",
-            }
-            for length, digest in previous_blocks.items():
+            previous_blocks = [
+                (25652, "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e"),
+                (27496, "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e"),
+                (36725, "6f3e2e4f29aa27128af413bc7443fc9a6013594cc36a267b2551d2e4749de1e6"),
+            ]
+            for length, digest in previous_blocks:
                 end = start + length
                 if hashlib.sha256(original[start:end]).hexdigest() == digest:
                     baseline = (original[:start] + original[end:]).replace(b", assessmentContext", b"", 1)
@@ -203,7 +204,8 @@ def smoke_test(sql):
             VALUES(?,? ,?,?,?,1) RETURNING id""", student_code, "Assessment Test Student", class_name, t_id, c_id)[0]["id"]
 
         post("maths_trek_save", teacher_code=teacher_code, student_id=s_id, test_number=1, marks=[1] * 40)
-        assert teacher("maths_comment", student_id=s_id, test_number=1)["comment"].strip()
+        assert teacher("maths_comment", student_id=s_id, test_number=1,
+                       teacher_feedback="Remind them to check their work before handing it in.")["comment"].strip()
         teacher("maths_comment", expected=404, student_id=s_id, test_number=2)
         print("Live Maths Trek AI comment verified using a synthetic test result.", flush=True)
 
