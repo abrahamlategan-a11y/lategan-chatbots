@@ -105,7 +105,7 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button></div><div id="markingActions" class="panel markingActions" hidden><div id="sectionTotalsTop" class="sectionTotalsTop" aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop">Save and next</button><span id="saveState" role="status" class="sub"></span></div>
 <section id="marking" hidden><div class="grid" id="columns"></div></section>
-<dialog id="rollPanel"><h2>Arrange class roll</h2><p class="sub">Use the arrows to put students in your preferred roll order. Only first names are shown. Changes are saved on this device.</p><div id="rollNames" class="rollNames"></div><div class="toolbar"><button type="button" id="saveRoll">Save roll order</button><button type="button" id="alphabeticalRoll" class="secondary">Reset to alphabetical</button><button type="button" id="closeRoll" class="secondary">Cancel</button></div></dialog><dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Marked</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
+<dialog id="rollPanel"><h2>Arrange class roll</h2><p class="sub">Use the arrows to put students in your preferred roll order. Only first names are shown. Changes are saved on this device.</p><div id="rollNames" class="rollNames"></div><div class="toolbar"><button type="button" id="saveRoll">Save roll order</button><button type="button" id="alphabeticalRoll" class="secondary">Reset to alphabetical</button><button type="button" id="closeRoll" class="secondary">Cancel</button></div></dialog><dialog id="completionPanel"><h2 id="completionTitle">Marking progress</h2><p id="completionTotal" class="sub"></p><div class="completionGrid"><section><h3 id="completedTitle">Marked</h3><div id="completedList"></div></section><section><h3 id="remainingTitle">Not marked</h3><div id="remainingList"></div></section></div><button type="button" id="closeCompletion" class="secondary">Close</button></dialog><dialog id="groupPanel"><h2>Custom class</h2><div class="controls"><label>Class name<input id="groupName" maxlength="100" placeholder="e.g. Braam Extension Class"></label><button id="createGroup">Save custom class</button><button id="closeGroup" class="secondary">Cancel</button></div><label>Show students from<select id="groupSourceClass"></select></label><div id="groupMembers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"></div><p id="groupError" role="status"></p></dialog>
 <section id="reports" class="hidden"><div class="panel">
 <div id="studentTiles" class="studentTiles" aria-label="Choose a student"></div>
 <h2 id="reportHeading">Student progress</h2><p id="reportScope" class="sub" aria-live="polite"></p>
@@ -461,19 +461,40 @@ function setDisabled(disabled){
  document.querySelectorAll("button,select,input").forEach(n=>n.disabled=disabled);
  el("saveTop").disabled=el("saveOnlyTop").disabled=disabled||!ready;
 }
+el("groupSourceClass").onchange=()=>{
+ const selected=el("groupSourceClass").value;
+ for(const label of el("groupMembers").children)label.hidden=!!selected&&label.dataset.classId!==selected;
+};
 el("custom").onclick=async()=>{
  if(busy)return;
+ const button=el("custom");
+ button.disabled=true;
  try{
-  const roster=customRoster||await loadAccessibleRoster();
+  const roster=await post({action:"maths_trek_roster"});
+  if(!Array.isArray(roster.students))throw Error("The school roster is unavailable.");
+  customRoster=roster.students;
   const box=el("groupMembers");box.replaceChildren();
-  for(const student of roster){
+  const sourceClasses=new Map();
+  for(const student of customRoster){
+   const classId=String(student.class_id??"unassigned");
+   const className=student.class_name||"Unassigned";
+   sourceClasses.set(classId,className);
    const label=document.createElement("label");
-   const check=document.createElement("input");check.type="checkbox";check.value=student.id;
-   label.append(check,document.createTextNode(" "+student.display_name+" · "+(student.class_name||"Unassigned")));
+   label.dataset.classId=classId;
+   const check=document.createElement("input");
+   check.type="checkbox";check.value=student.id;
+   label.append(check,document.createTextNode(" "+student.display_name+" · "+className));
    box.append(label);
   }
+  options("groupSourceClass",[{id:"",name:"All classes"},...[...sourceClasses]
+   .sort((a,b)=>a[1].localeCompare(b[1])).map(([id,name])=>({id,name}))],"id","name");
   el("groupError").textContent="";el("groupPanel").showModal();
- }catch(e){message("Could not load students: "+e.message)}
+ }catch(e){
+  el("groupMembers").replaceChildren();
+  options("groupSourceClass",[],"id","name");
+  el("groupError").textContent="Could not load the school roster. Close this window and try again. "+e.message;
+  el("groupPanel").showModal();
+ }finally{button.disabled=false}
 };
 el("closeGroup").onclick=()=>el("groupPanel").close();
 el("createGroup").onclick=async()=>{
