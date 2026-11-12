@@ -101,6 +101,10 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 .reportTestCard .commentButton{align-self:flex-start}
 #testCommentDialog{width:min(540px,calc(100% - 32px));box-sizing:border-box}
 #testCommentDraft{display:block;width:100%;box-sizing:border-box;margin:8px 0 14px;font:inherit;padding:10px;resize:vertical}
+#testCommentSuggestions{margin:12px 0}
+#testCommentSuggestions summary{cursor:pointer;font-weight:750}
+.commentSuggestion{border-top:1px solid #e7e3f1;margin-top:12px;padding-top:12px}
+.commentSuggestion p{margin:6px 0}
 @media print{.commentButton,#testCommentDialog{display:none!important}}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek Data</h1><small>Learning Hub · Assessment marking and results</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
@@ -120,9 +124,13 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <label for="testCommentDraft">Comment draft</label>
 <textarea id="testCommentDraft" rows="5"></textarea>
 <div class="toolbar"><button type="button" id="copyTestComment">Copy comment</button><form method="dialog"><button class="secondary">Close</button></form></div>
+<details id="testCommentSuggestions">
+<summary>Suggestions</summary>
+<div id="testCommentOptions"></div>
+</details>
 <p id="testCommentStatus" class="sub" role="status"></p>
 </dialog>
-</main><script src="./reporting.js?v=test-comments-1"></script><script>
+</main><script src="./reporting.js?v=test-comments-2"></script><script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev",code=localStorage.getItem("lategan_teacher_code")||"";
 const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1"};
 async function post(data){const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...data,teacher_code:code})});const j=await response.json();if(!response.ok||j.error)throw Error(j.error||"Server error");return j}
@@ -310,7 +318,24 @@ function openTestComment(studentName,test,summary){
  const draft=el("testCommentDraft");
  el("testCommentTitle").textContent=studentName+" · Test "+test;
  el("testCommentStatus").textContent="";
- draft.value=mathsTrekComment(studentName,test,summary);
+ const suggestions=mathsTrekCommentSuggestions(studentName,test,summary);
+ draft.value=suggestions[0][1];
+ el("testCommentSuggestions").open=false;
+ const options=el("testCommentOptions");
+ options.replaceChildren();
+ for(const [label,comment] of suggestions){
+  const option=reportNode("div",null,"commentSuggestion");
+  const use=reportNode("button","Use this version","secondary");
+  use.type="button";
+  use.setAttribute("aria-label","Use "+label.toLowerCase()+" comment");
+  use.onclick=()=>{
+   draft.value=comment;
+   el("testCommentStatus").textContent=label+" comment applied.";
+   draft.focus();
+  };
+  option.append(reportNode("strong",label),reportNode("p",comment),use);
+  options.append(option);
+ }
  el("testCommentDialog").showModal();
  draft.focus();
 }

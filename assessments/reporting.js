@@ -26,17 +26,28 @@ function mathsTrekSummary(records, metadata) {
     strengths: ranked.filter(x => x.pct >= .75).sort((a,b) => b.pct-a.pct || b.max-a.max || a.name.localeCompare(b.name)).slice(0,3),
     growth: ranked.filter(x => x.pct < .6).sort((a,b) => a.pct-b.pct || b.max-a.max || a.name.localeCompare(b.name)).slice(0,3)};
 }
-function mathsTrekComment(studentName, test, summary) {
-  if (!summary.available) return '';
-  const topics = items => items.slice(0, 2).map(item => item.name.split(' · ')[1]).join(' and ');
-  const sentences = [`${studentName} scored ${summary.total} out of ${summary.available} on Maths Trek Test ${test}.`];
-  if (summary.strengths.length) {
-    sentences.push(`Their strongest results were in ${topics(summary.strengths)}.`);
-  }
-  if (summary.growth.length) {
-    sentences.push(`A useful next step is to practise ${topics(summary.growth)}.`);
-  }
-  return sentences.join(' ');
+function mathsTrekCommentSuggestions(studentName, test, summary) {
+  const topic = item => item.name.split(' · ')[1];
+  const topics = items => items.slice(0, 2).map(topic).join(' and ');
+  const [strength] = summary.strengths;
+  const [growth] = summary.growth;
+  const result = `${studentName} scored ${summary.total} out of ${summary.available} on Maths Trek Test ${test}.`;
+  const strengths = strength ? `Their strongest results were in ${topics(summary.strengths)}.` : '';
+  const nextStep = growth ? `A useful next step is to practise ${topics(summary.growth)}.` : '';
+  const combine = (...sentences) => sentences.filter(Boolean).join(' ');
+  return [
+    ['Balanced', combine(result, strengths, nextStep)],
+    ['Short', combine(
+      `Maths Trek Test ${test} — ${studentName} scored ${summary.total}/${summary.available}.`,
+      strength && `Strength in ${topic(strength)}.`,
+      growth && `Next step is to practise ${topic(growth)}.`
+    )],
+    ['With marks by topic', combine(
+      result,
+      strength && `They earned ${strength.score} out of ${strength.max} marks on questions about ${topic(strength)}.`,
+      growth && `They earned ${growth.score} out of ${growth.max} marks on questions about ${topic(growth)}, which gives them a focus for further practice.`
+    )]
+  ].filter(([, comment], index, suggestions) => suggestions.findIndex(([, text]) => text === comment) === index);
 }
 function mathsTrekCsvCell(value) {
   let text = String(value ?? '');
