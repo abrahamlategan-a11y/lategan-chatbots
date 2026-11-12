@@ -26,6 +26,18 @@ function mathsTrekSummary(records, metadata) {
     strengths: ranked.filter(x => x.pct >= .75).sort((a,b) => b.pct-a.pct || b.max-a.max || a.name.localeCompare(b.name)).slice(0,3),
     growth: ranked.filter(x => x.pct < .6).sort((a,b) => a.pct-b.pct || b.max-a.max || a.name.localeCompare(b.name)).slice(0,3)};
 }
+function mathsTrekComment(studentName, test, summary) {
+  if (!summary.available) return '';
+  const topics = items => items.slice(0, 2).map(item => item.name.split(' · ')[1]).join(' and ');
+  const sentences = [`${studentName} scored ${summary.total} out of ${summary.available} on Maths Trek Test ${test}.`];
+  if (summary.strengths.length) {
+    sentences.push(`Their strongest results were in ${topics(summary.strengths)}.`);
+  }
+  if (summary.growth.length) {
+    sentences.push(`A useful next step is to practise ${topics(summary.growth)}.`);
+  }
+  return sentences.join(' ');
+}
 function mathsTrekCsvCell(value) {
   let text = String(value ?? '');
   if (/^[\s]*[=+@-]/.test(text)) text = "'" + text;

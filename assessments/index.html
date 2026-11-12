@@ -97,6 +97,11 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 #markingActions .sectionTotalsTop span{font-size:16px;font-weight:900;padding:12px 15px;border-radius:13px;background:#e8ddfa;color:#17244b;box-shadow:inset 0 0 0 1px #ded1f6}
 #markingActions #totalTop{font-size:20px;font-weight:900;padding:12px 17px;background:#dff7ee;color:#103e3b;border-radius:13px}
 @media(max-width:680px){#markingActions .sectionTotalsTop span{font-size:14px;padding:9px 10px}#markingActions #totalTop{font-size:17px;padding:9px 12px}}
+.reportTestCard{display:flex;flex-direction:column;gap:8px}
+.reportTestCard .commentButton{align-self:flex-start}
+#testCommentDialog{width:min(540px,calc(100% - 32px));box-sizing:border-box}
+#testCommentDraft{display:block;width:100%;box-sizing:border-box;margin:8px 0 14px;font:inherit;padding:10px;resize:vertical}
+@media print{.commentButton,#testCommentDialog{display:none!important}}
 </style></head><body><header><div><a class="hub-brand-link" href="../teacher/" aria-label="Learning Hub home"><span class="hub-mark">LH</span><span>Learning Hub</span></a><h1>Maths Trek Data</h1><small>Learning Hub · Assessment marking and results</small></div><nav class="toolbar"><a id="pageLink" class="summary-cta" href="?view=summary">View Results Summary <span aria-hidden="true">→</span></a></nav></header>
 <main><div id="status" class="notice">Connecting to your Learning Hub…</div>
 <div class="panel controls"><label>Class<select id="class"></select></label><details class="classSettings"><summary>Class settings</summary><div class="toolbar"><button type="button" id="favouriteClass" class="secondary" title="Make this your default class">☆ Set as favourite</button><button id="custom" class="secondary">Custom class</button><button type="button" id="rollOrder" class="secondary" title="Arrange students in roll order">Arrange roll</button></div></details><label hidden>Test<select id="test"><option value="1">Test 1</option><option value="2">Test 2</option><option value="3">Test 3</option><option value="4">Test 4</option></select></label></div><div class="panel toolbar" id="assessmentControls"><strong>Assess</strong><div class="testButtons" id="testButtons"></div></div><div class="panel controls" id="studentPicker"><label>Student<select id="student"></select></label><span id="progress" class="sub"></span><button type="button" id="openCompletion" class="secondary" title="See marked and not yet marked students for this test">Class marking list</button></div><div id="markingActions" class="panel markingActions" hidden><div id="sectionTotalsTop" class="sectionTotalsTop" aria-live="polite"><span id="part1Top">Part 1: 0 / 24</span><span id="part2Top">Part 2: 0 / 24</span><span id="part3Top">Part 3: 0 / 12</span></div><strong id="totalTop" class="liveTotal" hidden>Total: 0 / 60</strong><button id="saveOnlyTop" hidden>Save</button><button id="saveTop">Save and next</button><span id="saveState" role="status" class="sub"></span></div>
@@ -110,7 +115,14 @@ header .summary-cta:focus-visible{outline:3px solid #526bd2;outline-offset:4px}
 <div id="reportDetails"></div><div id="classReport" class="tableScroll" hidden></div>
 <div class="toolbar reportActions"><button id="classView" class="secondary" aria-pressed="false">Whole class summary</button><button id="studentView" class="secondary" hidden>← Back to student results</button><button id="export" hidden>Export class results (CSV)</button></div>
 </div></section>
-</main><script src="./reporting.js"></script><script>
+<dialog id="testCommentDialog" aria-labelledby="testCommentTitle">
+<h2 id="testCommentTitle"></h2>
+<label for="testCommentDraft">Comment draft</label>
+<textarea id="testCommentDraft" rows="5"></textarea>
+<div class="toolbar"><button type="button" id="copyTestComment">Copy comment</button><form method="dialog"><button class="secondary">Close</button></form></div>
+<p id="testCommentStatus" class="sub" role="status"></p>
+</dialog>
+</main><script src="./reporting.js?v=test-comments-1"></script><script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev",code=localStorage.getItem("lategan_teacher_code")||"";
 const el=id=>document.getElementById(id);let classes=[],students=[],results=[],marks=Array(40).fill(0),dirty=false,ready=false,metadata=[],groups=[],busy=false,selection={class:"",student:"",test:"1"};
 async function post(data){const response=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...data,teacher_code:code})});const j=await response.json();if(!response.ok||j.error)throw Error(j.error||"Server error");return j}
@@ -294,6 +306,25 @@ function reportNode(tag,text,css){
  return node;
 }
 function reportPercent(score,max){return max?Math.round(score/max*100)+"%":"—"}
+function openTestComment(studentName,test,summary){
+ const draft=el("testCommentDraft");
+ el("testCommentTitle").textContent=studentName+" · Test "+test;
+ el("testCommentStatus").textContent="";
+ draft.value=mathsTrekComment(studentName,test,summary);
+ el("testCommentDialog").showModal();
+ draft.focus();
+}
+el("copyTestComment").onclick=async()=>{
+ const draft=el("testCommentDraft"),status=el("testCommentStatus");
+ try{
+  await navigator.clipboard.writeText(draft.value);
+  status.textContent="Comment copied.";
+ }catch{
+  draft.focus();
+  draft.select();
+  status.textContent="Use your device’s copy command to copy the selected comment.";
+ }
+};
 function renderReports(){
  const testFilter=el("reportTest").value;
  const selectedTests=selectedReportTests();
@@ -359,17 +390,28 @@ function renderReports(){
   return;
  }
  const id=currentStudent(),rs=byStudent.get(id)||[];
- el("reportHeading").textContent=(students.find(s=>Number(s.id)===id)?.display_name||"Student")+" · progress";
+ const studentName=students.find(s=>Number(s.id)===id)?.display_name||"Student";
+ el("reportHeading").textContent=studentName+" · progress";
  for(let test=1;test<=4;test++){
   if(testFilter&&test!==Number(testFilter))continue;
   const r=results.find(x=>Number(x.student_id)===id&&Number(x.test||x.test_number)===test);
+  const summary=r?mathsTrekSummary([r],metadata):null;
   const card=reportNode("button",null,"mini reportTestLink");
   card.type="button";
   card.title="Open Test "+test+" to review or correct marks";
-  card.setAttribute("aria-label","Review Test "+test+" marking"+(r?", "+mathsTrekSummary([r],metadata).total+" out of 60":", not marked"));
-  card.append(reportNode("div","Test "+test),reportNode("strong",r?mathsTrekSummary([r],metadata).total+" / 60":"Not marked"),reportNode("span","Review marks →","reportTestHint"));
+  card.setAttribute("aria-label","Review Test "+test+" marking"+(summary?.available?", "+summary.total+" out of 60":", not marked"));
+  card.append(reportNode("div","Test "+test),reportNode("strong",summary?.available?summary.total+" / 60":"Not marked"),reportNode("span","Review marks →","reportTestHint"));
   card.onclick=()=>{const params=new URLSearchParams({class:el("class").value,student:String(id),test:String(test)});location.href="?"+params};
-  root.append(card);
+  const testCard=reportNode("div",null,"reportTestCard");
+  testCard.append(card);
+  if(summary?.available){
+   const comment=reportNode("button","Draft comment","secondary commentButton");
+   comment.type="button";
+   comment.setAttribute("aria-label","Draft comment for Test "+test);
+   comment.onclick=()=>openTestComment(studentName,test,summary);
+   testCard.append(comment);
+  }
+  root.append(testCard);
  }
  const d=mathsTrekSummary(rs,metadata);
  const hero=reportNode("div",null,"reportHero");
