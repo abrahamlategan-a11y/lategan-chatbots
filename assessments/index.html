@@ -151,7 +151,7 @@ function updateCompletionCounters(){
  for(const button of el("testButtons").children){const test=Number(button.dataset.test),counts=completionCounts(test);button.textContent="Test "+test+" · "+counts.done+"/"+counts.total;button.title=counts.done+" of "+counts.total+" marked. Select test to view details."}
 }
 const summaryPage=new URLSearchParams(location.search).get("view")==="summary";
-let selectedTest=summaryPage,schoolRoster=null,regularClasses=[];
+let selectedTest=summaryPage,schoolRoster=null,customRoster=null,regularClasses=[];
 const parts=[[0,24,1],[24,36,2],[36,40,3]];
 const draftKey=()=>JSON.stringify(["maths-trek-draft",currentStudent(),currentTest()]);
 function loadMarks(){
@@ -215,7 +215,7 @@ async function loadStudents(){
  if(value.startsWith("group:")){
   const group=groups.find(g=>"group:"+g.id===value);
   const ids=new Set((group?.ids||[]).map(Number));
-  const roster=schoolRoster||await loadAccessibleRoster();
+  const roster=customRoster||await loadAccessibleRoster();
   students=roster.filter(s=>ids.has(Number(s.id)));
  }else if(schoolRoster){
   students=schoolRoster.filter(s=>value==="all"||String(s.class_id)===value);
@@ -256,8 +256,9 @@ async function init(){
   const d=await post({action:"teacher_list_classes"});regularClasses=d.classes||[];classes=[...regularClasses];
   try{
    const roster=await post({action:"maths_trek_roster"});
-   if(Array.isArray(roster.students)){
-    schoolRoster=roster.students;
+   if(Array.isArray(roster.students))customRoster=roster.students;
+   if(customRoster&&roster.can_view_all_classes!==false){
+    schoolRoster=customRoster;
     const ids=new Set(classes.map(c=>String(c.id)));
     for(const student of schoolRoster)if(!ids.has(String(student.class_id))){
      ids.add(String(student.class_id));classes.push({id:student.class_id,name:student.class_name||"Unassigned"});
@@ -463,7 +464,7 @@ function setDisabled(disabled){
 el("custom").onclick=async()=>{
  if(busy)return;
  try{
-  const roster=schoolRoster||await loadAccessibleRoster();
+  const roster=customRoster||await loadAccessibleRoster();
   const box=el("groupMembers");box.replaceChildren();
   for(const student of roster){
    const label=document.createElement("label");
