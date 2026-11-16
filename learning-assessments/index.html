@@ -64,6 +64,10 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 .planEntry h4,.planEntry p{margin:0 0 5px}.planEntry p{white-space:pre-wrap;overflow-wrap:anywhere}.planEntry .released{background:#d9f5e9;color:#165146}
 #planDialog{width:min(560px,calc(100% - 24px));border:1px solid #e5def2;border-radius:20px;color:#1c3840}#planDialog::backdrop{background:#17265066}
 #planForm{display:grid;gap:10px}#planForm textarea{min-height:70px}#planForm h2,#planFormStatus{margin:0}
+.planSubjectFields{border:1px solid #e5def2;border-radius:10px;margin:0;padding:10px;min-width:0}
+#planSubjects{display:flex;flex-wrap:wrap;gap:8px 14px;margin-bottom:10px}
+#planSubjects label{display:flex;align-items:center;gap:5px}
+#planSubjects input{width:auto}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -84,8 +88,8 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   <form id="planForm">
     <h2 id="planDialogTitle">Add assessment</h2>
     <label>Assessment title<input id="planTitle" required maxlength="150"></label>
-    <div class="plannerFilters"><label>Subject<input id="planSubject" required maxlength="80" list="planSubjects"><datalist id="planSubjects"></datalist></label>
-    <label>Term<select id="planTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option><option value="4">Term 4</option></select></label></div>
+    <fieldset class="planSubjectFields"><legend>Subjects</legend><div id="planSubjects"></div><label>Other subject (optional)<input id="planOtherSubject" maxlength="80"></label></fieldset>
+    <div class="plannerFilters"><label>Term<select id="planTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option><option value="4">Term 4</option></select></label></div>
     <label>Planned date (optional)<input type="date" id="planDate"></label>
     <label>Learning Hub test (optional)<select id="planTest"></select></label>
     <label>Notes (optional)<textarea id="planNotes" rows="2" maxlength="1200"></textarea></label>
@@ -320,8 +324,9 @@ drawLibrary();
     return element;
   };
   const defaultSubjects = ["Writing", "Reading", "Speaking", "Maths", "Science", "HASS", "Health", "Design and Tech", "Diagnostic"];
+  const entrySubjects = item => item.subjects?.length ? item.subjects : [item.subject];
   const subjects = entries => {
-    const extraSubjects = [...new Set(entries.map(item => item.subject))]
+    const extraSubjects = [...new Set(entries.flatMap(entrySubjects))]
       .filter(subject => !defaultSubjects.includes(subject))
       .sort((a,b)=>a.localeCompare(b));
     return [...defaultSubjects, ...extraSubjects];
@@ -372,12 +377,13 @@ drawLibrary();
       line.append(heading);
       for (let term = 1; term <= 4; term++) {
         const cell = line.insertCell();
-        const items = entries.filter(item=>item.subject===subject && item.term===term)
+        const items = entries.filter(item=>entrySubjects(item).includes(subject) && item.term===term)
           .sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||a.title.localeCompare(b.title));
         for (const item of items) {
           const row = node("article",null,"planEntry");
           const detail = node("div");
           detail.append(node("h4",item.title));
+          if (entrySubjects(item).length>1) detail.append(node("p",entrySubjects(item).join(" + "),"muted"));
           if (item.date) detail.append(node("p",releasedDate(item.date + "T12:00:00+08:00"),"muted"));
           if (item.notes) detail.append(node("p",item.notes));
           if (item.link) {
@@ -423,11 +429,19 @@ drawLibrary();
     $("planForm").reset();
     $("planDialogTitle").textContent = item ? "Edit assessment" : "Add assessment";
     $("planTitle").value = item?.title || "";
-    $("planSubject").value = item?.subject || subject;
     $("planTerm").value = String(item?.term || term);
     $("planDate").value = item?.date || "";
     $("planNotes").value = item?.notes || "";
-    $("planSubjects").replaceChildren(...subjects(read()).map(subject=>new Option(subject)));
+    const selectedSubjects = item ? entrySubjects(item) : [subject];
+    $("planSubjects").replaceChildren(...subjects(read()).map(name=>{
+      const label = node("label");
+      const checkbox = node("input");
+      checkbox.type = "checkbox";
+      checkbox.value = name;
+      checkbox.checked = selectedSubjects.includes(name);
+      label.append(checkbox,node("span",name));
+      return label;
+    }));
     $("deletePlan").hidden = !item;
     $("planFormStatus").textContent = "";
     fillLinks(item?.link || "");
@@ -442,13 +456,18 @@ drawLibrary();
   year.onchange = filter.onchange = render;
   $("planForm").onsubmit = event => {
     event.preventDefault();
-    const title = $("planTitle").value.trim(), subject = $("planSubject").value.trim();
-    if (!title || !subject) { $("planFormStatus").textContent = "Enter a title and subject."; return; }
+    const title = $("planTitle").value.trim();
+    const chosenSubjects = [...$("planSubjects").querySelectorAll("input:checked")].map(input=>input.value);
+    const other = $("planOtherSubject").value.trim();
+    if (other && !chosenSubjects.some(name=>name.toLowerCase()===other.toLowerCase())) {
+      chosenSubjects.push(subjects(read()).find(name=>name.toLowerCase()===other.toLowerCase())||other);
+    }
+    if (!title || !chosenSubjects.length) { $("planFormStatus").textContent = "Enter a title and choose at least one subject."; return; }
     try {
       if (key()!==editKey) throw Error("Teacher sign-in changed. Reopen the editor.");
       const entries = read();
       const existing = entries.find(item=>item.id===editing?.id);
-      const entry = {id:editing?.id||uid(),title,subject,year:editYear,term:Number($("planTerm").value),
+      const entry = {id:editing?.id||uid(),title,subject:chosenSubjects[0],subjects:chosenSubjects,year:editYear,term:Number($("planTerm").value),
         date:$("planDate").value,link:$("planTest").value,notes:$("planNotes").value.trim(),released:existing?.released||null};
       save([...entries.filter(item=>item.id!==entry.id),entry]);
       dialog.close();
