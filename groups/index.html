@@ -175,6 +175,24 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 }
 @media(max-width:520px){.jobs-page .point-main-row{grid-template-columns:1fr}}
 @media print{.jobs-page .fun-point-card{break-inside:avoid}}
+.jobs-page .fun-point-card{grid-template-columns:minmax(0,1fr) auto;column-gap:24px}
+.jobs-page .point-card-top{justify-content:flex-start;gap:16px;flex-wrap:wrap}
+.jobs-page .running-pill{display:flex;align-items:baseline;gap:8px;border:0;background:none;padding:0;color:#35436a}
+.jobs-page .running-pill b{font-size:clamp(32px,4vw,48px);line-height:1;color:#142450;font-variant-numeric:tabular-nums}
+.jobs-page .member-pill{font-size:16px;font-weight:850;padding:6px 11px;color:#142450;border-color:#a8abd366}
+.jobs-page .point-main-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.jobs-page .today-box{background:transparent;border:0;padding:0}
+.jobs-page .today-line input{width:68px;padding:5px 6px;font-size:23px}
+.jobs-page .edit-points{align-self:center}
+#adjustPointsDialog{width:min(440px,calc(100% - 32px));border:1px solid var(--line);border-radius:20px;padding:20px;color:var(--ink)}
+#adjustPointsDialog::backdrop{background:#17265066}
+#adjustPointsForm{display:grid;gap:8px}
+#adjustPointsForm h2,#adjustPointsError{margin:0}
+#adjustPointsForm input{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px}
+#adjustPointsError{color:#8a302b}
+.adjust-actions{display:flex;justify-content:flex-end;gap:8px}
+@media(max-width:900px){.jobs-page .point-main-row{margin-top:10px}}
+@media print{.edit-points,#adjustPointsDialog{display:none!important}}
 </style>
 </head>
 <body>
@@ -249,6 +267,17 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
       </div>
     </div>
 
+    <dialog id="adjustPointsDialog" aria-labelledby="adjustPointsTitle">
+      <form id="adjustPointsForm">
+        <h2 id="adjustPointsTitle">Edit points</h2>
+        <label for="adjustPointsAmount">Points to add or subtract</label>
+        <input id="adjustPointsAmount" type="number" min="-50" max="50" step="0.1" placeholder="+2.0" required>
+        <label for="adjustPointsNote">Reason (optional)</label>
+        <input id="adjustPointsNote" maxlength="120">
+        <p id="adjustPointsError" role="status"></p>
+        <div class="adjust-actions"><button type="button" class="btn" id="cancelAdjustPoints">Cancel</button><button type="submit" class="btn primary" id="saveAdjustPoints">Save adjustment</button></div>
+      </form>
+    </dialog>
     <div class="modal-backdrop" id="historyModal">
       <div class="history-modal">
         <div class="history-head">
@@ -371,10 +400,9 @@ function todayKey(){
 }
 async function loadPoints({silent=false}={}){
   const active=document.activeElement;
+  if(silent && $("adjustPointsDialog").open)return;
   if(silent && active && (
-    active.classList?.contains("point-input") ||
-    active.classList?.contains("adjustment-amount") ||
-    active.classList?.contains("adjustment-note")
+    active.classList?.contains("point-input")
   )) return;
 
   try{
@@ -456,14 +484,7 @@ function renderPoints(){
           <div class="today-line"><input class="point-input" data-id="${esc(g.id)}" type="number" min="0" max="10" step="0.1" value="${score}"><span>/ 10</span></div>
           <button class="btn history-btn" data-history="${esc(g.id)}">View history</button>
         </div>
-        <div class="adjust-box">
-          <label>Add catch-up / bonus / correction</label>
-          <div class="adjust-row">
-            <input class="amount adjustment-amount" data-id="${esc(g.id)}" type="number" min="-50" max="50" step="0.1" placeholder="+2.0">
-            <input class="adjustment-note" data-id="${esc(g.id)}" maxlength="120" placeholder="Reason, e.g. missed yesterday">
-            <button class="btn add-adjustment" data-id="${esc(g.id)}">Add</button>
-          </div>
-        </div>
+        <button type="button" class="btn edit-points" data-adjust="${esc(g.id)}" aria-label="Edit points for ${esc(g.name)}">Edit</button>
       </div>
     </div>`;
   }).join("")||'<div class="empty">Create job groups first.</div>';
@@ -491,34 +512,53 @@ function renderPoints(){
       ],{duration:850,easing:"cubic-bezier(.2,.75,.22,1)"});
     });
   }
-  document.querySelectorAll(".add-adjustment").forEach(b=>{b.disabled=!pointsState.enabled;b.onclick=()=>addAdjustment(b.dataset.id)});
+  grid.querySelectorAll("[data-adjust]").forEach(button=>{
+    button.disabled=!pointsState.enabled;
+    button.onclick=()=>openAdjustment(button.dataset.adjust);
+  });
   document.querySelectorAll("[data-history]").forEach(b=>b.onclick=()=>openHistory(b.dataset.history));
 }
 
-async function addAdjustment(groupId){
-  const amountEl=document.querySelector(`.adjustment-amount[data-id="${CSS.escape(groupId)}"]`);
-  const noteEl=document.querySelector(`.adjustment-note[data-id="${CSS.escape(groupId)}"]`);
-  const amount=Number(amountEl?.value);
-  const note=String(noteEl?.value||"").trim();
-  if(!Number.isFinite(amount)||amount===0||amount<-50||amount>50||Math.round(amount*10)!==amount*10){
-    alert("Adjustment must be from -50 to +50, with at most one decimal place.");
+let adjustingGroupId;
+function openAdjustment(groupId){
+  const group=jobGroups.find(team=>String(team.id)===groupId);
+  if(!group)return;
+  adjustingGroupId=groupId;
+  $("adjustPointsForm").reset();
+  $("adjustPointsError").textContent="";
+  $("adjustPointsTitle").textContent="Edit points · "+group.name;
+  $("adjustPointsDialog").showModal();
+  $("adjustPointsAmount").focus();
+}
+$("cancelAdjustPoints").onclick=()=>$("adjustPointsDialog").close();
+$("adjustPointsDialog").oncancel=event=>{
+  if($("saveAdjustPoints").disabled)event.preventDefault();
+};
+$("adjustPointsForm").onsubmit=async event=>{
+  event.preventDefault();
+  const save=$("saveAdjustPoints"), cancel=$("cancelAdjustPoints");
+  if(save.disabled)return;
+  const amount=Number($("adjustPointsAmount").value);
+  if(!Number.isFinite(amount)||!amount||Math.abs(amount)>50||Math.abs(amount*10-Math.round(amount*10))>1e-8){
+    $("adjustPointsError").textContent="Enter a non-zero adjustment from −50 to +50, with up to one decimal place.";
     return;
   }
+  save.disabled=cancel.disabled=true;
+  $("adjustPointsError").textContent="";
   try{
     await post({
-      action:"teacher_job_points_add_adjustment",
-      teacher_code:teacherCode,
-      date_key:todayKey(),
-      group_id:groupId,
-      amount,
-      note
+      action:"teacher_job_points_add_adjustment",teacher_code:teacherCode,date_key:todayKey(),
+      group_id:adjustingGroupId,amount,note:$("adjustPointsNote").value.trim()
     });
-    delete amountEl.dataset.edited;
-    delete noteEl.dataset.edited;
-    $("pointsSaved").textContent="Adjustment added";
+    $("adjustPointsDialog").close();
+    $("pointsSaved").textContent="Adjustment saved";
     await loadPoints();
-  }catch(e){alert(e.message)}
-}
+  }catch(e){
+    $("adjustPointsError").textContent=e.message;
+  }finally{
+    save.disabled=cancel.disabled=false;
+  }
+};
 
 function openHistory(groupId){
   const g=jobGroups.find(x=>String(x.id)===String(groupId));
