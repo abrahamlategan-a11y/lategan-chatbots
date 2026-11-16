@@ -49,8 +49,18 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 #scoreQuestionDialog textarea{min-height:80px}
 #planner .sectionTitle p{margin:6px 0 12px}
 .plannerFilters{display:flex;gap:12px;flex-wrap:wrap}.plannerFilters label{flex:1;min-width:125px;max-width:260px}
-#planTerms{display:grid;gap:13px}.planTerm{border:1px solid #e5def2;border-radius:16px;padding:14px;background:#faf8ff}.planTerm h3{margin:0 0 8px;color:#24355c}
-.planEntry{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:white;border:1px solid #ebe6f4;border-radius:12px;padding:12px;margin-top:8px}
+#planTerms{overflow:auto;border:1px solid #e5def2;border-radius:14px}
+.planMatrix{width:100%;min-width:760px;table-layout:fixed;border-spacing:0;text-align:left}
+.planMatrix caption{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.planMatrix th,.planMatrix td{vertical-align:top;padding:10px;border-bottom:1px solid #e5def2}
+.planMatrix td+td,.planMatrix thead th+th{border-left:1px solid #e5def2}
+.planMatrix tr:last-child>td,.planMatrix tbody tr:last-child>th{border-bottom:0}
+.planMatrix thead th{background:#eee7fa;color:#24355c}
+.planMatrix thead th:first-child,.planMatrix tbody th{position:sticky;left:0;background:#eee7fa;width:clamp(110px,15vw,165px);overflow-wrap:anywhere;box-shadow:1px 0 #e5def2;z-index:1}
+.planMatrix td{background:#faf8ff}
+.planEntry{background:white;border:1px solid #ebe6f4;border-radius:10px;padding:10px;margin-bottom:8px;overflow-wrap:anywhere}
+.planEntry .row{gap:5px;margin-top:8px}.planEntry button,.planCellAdd{font-size:12px;padding:6px 8px}
+.planCellAdd{background:transparent;color:#504284}
 .planEntry h4,.planEntry p{margin:0 0 5px}.planEntry p{white-space:pre-wrap;overflow-wrap:anywhere}.planEntry .released{background:#d9f5e9;color:#165146}
 #planDialog{width:min(560px,calc(100% - 24px));border:1px solid #e5def2;border-radius:20px;color:#1c3840}#planDialog::backdrop{background:#17265066}
 #planForm{display:grid;gap:10px}#planForm textarea{min-height:70px}#planForm h2,#planFormStatus{margin:0}
@@ -67,7 +77,7 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   <div class="sectionTitle"><div><h2>Year planner</h2><p class="muted">Plan assessments by subject and mark them released after sharing them with parents and students.</p></div><button type="button" class="primary" id="addPlan">+ Add assessment</button></div>
   <div class="plannerFilters"><label>School year<input id="planYear" type="number" min="2000" max="2100" step="1" required></label><label>Subject<select id="planSubjectFilter"></select></label></div>
   <p id="planStatus" class="muted" role="status"></p>
-  <div id="planTerms"></div>
+  <div id="planTerms" tabindex="0" role="region" aria-label="Assessment planner grid"></div>
   <p class="muted">Plans are saved in this browser.</p>
 </section>
 <dialog id="planDialog" aria-labelledby="planDialogTitle">
@@ -338,40 +348,65 @@ drawLibrary();
     const chosen = filter.value;
     filter.replaceChildren(new Option("All subjects",""), ...subjects(entries).map(subject=>new Option(subject,subject)));
     if (subjects(entries).includes(chosen)) filter.value = chosen;
-    for (let term = 1; term <= 4; term++) {
-      const section = node("section",null,"planTerm");
-      section.append(node("h3","Term " + term));
-      const items = entries.filter(item=>item.term===term && (!filter.value||filter.value===item.subject))
-        .sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||a.title.localeCompare(b.title));
-      if (!items.length) section.append(node("p","No assessments planned.","muted"));
-      for (const item of items) {
-        const row = node("article",null,"planEntry");
-        const detail = node("div");
-        detail.append(node("h4",item.title),node("p",item.subject + (item.date ? " · " + releasedDate(item.date + "T12:00:00+08:00") : ""),"muted"));
-        if (item.notes) detail.append(node("p",item.notes));
-        if (item.link) {
-          const anchor = node("a","Open Learning Hub test");
-          anchor.href = "?test=" + encodeURIComponent(item.link);
-          detail.append(anchor);
-        }
-        const actions = node("div",null,"row");
-        const release = button(item.released ? "Released" : "Mark released",()=>{
-          if (item.released && !confirm("Set this assessment back to planned?")) return;
-          try {
-            save(read().map(entry=>entry.id===item.id ? {...entry,released:entry.released ? null : new Date().toISOString()} : entry));
-          } catch (error) { status.textContent = "Could not save release status. " + error.message; }
-        });
-        if (item.released) {
-          release.className = "released";
-          release.setAttribute("aria-label","Released " + releasedDate(item.released) + ". Set back to planned");
-          detail.append(node("p","Released " + releasedDate(item.released),"muted"));
-        }
-        actions.append(release,button("Edit",()=>open(item)));
-        row.append(detail,actions);
-        section.append(row);
-      }
-      host.append(section);
+    const table = node("table",null,"planMatrix");
+    const caption = node("caption","Assessment plan for " + year.value);
+    table.append(caption);
+    const headings = table.createTHead().insertRow();
+    for (const label of ["Subject","Term 1","Term 2","Term 3","Term 4"]) {
+      const heading = node("th",label);
+      heading.scope = "col";
+      headings.append(heading);
     }
+    const body = table.createTBody();
+    const visibleSubjects = filter.value ? [filter.value] : subjects(entries);
+    if (!visibleSubjects.length) {
+      const empty = body.insertRow().insertCell();
+      empty.colSpan = 5;
+      empty.append(node("p","No assessments planned for this year. Add an assessment to start your first subject.","muted"));
+    }
+    for (const subject of visibleSubjects) {
+      const line = body.insertRow();
+      const heading = node("th",subject);
+      heading.scope = "row";
+      line.append(heading);
+      for (let term = 1; term <= 4; term++) {
+        const cell = line.insertCell();
+        const items = entries.filter(item=>item.subject===subject && item.term===term)
+          .sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||a.title.localeCompare(b.title));
+        for (const item of items) {
+          const row = node("article",null,"planEntry");
+          const detail = node("div");
+          detail.append(node("h4",item.title));
+          if (item.date) detail.append(node("p",releasedDate(item.date + "T12:00:00+08:00"),"muted"));
+          if (item.notes) detail.append(node("p",item.notes));
+          if (item.link) {
+            const anchor = node("a","Open Learning Hub test");
+            anchor.href = "?test=" + encodeURIComponent(item.link);
+            detail.append(anchor);
+          }
+          const actions = node("div",null,"row");
+          const release = button(item.released ? "Released" : "Mark released",()=>{
+            if (item.released && !confirm("Set this assessment back to planned?")) return;
+            try {
+              save(read().map(entry=>entry.id===item.id ? {...entry,released:entry.released ? null : new Date().toISOString()} : entry));
+            } catch (error) { status.textContent = "Could not save release status. " + error.message; }
+          });
+          if (item.released) {
+            release.className = "released";
+            release.setAttribute("aria-label","Released " + releasedDate(item.released) + ". Set back to planned");
+            detail.append(node("p","Released " + releasedDate(item.released),"muted"));
+          }
+          actions.append(release,button("Edit",()=>open(item)));
+          row.append(detail,actions);
+          cell.append(row);
+        }
+        const add = button("+ Add",()=>open(null,subject,term));
+        add.className = "planCellAdd";
+        add.setAttribute("aria-label","Add " + subject + " assessment to Term " + term);
+        cell.append(add);
+      }
+    }
+    host.append(table);
   }
   function fillLinks(selected) {
     const options = links();
@@ -379,7 +414,7 @@ drawLibrary();
     if (selected && !options.some(([value])=>value===selected)) $("planTest").append(new Option("Previously linked test",selected));
     $("planTest").value = selected;
   }
-  function open(item) {
+  function open(item, subject = filter.value, term = 1) {
     if (!year.reportValidity()) return;
     editing = item;
     editYear = Number(year.value);
@@ -387,8 +422,8 @@ drawLibrary();
     $("planForm").reset();
     $("planDialogTitle").textContent = item ? "Edit assessment" : "Add assessment";
     $("planTitle").value = item?.title || "";
-    $("planSubject").value = item?.subject || filter.value;
-    $("planTerm").value = String(item?.term || 1);
+    $("planSubject").value = item?.subject || subject;
+    $("planTerm").value = String(item?.term || term);
     $("planDate").value = item?.date || "";
     $("planNotes").value = item?.notes || "";
     $("planSubjects").replaceChildren(...subjects(read()).map(subject=>new Option(subject)));
