@@ -47,6 +47,13 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 #classScoreTable .provisionalScore{color:#715216}
 #scoreQuestionDialog{width:min(94vw,670px);max-height:90vh;overflow:auto}
 #scoreQuestionDialog textarea{min-height:80px}
+#planner .sectionTitle p{margin:6px 0 12px}
+.plannerFilters{display:flex;gap:12px;flex-wrap:wrap}.plannerFilters label{flex:1;min-width:125px;max-width:260px}
+#planTerms{display:grid;gap:13px}.planTerm{border:1px solid #e5def2;border-radius:16px;padding:14px;background:#faf8ff}.planTerm h3{margin:0 0 8px;color:#24355c}
+.planEntry{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:white;border:1px solid #ebe6f4;border-radius:12px;padding:12px;margin-top:8px}
+.planEntry h4,.planEntry p{margin:0 0 5px}.planEntry p{white-space:pre-wrap;overflow-wrap:anywhere}.planEntry .released{background:#d9f5e9;color:#165146}
+#planDialog{width:min(560px,calc(100% - 24px));border:1px solid #e5def2;border-radius:20px;color:#1c3840}#planDialog::backdrop{background:#17265066}
+#planForm{display:grid;gap:10px}#planForm textarea{min-height:70px}#planForm h2,#planFormStatus{margin:0}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -55,8 +62,28 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
   <button class="primary">Sign in</button>
 </form>
 <p id="connectionStatus" class="muted noprint" role="status"></p>
-<div class="tabs noprint"><button data-tab="library" class="active">📚 Assessment Library</button><button data-tab="shared">Shared assessments</button><button data-tab="create">✏️ Create & edit</button><button data-tab="preview">🧑‍🎓 Student preview</button></div>
-<section id="library" class="panel"><div class="sectionTitle"><div><h2>Assessment Library</h2><p class="muted">Assign a test, open its QR code or view class results from its card.</p></div><button class="primary" id="new">+ New assessment</button></div><div id="libraryCards" class="library"></div>
+<div class="tabs noprint"><button data-tab="planner" class="active">Year planner</button><button data-tab="library">📚 Assessment Library</button><button data-tab="shared">Shared assessments</button><button data-tab="create">✏️ Create & edit</button><button data-tab="preview">🧑‍🎓 Student preview</button></div>
+<section id="planner" class="panel">
+  <div class="sectionTitle"><div><h2>Year planner</h2><p class="muted">Plan assessments by subject and mark them released after sharing them with parents and students.</p></div><button type="button" class="primary" id="addPlan">+ Add assessment</button></div>
+  <div class="plannerFilters"><label>School year<input id="planYear" type="number" min="2000" max="2100" step="1" required></label><label>Subject<select id="planSubjectFilter"></select></label></div>
+  <p id="planStatus" class="muted" role="status"></p>
+  <div id="planTerms"></div>
+  <p class="muted">Plans are saved in this browser.</p>
+</section>
+<dialog id="planDialog" aria-labelledby="planDialogTitle">
+  <form id="planForm">
+    <h2 id="planDialogTitle">Add assessment</h2>
+    <label>Assessment title<input id="planTitle" required maxlength="150"></label>
+    <div class="plannerFilters"><label>Subject<input id="planSubject" required maxlength="80" list="planSubjects"><datalist id="planSubjects"></datalist></label>
+    <label>Term<select id="planTerm"><option value="1">Term 1</option><option value="2">Term 2</option><option value="3">Term 3</option><option value="4">Term 4</option></select></label></div>
+    <label>Planned date (optional)<input type="date" id="planDate"></label>
+    <label>Learning Hub test (optional)<select id="planTest"></select></label>
+    <label>Notes (optional)<textarea id="planNotes" rows="2" maxlength="1200"></textarea></label>
+    <p id="planFormStatus" class="muted" role="status"></p>
+    <div class="row"><button type="submit" class="primary">Save assessment</button><button type="button" id="cancelPlan">Cancel</button><button type="button" class="danger" id="deletePlan" hidden>Delete</button></div>
+  </form>
+</dialog>
+<section id="library" class="panel hidden"><div class="sectionTitle"><div><h2>Assessment Library</h2><p class="muted">Assign a test, open its QR code or view class results from its card.</p></div><button class="primary" id="new">+ New assessment</button></div><div id="libraryCards" class="library"></div>
   <section id="otherAssignments" hidden>
     <h3>Other assigned assessments</h3>
     <div id="assignmentList" class="library"></div>
@@ -164,7 +191,7 @@ const uid=()=>Math.random().toString(36).slice(2,11);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let templates=[];try{templates=JSON.parse(localStorage.getItem(KEY))||[]}catch{};let current={id:uid(),title:'',subject:'',year:'Year 4',term:'',questions:[]};
 function persist(){localStorage.setItem(KEY,JSON.stringify(templates))}
-function tab(name){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));for(const n of ['library','shared','create','preview'])$(n).classList.toggle('hidden',n!==name);document.dispatchEvent(new Event('assessment-tab-changed'));if(name==='library')drawLibrary();if(name==='create'){drawEditor();document.dispatchEvent(new Event('assessment-editor-opened'))}if(name==='preview')drawStudent()}
+function tab(name){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));for(const n of ['planner','library','shared','create','preview'])$(n).classList.toggle('hidden',n!==name);document.dispatchEvent(new Event('assessment-tab-changed'));if(name==='library')drawLibrary();if(name==='create'){drawEditor();document.dispatchEvent(new Event('assessment-editor-opened'))}if(name==='preview')drawStudent()}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>tab(b.dataset.tab));
 function fieldsToCurrent(){for(const k of ['title','subject','year','term','instructions'])current[k]=$(k).value}
 function currentToFields(){for(const k of ['title','subject','year','term','instructions'])$(k).value=current[k]||''}
@@ -259,4 +286,174 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=class-scores"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=class-scores"></script><script src="class-scores.js?v=1"></script></body></html>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=class-scores"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=class-scores"></script><script src="class-scores.js?v=1"></script><script>
+(() => {
+  const key = () => "lh-year-planner-v1:" + (localStorage.getItem("lategan_teacher_code") || "local");
+  const read = () => {
+    const value = JSON.parse(localStorage.getItem(key()) || "[]");
+    return Array.isArray(value) ? value : [];
+  };
+  const year = $("planYear");
+  const filter = $("planSubjectFilter");
+  const dialog = $("planDialog");
+  const thisYear = Number(new Intl.DateTimeFormat("en-AU", {year:"numeric",timeZone:"Australia/Perth"}).format());
+  year.value = thisYear;
+  let editing = null;
+  let editYear;
+  let editKey;
+  let nextRender = 0;
+
+  const node = (tag, content, className) => {
+    const element = document.createElement(tag);
+    if (content) element.textContent = content;
+    if (className) element.className = className;
+    return element;
+  };
+  const subjects = entries => [...new Set(entries.map(item => item.subject))].sort((a,b)=>a.localeCompare(b));
+  const releasedDate = value => new Intl.DateTimeFormat("en-AU", {dateStyle:"medium",timeZone:"Australia/Perth"}).format(new Date(value));
+  const links = () => [
+    ...templates.map(test => ["template:" + test.id, test.title + " · Library"]),
+    ...classAssignments.map(test => ["assignment:" + test.id, test.title + " · " + (test.class_name || "Assigned test")])
+  ];
+  const button = (label, handler) => {
+    const result = node("button",label);
+    result.type = "button";
+    result.onclick = handler;
+    return result;
+  };
+  function save(entries) {
+    localStorage.setItem(key(), JSON.stringify(entries));
+    render();
+  }
+  function render() {
+    const host = $("planTerms");
+    const status = $("planStatus");
+    host.replaceChildren();
+    if (!year.checkValidity()) {
+      status.textContent = "Enter a school year from 2000 to 2100.";
+      return;
+    }
+    status.textContent = "";
+    const entries = read().filter(item => item.year === Number(year.value));
+    const chosen = filter.value;
+    filter.replaceChildren(new Option("All subjects",""), ...subjects(entries).map(subject=>new Option(subject,subject)));
+    if (subjects(entries).includes(chosen)) filter.value = chosen;
+    for (let term = 1; term <= 4; term++) {
+      const section = node("section",null,"planTerm");
+      section.append(node("h3","Term " + term));
+      const items = entries.filter(item=>item.term===term && (!filter.value||filter.value===item.subject))
+        .sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||a.title.localeCompare(b.title));
+      if (!items.length) section.append(node("p","No assessments planned.","muted"));
+      for (const item of items) {
+        const row = node("article",null,"planEntry");
+        const detail = node("div");
+        detail.append(node("h4",item.title),node("p",item.subject + (item.date ? " · " + releasedDate(item.date + "T12:00:00+08:00") : ""),"muted"));
+        if (item.notes) detail.append(node("p",item.notes));
+        if (item.link) {
+          const anchor = node("a","Open Learning Hub test");
+          anchor.href = "?test=" + encodeURIComponent(item.link);
+          detail.append(anchor);
+        }
+        const actions = node("div",null,"row");
+        const release = button(item.released ? "Released" : "Mark released",()=>{
+          if (item.released && !confirm("Set this assessment back to planned?")) return;
+          try {
+            save(read().map(entry=>entry.id===item.id ? {...entry,released:entry.released ? null : new Date().toISOString()} : entry));
+          } catch (error) { status.textContent = "Could not save release status. " + error.message; }
+        });
+        if (item.released) {
+          release.className = "released";
+          release.setAttribute("aria-label","Released " + releasedDate(item.released) + ". Set back to planned");
+          detail.append(node("p","Released " + releasedDate(item.released),"muted"));
+        }
+        actions.append(release,button("Edit",()=>open(item)));
+        row.append(detail,actions);
+        section.append(row);
+      }
+      host.append(section);
+    }
+  }
+  function fillLinks(selected) {
+    const options = links();
+    $("planTest").replaceChildren(new Option("No Learning Hub test",""),...options.map(([value,label])=>new Option(label,value)));
+    if (selected && !options.some(([value])=>value===selected)) $("planTest").append(new Option("Previously linked test",selected));
+    $("planTest").value = selected;
+  }
+  function open(item) {
+    if (!year.reportValidity()) return;
+    editing = item;
+    editYear = Number(year.value);
+    editKey = key();
+    $("planForm").reset();
+    $("planDialogTitle").textContent = item ? "Edit assessment" : "Add assessment";
+    $("planTitle").value = item?.title || "";
+    $("planSubject").value = item?.subject || filter.value;
+    $("planTerm").value = String(item?.term || 1);
+    $("planDate").value = item?.date || "";
+    $("planNotes").value = item?.notes || "";
+    $("planSubjects").replaceChildren(...subjects(read()).map(subject=>new Option(subject)));
+    $("deletePlan").hidden = !item;
+    $("planFormStatus").textContent = "";
+    fillLinks(item?.link || "");
+    dialog.showModal();
+    const request = ++nextRender;
+    if (assignmentCode) loadAssignments().then(()=>{
+      if (dialog.open && request===nextRender) fillLinks($("planTest").value);
+    });
+  }
+  $("addPlan").onclick = () => open(null);
+  $("cancelPlan").onclick = () => dialog.close();
+  year.onchange = filter.onchange = render;
+  $("planForm").onsubmit = event => {
+    event.preventDefault();
+    const title = $("planTitle").value.trim(), subject = $("planSubject").value.trim();
+    if (!title || !subject) { $("planFormStatus").textContent = "Enter a title and subject."; return; }
+    try {
+      if (key()!==editKey) throw Error("Teacher sign-in changed. Reopen the editor.");
+      const entries = read();
+      const existing = entries.find(item=>item.id===editing?.id);
+      const entry = {id:editing?.id||uid(),title,subject,year:editYear,term:Number($("planTerm").value),
+        date:$("planDate").value,link:$("planTest").value,notes:$("planNotes").value.trim(),released:existing?.released||null};
+      save([...entries.filter(item=>item.id!==entry.id),entry]);
+      dialog.close();
+    } catch (error) { $("planFormStatus").textContent = "Could not save assessment. " + error.message; }
+  };
+  $("deletePlan").onclick = () => {
+    if (!editing || !confirm("Delete this planned assessment?")) return;
+    try {
+      if (key()!==editKey) throw Error("Teacher sign-in changed. Reopen the editor.");
+      save(read().filter(item=>item.id!==editing.id));
+      dialog.close();
+    } catch (error) { $("planFormStatus").textContent = error.message; }
+  };
+  document.addEventListener("assessment-tab-changed",()=>{if (!$("planner").classList.contains("hidden")) render();});
+  window.addEventListener("storage",event=>{if (event.key===key() || event.key==="lategan_teacher_code") render();});
+  $("assessmentLogin").addEventListener("submit",()=>{
+    const observer = new MutationObserver(()=>{
+      if ($("assessmentLogin").hidden) { observer.disconnect(); render(); }
+    });
+    observer.observe($("assessmentLogin"),{attributes:true,attributeFilter:["hidden"]});
+  },{once:true});
+  render();
+
+  const [kind, id] = (new URLSearchParams(location.search).get("test") || "").split(":");
+  if (kind==="template") {
+    const template = templates.find(test=>test.id===id);
+    if (template) {
+      current=structuredClone(template);
+      currentToFields();
+      tab("create");
+    } else $("planStatus").textContent="That test is no longer in this browser’s Assessment Library.";
+  } else if (kind==="assignment") {
+    loadAssignments().then(()=>{
+      const assignment = classAssignments.find(test=>test.id===id);
+      if (!assignment) {
+        $("planStatus").textContent="That assigned test is unavailable. Check your Teacher Hub sign-in and open the link again.";
+        return;
+      }
+      tab("library");
+      openAssignmentResults(assignment,"library",null);
+    });
+  }
+})();
+</script></body></html>
