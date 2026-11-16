@@ -161,6 +161,20 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 .jobs-page .today-box,.jobs-page .adjust-box{padding:10px}
 .jobs-page .point-main-row{margin-top:12px}
 .jobs-page .points-hero .btn.danger,#resetJobs{background:#fff1ed;color:#8a302b;border:1px solid #ebc8bf}
+.jobs-page .points-entry-grid{grid-template-columns:minmax(0,1fr)}
+.jobs-page .fun-point-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);column-gap:22px;align-items:center;padding:16px 20px}
+.jobs-page .group-rank,.jobs-page .point-card-top,.jobs-page .group-members-inline{grid-column:1}
+.jobs-page .group-rank{font-size:20px;margin-bottom:5px}
+.jobs-page .point-main-row{grid-column:2;grid-row:1 / span 3;margin:0;grid-template-columns:minmax(110px,.65fr) minmax(0,1.35fr)}
+.jobs-page .group-members-inline{background:transparent;border:0;padding:0}
+.jobs-page .group-members-inline .members-heading{display:none}
+.jobs-page .member-list{margin-top:0}
+@media(max-width:900px){
+  .jobs-page .fun-point-card{display:block}
+  .jobs-page .point-main-row{margin-top:12px}
+}
+@media(max-width:520px){.jobs-page .point-main-row{grid-template-columns:1fr}}
+@media print{.jobs-page .fun-point-card{break-inside:avoid}}
 </style>
 </head>
 <body>
@@ -225,7 +239,7 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
         </div>
       </div>
 
-      <div class="leaderboard" id="pointsLeaderboard"></div>
+
 
       <div class="points-entry-grid" id="pointsGrid"></div>
 
@@ -373,6 +387,7 @@ async function loadPoints({silent=false}={}){
       history:next.history||[]
     });
     const changed=lastPointsSignature && sig!==lastPointsSignature;
+    if(silent && sig===lastPointsSignature)return;
     lastPointsSignature=sig;
     pointsState=next;
     renderPoints();
@@ -414,21 +429,22 @@ function renderPoints(){
   const ranked=jobGroups.map(g=>({id:String(g.id),name:g.name,total:totalMap.get(String(g.id))||0}))
     .sort((a,b)=>b.total-a.total);
 
-  $("pointsLeaderboard").innerHTML=ranked.map((g,i)=>`
-    <div class="leader-card ${i===0?"first":""}">
-      <div class="place">${["🥇","🥈","🥉"][i]||"⭐"}</div>
-      <div class="lname">${esc(g.name)}</div>
-      <div class="ltotal">${g.total.toFixed(1)}</div>
-      <div class="tag">${i===0?"CURRENT LEADER":"RUNNING TOTAL"}</div>
-    </div>`).join("");
-
-  $("pointsGrid").innerHTML=jobGroups.map((g,i)=>{
+  const grid=$("pointsGrid");
+  const previous=new Map([...grid.querySelectorAll("[data-team]")].map((card,index)=>[
+    card.dataset.team,{index,top:card.getBoundingClientRect().top}
+  ]));
+  const drafts=new Map([...grid.querySelectorAll("input[data-id]")].filter(input=>input.dataset.edited).map(input=>[
+    input.className+"|"+input.dataset.id,input.value
+  ]));
+  const byId=new Map(jobGroups.map((group,index)=>[String(group.id),{group,index}]));
+  grid.innerHTML=ranked.map(({id},rank)=>{
+    const {group:g,index:i}=byId.get(id);
     const score=todayMap.has(String(g.id))?todayMap.get(String(g.id)):"";
     const total=totalMap.get(String(g.id))||0;
     const members=(g.student_ids||[]).map(id=>activeStudents().find(st=>Number(st.id)===Number(id))).filter(Boolean);
-    const rank=ranked.findIndex(x=>x.id===String(g.id));
-    return `<div class="fun-point-card c${(i%4)+1}">
-      <div class="group-rank">${["🥇","🥈","🥉"][rank]||"⭐"} <span>GROUP ${i+1}</span></div>
+
+    return `<div class="fun-point-card c${(i%4)+1}" data-team="${esc(g.id)}">
+      <div class="group-rank">${["🥇","🥈","🥉"][rank]||"⭐"} <span>RANK ${rank+1}</span></div>
       <div class="point-card-top">
         <h3>${esc(g.name)}</h3>
         <div class="running-pill">Running total <b>${total.toFixed(1)}</b></div>
@@ -452,7 +468,29 @@ function renderPoints(){
     </div>`;
   }).join("")||'<div class="empty">Create job groups first.</div>';
 
-  document.querySelectorAll(".point-input,.adjustment-amount,.adjustment-note").forEach(i=>i.disabled=!pointsState.enabled);
+  grid.querySelectorAll("input[data-id]").forEach(input=>{
+    const key=input.className+"|"+input.dataset.id;
+    if(drafts.has(key)){
+      input.value=drafts.get(key);
+      input.dataset.edited="true";
+    }
+    input.oninput=()=>{input.dataset.edited="true"};
+    input.disabled=!pointsState.enabled;
+  });
+  if(!matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const moves=[...grid.querySelectorAll("[data-team]")].map((card,index)=>{
+      const before=previous.get(card.dataset.team);
+      return before&&before.index!==index
+        ?{card,offset:before.top-card.getBoundingClientRect().top,rising:index<before.index}:null;
+    }).filter(Boolean);
+    moves.forEach(({card,offset,rising})=>{
+      card.animate([
+        {transform:`translateY(${offset}px)`,zIndex:rising?3:2},
+        {transform:"translateY(0) scale(1.012)",boxShadow:rising?"0 10px 30px #5755aa40":"none",zIndex:rising?3:2,offset:.82},
+        {transform:"translateY(0) scale(1)",boxShadow:"none",zIndex:rising?3:2}
+      ],{duration:850,easing:"cubic-bezier(.2,.75,.22,1)"});
+    });
+  }
   document.querySelectorAll(".add-adjustment").forEach(b=>{b.disabled=!pointsState.enabled;b.onclick=()=>addAdjustment(b.dataset.id)});
   document.querySelectorAll("[data-history]").forEach(b=>b.onclick=()=>openHistory(b.dataset.history));
 }
@@ -475,6 +513,8 @@ async function addAdjustment(groupId){
       amount,
       note
     });
+    delete amountEl.dataset.edited;
+    delete noteEl.dataset.edited;
     $("pointsSaved").textContent="Adjustment added";
     await loadPoints();
   }catch(e){alert(e.message)}
@@ -529,6 +569,7 @@ $("savePoints").onclick=async()=>{
   }
   try{
     await post({action:"teacher_job_points_save",teacher_code:teacherCode,date_key:todayKey(),scores});
+    $("pointsGrid").querySelectorAll(".point-input").forEach(input=>delete input.dataset.edited);
     $("pointsSaved").textContent="Today's scores saved ✓";
     await loadPoints();
   }catch(e){alert(e.message)}
@@ -537,6 +578,7 @@ $("resetPoints").onclick=async()=>{
   if(!confirm("Reset all running Group Points totals? This starts a fresh scoring cycle but keeps your job groups."))return;
   try{
     await post({action:"teacher_job_points_reset",teacher_code:teacherCode});
+    $("pointsGrid").querySelectorAll("input[data-edited]").forEach(input=>delete input.dataset.edited);
     $("pointsSaved").textContent="Totals reset";
     await loadPoints();
   }catch(e){alert(e.message)}
@@ -688,6 +730,7 @@ async function reloadClassData(){
   ]);
   students=sr.students||[];
   jobGroups=jr.groups||[];
+  $("pointsGrid").replaceChildren();
   $("resetJobs").disabled=!activeStudents().length;
   quickGroups=[];
   lastPointsSignature="";
