@@ -144,6 +144,23 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 .group-management .job-layout{padding:16px}
 .leaderboard{padding:15px 20px 2px}
 @media(max-width:760px){.points-entry-grid{grid-template-columns:1fr;padding:12px}.fun-point-card{padding:16px}.point-main-row{grid-template-columns:1fr}.point-card-top h3{font-size:24px}.running-pill b{font-size:19px}.group-management>summary span{display:block;margin:5px 0 0}}
+/* Classroom Jobs uses the same mint, lavender and navy palette as Teacher Hub. */
+.jobs-page .hero{background:#e4f6ef;box-shadow:none;padding:24px 26px}
+.jobs-page .hero p,.jobs-page .classbar .label,.jobs-page .classbar .current{color:#425474}
+.jobs-page .points-panel{border-radius:24px;overflow:hidden}
+.jobs-page .points-hero{background:#f1ebfc;color:#172650;padding:18px 22px;flex-wrap:wrap}
+.jobs-page .switch-row{background:#fff;color:#26345a}
+.jobs-page .live-badge{color:#214f43;background:#ddf4e9;border-color:#c5e7da}
+.jobs-page .points-entry-grid{gap:14px;padding:16px 20px}
+.jobs-page .fun-point-card{min-height:0;border-width:1px;box-shadow:none}
+.jobs-page .point-card-top h3{font-size:clamp(20px,2vw,27px);overflow-wrap:anywhere}
+.jobs-page .running-pill{padding:6px 10px;box-shadow:none}
+.jobs-page .running-pill b{font-size:20px}
+.jobs-page .group-members-inline{margin-top:12px;padding:9px 12px}
+.jobs-page .member-pill{padding:5px 9px}
+.jobs-page .today-box,.jobs-page .adjust-box{padding:10px}
+.jobs-page .point-main-row{margin-top:12px}
+.jobs-page .points-hero .btn.danger,#resetJobs{background:#fff1ed;color:#8a302b;border:1px solid #ebc8bf}
 </style>
 </head>
 <body>
@@ -191,16 +208,15 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
       <button class="btn primary" id="randomJobs">Fill randomly</button>
       <button class="btn" id="addJobGroup">+ Add group</button>
       <button class="btn" id="clearJobs">Clear students</button>
+      <button type="button" class="btn danger" id="resetJobs" disabled>Clear and reset all groups</button>
       <button class="btn" onclick="window.print()">Print / display</button>
-      <div class="saved" id="saveState">Saved automatically</div>
+      <div class="saved" id="saveState" role="status">Saved automatically</div>
     </div>
 
     <div class="panel points-panel" id="pointsPanel" style="margin-bottom:14px">
       <div class="points-hero">
         <div>
-          <div class="mini-eyebrow">GROUP POINTS</div>
-          <h2>🏆 Our classroom teams</h2>
-          <p>Every team, every student and every point together. Score out of 10, or add bonus points anytime.</p>
+          <h2>Classroom teams</h2>
         </div>
         <div class="points-controls">
           <span class="live-badge" id="livePointsBadge">● Live</span>
@@ -244,12 +260,13 @@ body{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;background:radia
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
 const $=id=>document.getElementById(id);
+let groupSave=Promise.resolve();
 let students=[],jobGroups=[],quickGroups=[],saveTimer=null,pointsState=null,pointsAutoRefresh=null,lastPointsSignature="",teacherClasses=[],activeClassId=null;
 
 async function post(p){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
   const d=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(d.error||"Something went wrong.");
+  if(!r.ok||d.error)throw new Error(d.error||"Something went wrong.");
   return d;
 }
 function esc(s){return String(s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -263,6 +280,7 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
 
 if(new URLSearchParams(location.search).get("view")==="jobs")document.querySelector('.tab[data-view="jobs"]').click();
 const isClassroomJobs=new URLSearchParams(location.search).get("view")==="jobs";
+document.body.classList.toggle("jobs-page",isClassroomJobs);
 document.getElementById("toolPageTitle").textContent=isClassroomJobs?"Classroom Jobs":"Group Maker";
 document.getElementById("toolPageDescription").textContent=isClassroomJobs
   ?"Manage your classroom jobs and permanent job groups."
@@ -571,12 +589,61 @@ function queueSave(){
   clearTimeout(saveTimer);
   saveTimer=setTimeout(saveJobs,350);
 }
-async function saveJobs(){
-  try{
-    await post({action:"teacher_save_job_groups",teacher_code:teacherCode,groups:jobGroups});
-    $("saveState").textContent="Saved";
-  }catch(e){$("saveState").textContent="Could not save";console.error(e)}
+function saveJobs(){
+  clearTimeout(saveTimer);
+  saveTimer=null;
+  const groups=structuredClone(jobGroups);
+  groupSave=groupSave.then(async()=>{
+    try{
+      await persistJobGroups(groups);
+      $("saveState").textContent="Saved";
+    }catch(e){$("saveState").textContent="Could not save";console.error(e)}
+  });
+  return groupSave;
 }
+function persistJobGroups(groups){
+  return post({action:"teacher_save_job_groups",teacher_code:teacherCode,groups});
+}
+function freshJobGroups(count, roster){
+  const groups=Array.from({length:count},(_,i)=>({
+    id:"job-"+crypto.randomUUID(),name:"Job Group "+(i+1),student_ids:[]
+  }));
+  shuffle(roster).forEach((student,i)=>groups[i%count].student_ids.push(Number(student.id)));
+  return groups;
+}
+$("resetJobs").onclick=async()=>{
+  const roster=activeStudents();
+  if(!activeClassId||!roster.length)return;
+  const className=teacherClasses.find(c=>Number(c.id)===activeClassId)?.name||"this class";
+  const count=jobGroups.length||Math.min(4,roster.length);
+  if(!confirm(`Replace all job groups for ${className} with ${count} new groups? Students will be randomly assigned and every new group will start at zero points.`))return;
+  const view=$("view-jobs"), picker=$("groupsClassSwitcher");
+  view.inert=true;
+  picker.disabled=true;
+  clearTimeout(saveTimer);
+  try{
+    await groupSave;
+    const context=await post({action:"teacher_login",teacher_code:teacherCode});
+    if(Number(context.teacher?.class_id||context.classes?.find(c=>Number(c.is_default)===1)?.id||context.classes?.[0]?.id)!==activeClassId){
+      throw new Error("The active class changed. Reopen Classroom Jobs before resetting.");
+    }
+    // Point totals use group IDs. New IDs start at zero in the same group save.
+    const groups=freshJobGroups(count,roster);
+    await persistJobGroups(groups);
+    saveTimer=null;
+    jobGroups=groups;
+    renderJobs();
+    await loadPoints();
+    $("saveState").textContent="New groups created. All totals start at zero.";
+  }catch(e){
+    $("saveState").textContent="Could not confirm the reset. "+e.message;
+    saveTimer=null;
+  }finally{
+    view.inert=false;
+    picker.disabled=false;
+    $("resetJobs").focus();
+  }
+};
 $("randomJobs").onclick=()=>{
   if(!jobGroups.length)return;
   const picked=shuffle(activeStudents());
@@ -621,6 +688,7 @@ async function reloadClassData(){
   ]);
   students=sr.students||[];
   jobGroups=jr.groups||[];
+  $("resetJobs").disabled=!activeStudents().length;
   quickGroups=[];
   lastPointsSignature="";
   populateQuickOptions();
@@ -636,7 +704,10 @@ $("groupsClassSwitcher").onchange=async()=>{
   if(!id||id===Number(activeClassId))return;
 
   sel.disabled=true;
+  $("view-jobs").inert=true;
   try{
+    if(saveTimer!==null)await saveJobs();
+    else await groupSave;
     await post({action:"teacher_set_default_class",teacher_code:teacherCode,class_id:id});
     activeClassId=id;
     teacherClasses=teacherClasses.map(c=>({...c,is_default:Number(c.id)===id?1:0}));
@@ -648,6 +719,7 @@ $("groupsClassSwitcher").onchange=async()=>{
     if(activeClassId)sel.value=String(activeClassId);
   }finally{
     sel.disabled=false;
+    $("view-jobs").inert=false;
   }
 };
 
