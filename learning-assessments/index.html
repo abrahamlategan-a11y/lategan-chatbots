@@ -319,7 +319,13 @@ drawLibrary();
     if (className) element.className = className;
     return element;
   };
-  const subjects = entries => [...new Set(entries.map(item => item.subject))].sort((a,b)=>a.localeCompare(b));
+  const defaultSubjects = ["Writing", "Reading", "Speaking", "Maths", "Science", "HASS", "Health", "Design and Tech"];
+  const subjects = entries => {
+    const extraSubjects = [...new Set(entries.map(item => item.subject))]
+      .filter(subject => !defaultSubjects.includes(subject))
+      .sort((a,b)=>a.localeCompare(b));
+    return [...defaultSubjects, ...extraSubjects];
+  };
   const releasedDate = value => new Intl.DateTimeFormat("en-AU", {dateStyle:"medium",timeZone:"Australia/Perth"}).format(new Date(value));
   const links = () => [
     ...templates.map(test => ["template:" + test.id, test.title + " · Library"]),
@@ -359,11 +365,6 @@ drawLibrary();
     }
     const body = table.createTBody();
     const visibleSubjects = filter.value ? [filter.value] : subjects(entries);
-    if (!visibleSubjects.length) {
-      const empty = body.insertRow().insertCell();
-      empty.colSpan = 5;
-      empty.append(node("p","No assessments planned for this year. Add an assessment to start your first subject.","muted"));
-    }
     for (const subject of visibleSubjects) {
       const line = body.insertRow();
       const heading = node("th",subject);
