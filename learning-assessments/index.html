@@ -319,7 +319,7 @@ drawLibrary();
     if (className) element.className = className;
     return element;
   };
-  const defaultSubjects = ["Writing", "Reading", "Speaking", "Maths", "Science", "HASS", "Health", "Design and Tech"];
+  const defaultSubjects = ["Writing", "Reading", "Speaking", "Maths", "Science", "HASS", "Health", "Design and Tech", "Diagnostic"];
   const subjects = entries => {
     const extraSubjects = [...new Set(entries.map(item => item.subject))]
       .filter(subject => !defaultSubjects.includes(subject))
