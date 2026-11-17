@@ -90,6 +90,7 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 .planCellAdd:hover,.planCardSummary:hover{background:#f0ebf7}
 .planCellAdd:focus-visible,.planCardSummary:focus-visible{outline:2px solid #6e5298;outline-offset:1px}
 @media print{.planCardSummary::after{display:none}}
+#sharePlanDialog{width:min(560px,calc(100% - 24px));border:1px solid #e5def2;border-radius:20px;color:#1c3840}#sharePlanDialog::backdrop{background:#17265066}#planInviteField{margin-top:10px}#planInviteField[hidden]{display:none}#planEditors .row{justify-content:space-between;margin:6px 0}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -101,11 +102,27 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 <div class="tabs noprint"><button data-tab="planner" class="active">Year planner</button><button data-tab="library">📚 Assessment Library</button><button data-tab="shared">Shared assessments</button><button data-tab="create">✏️ Create & edit</button><button data-tab="preview">🧑‍🎓 Student preview</button></div>
 <section id="planner" class="panel">
   <div class="sectionTitle"><div><h2>Year planner</h2><p class="muted">Plan assessments by subject and mark them released after sharing them with parents and students.</p></div><button type="button" class="primary" id="addPlan">+ Add assessment</button></div>
-  <div class="plannerFilters"><label>School year<input id="planYear" type="number" min="2000" max="2100" step="1" required></label><label>Subject<select id="planSubjectFilter"></select></label></div>
+  <div class="plannerFilters"><label>Planner<select id="planOwner"></select></label><label>School year<input id="planYear" type="number" min="2000" max="2100" step="1" required></label><label>Subject<select id="planSubjectFilter"></select></label></div>
+  <div class="row" style="margin-top:12px">
+    <button type="button" id="refreshPlan">Refresh</button>
+    <button type="button" id="sharePlan" hidden>Share planner</button>
+    <button type="button" id="importPlan" hidden>Import assessments from this browser</button>
+    <button type="button" class="primary" id="joinPlan" hidden>Join shared planner</button>
+  </div>
   <p id="planStatus" class="muted" role="status"></p>
   <div id="planTerms" tabindex="0" role="region" aria-label="Assessment planner grid"></div>
-  <p class="muted">Plans are saved in this browser.</p>
+  <p class="muted">Planner changes are saved to Learning Hub.</p>
 </section>
+<dialog id="sharePlanDialog" aria-labelledby="sharePlanTitle">
+  <h2 id="sharePlanTitle">Share your planner</h2>
+  <p>Anyone with this link and a Learning Hub teacher account can join as an editor for the next seven days. Creating a new link replaces the previous link.</p>
+  <div class="row"><button type="button" class="primary" id="invitePlan">Create invite link</button><button type="button" id="disablePlanInvite">Disable invite link</button></div>
+  <label id="planInviteField" hidden>Invite link<input id="planInviteUrl" readonly></label>
+  <h3>Editors</h3>
+  <div id="planEditors"></div>
+  <p id="sharePlanStatus" role="status"></p>
+  <form method="dialog"><button>Done</button></form>
+</dialog>
 <dialog id="planDialog" aria-labelledby="planDialogTitle">
   <form id="planForm">
     <h2 id="planDialogTitle">Add assessment</h2>
@@ -323,10 +340,10 @@ $('printPreview').onclick=()=>{localStorage.setItem(DRAFT+current.id,JSON.string
 $('studentQuestions').addEventListener('input',()=>{localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers()));$('previewStatus').textContent='Saved automatically on this device.'});
 $('studentName').addEventListener('input',()=>localStorage.setItem(DRAFT+current.id,JSON.stringify(draftAnswers())));
 drawLibrary();
-</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=class-scores"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=class-scores"></script><script src="class-scores.js?v=1"></script><script>
+</script><script src="api.js"></script><script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script><script src="teacher.js?v=planner-sync"></script><script src="marking-grid.js?v=written-review"></script><script src="written-review.js?v=class-scores"></script><script src="class-scores.js?v=1"></script><script>
 (() => {
   const key = () => "lh-year-planner-v1:" + (localStorage.getItem("lategan_teacher_code") || "local");
-  const read = () => {
+  const readLocal = () => {
     const value = JSON.parse(localStorage.getItem(key()) || "[]");
     return Array.isArray(value) ? value : [];
   };
@@ -337,7 +354,15 @@ drawLibrary();
   year.value = thisYear;
   let editing = null;
   let editYear;
-  let editKey;
+  let editOwner;
+  let editRevision;
+  let me;
+  let owner;
+  let revision;
+  let cachedEntries = [];
+  let busy = false;
+  const inviteToken = new URLSearchParams(location.search).get("plan_invite");
+  const read = () => cachedEntries;
   let nextRender = 0;
 
   const node = (tag, content, className) => {
@@ -366,9 +391,140 @@ drawLibrary();
     result.onclick = handler;
     return result;
   };
-  function save(entries) {
-    localStorage.setItem(key(), JSON.stringify(entries));
-    render();
+  function updateControls() {
+    $("planOwner").disabled = busy;
+    $("addPlan").disabled = busy || revision==null;
+    $("refreshPlan").disabled = busy;
+    $("sharePlan").hidden = revision==null || owner!==me;
+    $("sharePlan").disabled = busy;
+    const local = unimportedEntries();
+    const ids = new Set(read().map(item=>item.id));
+    $("importPlan").hidden = revision==null || owner!==me || !local.some(item=>!ids.has(item.id));
+    $("importPlan").disabled = busy;
+    $("joinPlan").hidden = !inviteToken || !me || new URLSearchParams(location.search).get("plan_invite")!==inviteToken;
+    $("joinPlan").disabled = busy;
+  }
+  function legacyEntries() {
+    try { return readLocal(); }
+    catch { return []; }
+  }
+  function unimportedEntries() {
+    try {
+      const imported = new Set(JSON.parse(localStorage.getItem(key()+":imported")||"[]"));
+      return legacyEntries().filter(item=>!imported.has(item.id));
+    } catch { return legacyEntries(); }
+  }
+  async function refresh(preferred = owner) {
+    if (busy) return;
+    busy = true;
+    updateControls();
+    const status = $("planStatus");
+    status.textContent = "Loading planner…";
+    try {
+      if (!assignmentCode) throw Error("Sign in with your Learning Hub teacher code to open your planner.");
+      const list = await teacherAssessment("plan_list");
+      me = list.me;
+      const plans = [[me,"My planner"],...list.shared.map(plan=>[plan.owner_id,plan.display_name+"’s planner"])];
+      owner = plans.some(([id])=>id===preferred) ? preferred : me;
+      $("planOwner").replaceChildren(...plans.map(([id,name])=>new Option(name,id)));
+      $("planOwner").value = String(owner);
+      const result = await teacherAssessment("plan_get",{owner_id:owner});
+      revision = result.revision;
+      cachedEntries = result.entries;
+      render();
+    } catch (error) {
+      revision = null;
+      cachedEntries = [];
+      render();
+      status.textContent = error.message;
+    } finally { busy = false; updateControls(); }
+  }
+  async function save(entries) {
+    if (busy || revision==null) throw Error("Planner is unavailable. Try refreshing.");
+    busy = true;
+    updateControls();
+    try {
+      const result = await teacherAssessment("plan_save",{owner_id:owner,revision,entries});
+      revision = result.revision;
+      cachedEntries = result.entries;
+      render();
+    } finally { busy = false; updateControls(); }
+  }
+  $("planOwner").onchange = () => refresh(Number($("planOwner").value));
+  $("refreshPlan").onclick = () => refresh();
+  $("importPlan").onclick = async () => {
+    if (owner!==me || busy) return;
+    const ids = new Set(read().map(item=>item.id));
+    const local = legacyEntries();
+    const entries = unimportedEntries().filter(item=>!ids.has(item.id))
+      .map(item=>({...item,subjects:entrySubjects(item)}));
+    if (!entries.length) return;
+    if (!confirm("Import "+entries.length+" assessments from this browser into My planner?")) return;
+    try {
+      await save([...read(),...entries]);
+      localStorage.setItem(key()+":imported",JSON.stringify(local.map(item=>item.id)));
+      updateControls();
+      $("planStatus").textContent = "Imported "+entries.length+" assessments.";
+    } catch (error) { $("planStatus").textContent = error.message; }
+  };
+  $("joinPlan").onclick = async () => {
+    if (busy || !confirm("Join this teacher’s planner as an editor?")) return;
+    $("joinPlan").disabled = true;
+    try {
+      const joined = await teacherAssessment("plan_join",{token:inviteToken});
+      const url = new URL(location.href);
+      url.searchParams.delete("plan_invite");
+      history.replaceState(null,"",url);
+      await refresh(joined.owner_id);
+    } catch (error) { $("planStatus").textContent = error.message; }
+    finally { updateControls(); }
+  };
+  const share = $("sharePlanDialog");
+  async function shareAction(work) {
+    if (share.inert) return;
+    share.inert = true;
+    $("sharePlanStatus").textContent = "";
+    try { await work(); }
+    catch (error) { $("sharePlanStatus").textContent = error.message; }
+    finally { share.inert = false; }
+  }
+  async function listEditors() {
+    const result = await teacherAssessment("plan_editors");
+    $("planEditors").replaceChildren(...result.editors.map(editor=>{
+      const row = node("div",null,"row");
+      row.append(node("span",editor.display_name),button("Remove access",()=>removeEditor(editor)));
+      return row;
+    }));
+    if (!result.editors.length) $("planEditors").textContent = "No editors yet.";
+  }
+  $("sharePlan").onclick = () => {
+    $("planInviteField").hidden = true;
+    $("planEditors").replaceChildren();
+    share.showModal();
+    void shareAction(listEditors);
+  };
+  $("invitePlan").onclick = () => shareAction(async()=>{
+    const {token} = await teacherAssessment("plan_invite");
+    const url = new URL(location.pathname,location.origin);
+    url.searchParams.set("plan_invite",token);
+    $("planInviteUrl").value = url.href;
+    $("planInviteField").hidden = false;
+    $("planInviteUrl").select();
+    try { await navigator.clipboard.writeText(url.href); $("sharePlanStatus").textContent = "Invite link copied."; }
+    catch { $("sharePlanStatus").textContent = "Copy the selected invite link to share it."; }
+  });
+  $("disablePlanInvite").onclick = () => shareAction(async()=>{
+    await teacherAssessment("plan_revoke");
+    $("planInviteField").hidden = true;
+    $("sharePlanStatus").textContent = "Invite link disabled.";
+  });
+  function removeEditor(editor) {
+    if (!confirm("Remove "+editor.display_name+" from your planner and disable the current invite link?")) return;
+    void shareAction(async()=>{
+      await teacherAssessment("plan_revoke",{teacher_id:editor.teacher_id});
+      $("planInviteField").hidden = true;
+      await listEditors();
+    });
   }
   function render() {
     const host = $("planTerms");
@@ -430,10 +586,10 @@ drawLibrary();
             detail.append(anchor);
           }
           const actions = node("div",null,"row");
-          const release = button(item.released ? "Released" : "Mark released",()=>{
+          const release = button(item.released ? "Released" : "Mark released",async()=>{
             if (item.released && !confirm("Set this assessment back to planned?")) return;
             try {
-              save(read().map(entry=>entry.id===item.id ? {...entry,released:entry.released ? null : new Date().toISOString()} : entry));
+              await save(read().map(entry=>entry.id===item.id ? {...entry,released:entry.released ? null : new Date().toISOString()} : entry));
             } catch (error) { status.textContent = "Could not save release status. " + error.message; }
           });
           if (item.released) {
@@ -461,10 +617,11 @@ drawLibrary();
     $("planTest").value = selected;
   }
   function open(item, subject = filter.value, term = 1) {
-    if (!year.reportValidity()) return;
+    if (busy || revision==null || !year.reportValidity()) return;
     editing = item;
     editYear = Number(year.value);
-    editKey = key();
+    editOwner = owner;
+    editRevision = revision;
     $("planForm").reset();
     $("planDialogTitle").textContent = item ? "Edit assessment" : "Add assessment";
     $("planTitle").value = item?.title || "";
@@ -494,7 +651,7 @@ drawLibrary();
   $("addPlan").onclick = () => open(null);
   $("cancelPlan").onclick = () => dialog.close();
   year.onchange = filter.onchange = render;
-  $("planForm").onsubmit = event => {
+  $("planForm").onsubmit = async event => {
     event.preventDefault();
     const title = $("planTitle").value.trim();
     const chosenSubjects = [...$("planSubjects").querySelectorAll("input:checked")].map(input=>input.value);
@@ -504,32 +661,30 @@ drawLibrary();
     }
     if (!title || !chosenSubjects.length) { $("planFormStatus").textContent = "Enter a title and choose at least one subject."; return; }
     try {
-      if (key()!==editKey) throw Error("Teacher sign-in changed. Reopen the editor.");
+      if (owner!==editOwner || revision!==editRevision) throw Error("The planner changed. Reopen the editor before saving.");
       const entries = read();
       const existing = entries.find(item=>item.id===editing?.id);
       const entry = {id:editing?.id||uid(),title,subject:chosenSubjects[0],subjects:chosenSubjects,year:editYear,term:Number($("planTerm").value),
         date:$("planDate").value,reviewStatus:$("planReviewStatus").value,link:$("planTest").value,notes:$("planNotes").value.trim(),released:existing?.released||null};
-      save([...entries.filter(item=>item.id!==entry.id),entry]);
+      await save([...entries.filter(item=>item.id!==entry.id),entry]);
       dialog.close();
     } catch (error) { $("planFormStatus").textContent = "Could not save assessment. " + error.message; }
   };
-  $("deletePlan").onclick = () => {
+  $("deletePlan").onclick = async () => {
     if (!editing || !confirm("Delete this planned assessment?")) return;
     try {
-      if (key()!==editKey) throw Error("Teacher sign-in changed. Reopen the editor.");
-      save(read().filter(item=>item.id!==editing.id));
+      if (owner!==editOwner || revision!==editRevision) throw Error("The planner changed. Reopen the editor before saving.");
+      await save(read().filter(item=>item.id!==editing.id));
       dialog.close();
     } catch (error) { $("planFormStatus").textContent = error.message; }
   };
   document.addEventListener("assessment-tab-changed",()=>{if (!$("planner").classList.contains("hidden")) render();});
-  window.addEventListener("storage",event=>{if (event.key===key() || event.key==="lategan_teacher_code") render();});
-  $("assessmentLogin").addEventListener("submit",()=>{
-    const observer = new MutationObserver(()=>{
-      if ($("assessmentLogin").hidden) { observer.disconnect(); render(); }
-    });
-    observer.observe($("assessmentLogin"),{attributes:true,attributeFilter:["hidden"]});
-  },{once:true});
+  document.addEventListener("assessment-teacher-signed-in",()=>refresh());
+  window.addEventListener("focus",()=>{
+    if (!dialog.open && !share.open && !$("planner").classList.contains("hidden")) void refresh();
+  });
   render();
+  void refresh();
 
   const [kind, id] = (new URLSearchParams(location.search).get("test") || "").split(":");
   if (kind==="template") {

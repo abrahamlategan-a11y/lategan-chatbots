@@ -78,6 +78,7 @@ $("assessmentLogin").onsubmit = async event => {
   await loadAssignments();
   if ($("assessmentLogin").hidden) {
     localStorage.setItem("lategan_teacher_code", assignmentCode);
+    document.dispatchEvent(new Event("assessment-teacher-signed-in"));
     await loadSharedAssessments();
   }
 };
