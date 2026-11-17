@@ -72,6 +72,24 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
 .planReviewBadge.established{background:#dcf4e9;color:#165146}
 .planReviewBadge.new{background:#e9e3fb;color:#493586}
 .planReviewBadge.needs-change{background:#fff0d6;color:#774500}
+.planMatrix td+td,.planMatrix thead th+th{border-left:1px solid #c8bfd8}
+.planMatrix tbody th{background:linear-gradient(110deg,var(--subject-tint,#e9e5f1),#f7f5fa);box-shadow:1px 0 #c8bfd8}
+.planMatrix td{background:#fcfbfd}
+.planEntry{padding:0;box-shadow:0 1px 2px #23163a08}
+.planCardSummary{position:relative;display:block;list-style:none;cursor:pointer;padding:9px 24px 9px 9px;border-radius:9px}
+.planCardSummary::-webkit-details-marker{display:none}
+.planCardSummary::after{content:"";position:absolute;right:11px;top:15px;width:5px;height:5px;border:solid #685b7e;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+.planEntry[open] .planCardSummary::after{transform:rotate(225deg)}
+.planCardTitle{display:block;font-weight:750;font-size:14px;line-height:1.3;color:#24355c}
+.planCardMeta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;margin-top:5px;color:#5b536a;font-size:11px}
+.planCardMeta .planReviewBadge{margin:0}
+.planReviewBadge.established{background:#eeedf1;color:#514b5e}
+.planReleasedMark{color:#176049;font-weight:700}
+.planCardDetails{border-top:1px solid #ebe6f4;padding:9px;font-size:13px}
+.planCellAdd{min-width:34px;min-height:32px;padding:3px 9px;font-size:17px;line-height:1;color:#66577b}
+.planCellAdd:hover,.planCardSummary:hover{background:#f0ebf7}
+.planCellAdd:focus-visible,.planCardSummary:focus-visible{outline:2px solid #6e5298;outline-offset:1px}
+@media print{.planCardSummary::after{display:none}}
 </style></head><body>
 <header><a href="../teacher/">⌂ Learning Hub</a><h1>📚 Assessments</h1><span>Teacher workspace</span></header><main>
 <div class="banner noprint">Import a JSON assessment under <strong>Create &amp; edit</strong>, check the questions, then assign it to a class.</div>
@@ -376,24 +394,35 @@ drawLibrary();
     }
     const body = table.createTBody();
     const visibleSubjects = filter.value ? [filter.value] : subjects(entries);
+    const subjectTints = new Map([
+      ["Writing","#e8ddf8"], ["Reading","#dfeaff"], ["Speaking","#f4ddec"],
+      ["Maths","#daeaf9"], ["Science","#d9eee3"], ["HASS","#eee5d7"],
+      ["Health","#f8e2dc"], ["Design and Tech","#d9eeef"], ["Diagnostic","#e6e8ef"]
+    ]);
     for (const subject of visibleSubjects) {
       const line = body.insertRow();
       const heading = node("th",subject);
       heading.scope = "row";
+      heading.style.setProperty("--subject-tint",subjectTints.get(subject)||"#e9e5f1");
       line.append(heading);
       for (let term = 1; term <= 4; term++) {
         const cell = line.insertCell();
         const items = entries.filter(item=>entrySubjects(item).includes(subject) && item.term===term)
           .sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||a.title.localeCompare(b.title));
         for (const item of items) {
-          const row = node("article",null,"planEntry");
-          const detail = node("div");
-          detail.append(node("h4",item.title));
+          const row = node("details",null,"planEntry");
+          const summary = node("summary",null,"planCardSummary");
+          const heading = node("span",item.title,"planCardTitle");
+          summary.append(heading);
+          const metadata = node("span",null,"planCardMeta");
+          if (item.date) metadata.append(node("span",releasedDate(item.date + "T12:00:00+08:00")));
           if (reviewStatuses.has(item.reviewStatus)) {
-            detail.append(node("span",reviewStatuses.get(item.reviewStatus),"planReviewBadge "+item.reviewStatus));
+            metadata.append(node("span",reviewStatuses.get(item.reviewStatus),"planReviewBadge "+item.reviewStatus));
           }
+          if (item.released) metadata.append(node("span","✓ Released","planReleasedMark"));
+          if (metadata.childElementCount) summary.append(metadata);
+          const detail = node("div",null,"planCardDetails");
           if (entrySubjects(item).length>1) detail.append(node("p",entrySubjects(item).join(" + "),"muted"));
-          if (item.date) detail.append(node("p",releasedDate(item.date + "T12:00:00+08:00"),"muted"));
           if (item.notes) detail.append(node("p",item.notes));
           if (item.link) {
             const anchor = node("a","Open Learning Hub test");
@@ -413,10 +442,11 @@ drawLibrary();
             detail.append(node("p","Released " + releasedDate(item.released),"muted"));
           }
           actions.append(release,button("Edit",()=>open(item)));
-          row.append(detail,actions);
+          detail.append(actions);
+          row.append(summary,detail);
           cell.append(row);
         }
-        const add = button("+ Add",()=>open(null,subject,term));
+        const add = button("+",()=>open(null,subject,term));
         add.className = "planCellAdd";
         add.setAttribute("aria-label","Add " + subject + " assessment to Term " + term);
         cell.append(add);
