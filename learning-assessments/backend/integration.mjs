@@ -207,3 +207,21 @@ for (const page of ["../index.html", "../assigned.html", "../../student/index.ht
   for (const script of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g)) new vm.Script(script[1]);
 }
 console.log("Assignment integration passed: roster, access, autosave, submit, counts, MCQ, automatic AI marks, retry and teacher override.");
+
+await teacher("plan_list", {}, 401, "bad");
+assert.deepEqual(await teacher("plan_get"), {revision:0,entries:[]});
+const planEntry = {id:"forces", title:"Forces explanation", subjects:["Science","Writing"], year:2027,term:1};
+assert.equal((await teacher("plan_save",{revision:0,entries:[planEntry]})).revision,1);
+await teacher("plan_get",{owner_id:1},404,"other-teacher");
+const invite = await teacher("plan_invite");
+assert.equal((await teacher("plan_join",invite,200,"other-teacher")).owner_id,1);
+assert.equal((await teacher("plan_list",{},200,"other-teacher")).shared[0].owner_id,1);
+assert.deepEqual((await teacher("plan_get",{owner_id:1},200,"other-teacher")).entries[0].subjects,planEntry.subjects);
+await teacher("plan_save",{owner_id:1,revision:1,entries:[{...planEntry,title:"Updated by colleague"}]},200,"other-teacher");
+assert.equal((await teacher("plan_get")).entries[0].title,"Updated by colleague");
+await teacher("plan_save",{revision:1,entries:[]},409);
+await teacher("plan_revoke",{teacher_id:2});
+await teacher("plan_get",{owner_id:1},404,"other-teacher");
+await teacher("plan_save",{owner_id:1,revision:2,entries:[]},404,"other-teacher");
+await teacher("plan_join",invite,404,"other-teacher");
+console.log("Planner integration passed: sync, invitations, shared editing, stale-write rejection and revocation.");

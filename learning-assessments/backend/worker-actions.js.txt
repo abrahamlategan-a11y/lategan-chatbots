@@ -131,6 +131,77 @@
         if (action.startsWith("lh_assessment_teacher_")) {
           const teacher = await getTeacher(env, body.teacher_code);
           if (!teacher) return fail("Teacher access denied.", 401);
+          if (action.startsWith("lh_assessment_teacher_plan_")) {
+            const me = Number(teacher.id);
+            const owner = body.owner_id == null ? me : Number(body.owner_id);
+            if (!Number.isSafeInteger(owner) || owner < 1) return fail("Invalid planner.");
+            if (action === "lh_assessment_teacher_plan_list") {
+              const {results} = await query(`SELECT e.owner_id, t.display_name
+                FROM lh_year_plan_editors e JOIN teachers t ON t.id=e.owner_id
+                WHERE e.teacher_id=? AND t.active=1 ORDER BY t.display_name`, me).all();
+              return reply({me, shared:results});
+            }
+            if (action === "lh_assessment_teacher_plan_join") {
+              if (!isId(body.token)) return fail("Invalid invitation.");
+              const joined = await query(`INSERT INTO lh_year_plan_editors(owner_id,teacher_id)
+                SELECT p.owner_id, ? FROM lh_year_plans p JOIN teachers t ON t.id=p.owner_id
+                WHERE p.invite_token=? AND p.invite_expires>? AND t.active=1 AND p.owner_id<>?
+                ON CONFLICT(owner_id,teacher_id) DO UPDATE SET teacher_id=excluded.teacher_id
+                RETURNING owner_id`, me, body.token, Date.now(), me).first();
+              return joined ? reply(joined) : fail("This invitation has expired or belongs to you.", 404);
+            }
+            if (action === "lh_assessment_teacher_plan_invite") {
+              const token = crypto.randomUUID();
+              await query(`INSERT INTO lh_year_plans(owner_id,invite_token,invite_expires) VALUES(?,?,?)
+                ON CONFLICT(owner_id) DO UPDATE SET invite_token=excluded.invite_token,invite_expires=excluded.invite_expires`,
+                me, token, Date.now()+7*86400000).run();
+              return reply({token});
+            }
+            if (action === "lh_assessment_teacher_plan_editors") {
+              const {results} = await query(`SELECT e.teacher_id,t.display_name FROM lh_year_plan_editors e
+                JOIN teachers t ON t.id=e.teacher_id WHERE e.owner_id=? ORDER BY t.display_name`, me).all();
+              return reply({editors:results});
+            }
+            if (action === "lh_assessment_teacher_plan_revoke") {
+              if (body.teacher_id != null && (!Number.isSafeInteger(body.teacher_id)||body.teacher_id<1)) return fail("Invalid teacher.");
+              await db.batch([
+                query("UPDATE lh_year_plans SET invite_token=NULL, invite_expires=NULL WHERE owner_id=?", me),
+                query("DELETE FROM lh_year_plan_editors WHERE owner_id=? AND teacher_id=?", me, body.teacher_id??0)
+              ]);
+              return reply({ok:true});
+            }
+            const access = `(owner_id=? OR EXISTS (SELECT 1 FROM lh_year_plan_editors e
+              JOIN teachers t ON t.id=e.owner_id WHERE e.owner_id=lh_year_plans.owner_id AND e.teacher_id=? AND t.active=1))`;
+            if (owner === me) await query("INSERT OR IGNORE INTO lh_year_plans(owner_id) VALUES(?)", me).run();
+            const row = await query(`SELECT revision,entries_json FROM lh_year_plans WHERE owner_id=? AND ${access}`, owner, me, me).first();
+            if (!row) return fail("Planner access is unavailable.", 404);
+            if (action === "lh_assessment_teacher_plan_get") return reply({revision:row.revision,entries:JSON.parse(row.entries_json)});
+            if (action !== "lh_assessment_teacher_plan_save") return fail("Unknown planner action.", 404);
+            if (!Number.isSafeInteger(body.revision) || body.revision!==row.revision) return fail("The planner changed. Reload and try again.",409);
+            const entries = body.entries;
+            if (!Array.isArray(entries) || entries.length>2000) return fail("Invalid planner entries.");
+            const ids = new Set();
+            for (const entry of entries) {
+              if (!entry || !clean(entry.id,100) || entry.id.length>100 || ids.has(entry.id) ||
+                  !clean(entry.title,150) || entry.title.length>150 ||
+                  !Number.isInteger(entry.year) || entry.year<2000 || entry.year>2100 ||
+                  ![1,2,3,4].includes(entry.term) ||
+                  !Array.isArray(entry.subjects) || !entry.subjects.length || entry.subjects.length>30 ||
+                  entry.subjects.some(subject=>!clean(subject,80)||subject.length>80) ||
+                  (entry.notes && (typeof entry.notes!=="string" || entry.notes.length>1200)) ||
+                  (entry.link && (typeof entry.link!=="string" || !/^(template|assignment):[a-z0-9_-]{1,100}$/i.test(entry.link))) ||
+                  (entry.date && (typeof entry.date!=="string" || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date) || !Number.isFinite(Date.parse(entry.date)))) ||
+                  (entry.released && (typeof entry.released!=="string" || !Number.isFinite(Date.parse(entry.released)))) ||
+                  (entry.reviewStatus && !["established","new","needs-change"].includes(entry.reviewStatus))) return fail("A planner entry contains invalid details.");
+              ids.add(entry.id);
+            }
+            const encoded = JSON.stringify(entries.map(({id,title,year,term,subjects,notes,date,link,released,reviewStatus})=>
+              ({id,title,year,term,subjects,subject:subjects[0],notes,date,link,released,reviewStatus})));
+            if (encoded.length>350000) return fail("The planner exceeds its storage limit.");
+            const saved = await query(`UPDATE lh_year_plans SET entries_json=?,revision=revision+1
+              WHERE owner_id=? AND revision=? AND ${access} RETURNING revision`,encoded,owner,body.revision,me,me).first();
+            return saved ? reply({revision:saved.revision,entries:JSON.parse(encoded)}) : fail("The planner changed or access was removed. Reload and try again.",409);
+          }
           if (action === "lh_assessment_teacher_list") {
             const classes = await teacherClasses(env, teacher.id);
             const {results} = await query(`

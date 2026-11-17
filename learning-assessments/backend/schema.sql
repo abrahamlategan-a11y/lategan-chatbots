@@ -41,3 +41,16 @@ CREATE TABLE IF NOT EXISTS lh_assessment_ai_marks (
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (assignment_id, student_id)
 );
+
+CREATE TABLE IF NOT EXISTS lh_year_plans (
+  owner_id INTEGER PRIMARY KEY,
+  revision INTEGER NOT NULL DEFAULT 0,
+  entries_json TEXT NOT NULL DEFAULT '[]',
+  invite_token TEXT UNIQUE,
+  invite_expires INTEGER
+);
+CREATE TABLE IF NOT EXISTS lh_year_plan_editors (
+  owner_id INTEGER NOT NULL,
+  teacher_id INTEGER NOT NULL,
+  PRIMARY KEY (owner_id, teacher_id)
+);

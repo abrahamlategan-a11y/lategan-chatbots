@@ -83,6 +83,7 @@ def release(account, token):
         if len(starts) == 1:
             start = starts[0].start()
             previous_blocks = [
+                (27496, "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e"),
                 (25652, "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e"),
                 (36725, "6f3e2e4f29aa27128af413bc7443fc9a6013594cc36a267b2551d2e4749de1e6"),
                 (37189, "240a0247de267b10d12e143bbd8d1348e1c1e84146e04b369dfd9996955a7779"),
@@ -232,6 +233,21 @@ def smoke_test(sql):
         assert any(student["class_id"] != c_id for student in roster["students"])
         print("Live school-wide custom class roster verified for a regular teacher.", flush=True)
 
+        for attempt in range(10):
+            try:
+                initial_plan = teacher("plan_get")
+                break
+            except RuntimeError:
+                if attempt == 9:
+                    raise
+                time.sleep(4)
+        assert initial_plan == {"revision": 0, "entries": []}
+        planned = {"id": "smoke-plan", "title": "Temporary plan", "subjects": ["Science"], "year": 2027, "term": 1}
+        assert teacher("plan_save", revision=0, entries=[planned])["revision"] == 1
+        assert teacher("plan_get")["entries"][0]["id"] == "smoke-plan"
+        teacher("plan_save", 409, revision=0, entries=[])
+        print("Live planner persistence and conflict protection verified.", flush=True)
+
         assert any(item["id"] == c_id for item in teacher("list")["classes"])
         assessment = {"title": "Temporary release check", "questions": [
             {"type": "mcq", "text": "What is 1 + 1?", "marks": 1, "options": ["1", "2"], "correct": "1"},
@@ -299,6 +315,7 @@ def smoke_test(sql):
         sql("DELETE FROM teacher_classes WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM classes WHERE name=? AND created_by_teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", class_name, teacher_code)
         sql("DELETE FROM lh_assessment_shares WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
+        sql("DELETE FROM lh_year_plans WHERE owner_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM teachers WHERE teacher_code=?", teacher_code)
         print("Temporary test data removed.", flush=True)
 
