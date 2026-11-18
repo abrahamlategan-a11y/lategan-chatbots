@@ -1,4 +1,4 @@
-/* Seasonal colours and decorations shared by Learning Hub pages. */
+/* Christmas colours and decorations shared by Learning Hub pages. */
 :root{
  --bg:#f9f8f3;--ink:#192f36;--muted:#57676b;--line:#dedfd9;
  --green:#245d4c;--deep:#173f35;--green-dark:#173f35;
@@ -59,4 +59,48 @@ body .login-card h2{color:#173f35}
 @media print{
  body{background:#fff!important}
  body .topbar::before,body .top::before,body>header::before{display:none}
+}
+
+/* Christmas decorations frame the page above its controls. */
+body .topbar,body .top,body>header{
+ padding-top:43px;
+}
+body .topbar::before,body .top::before,body>header::before{
+ height:34px;
+ border-bottom:1px solid #dab866;
+ background-color:#103c2b;
+ background-image:
+  radial-gradient(ellipse 6px 9px at 15px 18px,#ff666b 94%,transparent),
+  radial-gradient(ellipse 6px 9px at 45px 23px,#ffd760 94%,transparent),
+  radial-gradient(ellipse 6px 9px at 75px 23px,#76dcf4 94%,transparent),
+  radial-gradient(ellipse 6px 9px at 105px 18px,#8cde7a 94%,transparent),
+  radial-gradient(ellipse 58px 17px at 60px 7px,transparent 94%,#7b9e70 98%,transparent);
+ background-size:120px 34px;
+}
+body .hero,body .today-hero{
+ background:linear-gradient(115deg,#dff1e5,#fffbeb 58%,#f8dce0)!important;
+ border-color:#cadcc8;
+ border-top:4px solid #ae263e;
+}
+body .login-card{
+ border-top:0;
+}
+body .login-card::before{
+ content:"🎄" / "";
+ display:block;
+ margin:0 auto 12px;
+ text-align:center;
+ font-size:2.5rem;
+ line-height:1.1;
+}
+body a.tile[href*="secret-santa"],body .action[href*="secret-santa"]{
+ background:linear-gradient(130deg,#8d1c34,#ae263e);
+ border-color:#8d1c34;
+}
+body a.tile[href*="secret-santa"] p,body .action[href*="secret-santa"] p,body .action[href*="secret-santa"] .go{
+ color:#fff1eb;
+}
+@media print{
+ body .topbar,body .top,body>header{padding-top:0}
+ body .login-card::before{display:none}
 }
