@@ -187,7 +187,7 @@ def smoke_test(sql):
     def post(action, expected=200, **payload):
         status, raw, _ = request(LIVE, "POST", json.dumps({"action": action, **payload}).encode(),
                                  {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"})
-        if action == "lh_assessment_student_list" and status == 403:
+        if action in ("lh_assessment_student_list", "lh_assessment_santa_identity") and status == 403:
             data = json.loads(raw)
             if data.get("code") == "STUDENT_HOURS_CLOSED":
                 return data
@@ -274,6 +274,15 @@ def smoke_test(sql):
         assert all(pair["giver"]!=pair["recipient"] for pair in drawn["state"]["pairs"])
         santa("teacher_remove",teacher_code=teacher_code,revision=0,student_id=santa_ids[-1])
         assert len(santa("teacher_get",teacher_code=teacher_code)["state"]["pairs"])==3
+        identity = santa("identity",student_code=student_code)
+        if identity.get("code") != "STUDENT_HOURS_CLOSED":
+            assert identity["student"]["id"] == s_id and "recipient" not in identity
+            santa("reveal",409,student_code=student_code,confirmed_student_id=santa_ids[1])
+            assert santa("reveal",student_code=student_code,confirmed_student_id=s_id)["first_reveal"]
+            assert not santa("reveal",student_code=student_code,confirmed_student_id=s_id)["first_reveal"]
+            print("Live student identity confirmation and repeat reveal verified.", flush=True)
+        for extra_id in santa_ids[1:]:
+            sql("UPDATE students SET active=0 WHERE id=?",extra_id)
         print("Live synthetic Secret Santa draw, register and removal verified.", flush=True)
 
         assert any(item["id"] == c_id for item in teacher("list")["classes"])
