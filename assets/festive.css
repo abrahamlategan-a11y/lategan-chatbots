@@ -104,3 +104,81 @@ body a.tile[href*="secret-santa"] p,body .action[href*="secret-santa"] p,body .a
  body .topbar,body .top,body>header{padding-top:0}
  body .login-card::before{display:none}
 }
+
+/* The dashboard keeps its own artwork and reserves a row for the lights. */
+#section-home .topbar,
+body .today-hero{
+ position:relative;
+ isolation:isolate;
+ overflow:hidden;
+ border:1px solid #416c54;
+ border-radius:25px;
+ background:radial-gradient(circle at 14% 100%,#32734f,transparent 54%),
+  linear-gradient(115deg,#103c2b,#1b573c)!important;
+}
+#section-home .topbar{padding:52px 26px 26px 200px;min-height:194px}
+#section-home .topbar::before{
+ content:"🎄" / "";
+ top:auto;
+ right:auto;
+ bottom:12px;
+ left:30px;
+ width:auto;
+ height:auto;
+ border:0;
+ background:none;
+ font-size:115px;
+ line-height:1;
+ filter:drop-shadow(0 6px 10px #071f24aa);
+ transform:none;
+}
+#section-home .topbar::after,
+body .today-hero::before{
+ content:"";
+ position:absolute;
+ inset:0 0 auto;
+ width:auto;
+ height:34px;
+ border:0;
+ border-bottom:1px solid #53775d;
+ border-radius:0;
+ opacity:1;
+ pointer-events:none;
+ background:
+  radial-gradient(ellipse 5px 8px at 15px 16px,#ff7272 95%,transparent),
+  radial-gradient(ellipse 5px 8px at 45px 23px,#ffda72 95%,transparent),
+  radial-gradient(ellipse 5px 8px at 75px 23px,#83e5ff 95%,transparent),
+  radial-gradient(ellipse 5px 8px at 105px 16px,#96f298 95%,transparent),
+  radial-gradient(ellipse 58px 17px at 60px 7px,transparent 94%,#b7c89a 98%,transparent);
+ background-size:120px 34px;
+ background-repeat:repeat-x;
+}
+#section-home .topbar .eyebrow{
+ display:block;
+ color:#ffdc88;
+}
+#section-home h1,body .today-hero .greeting{color:#fff9e9!important}
+#section-home .sub,body .today-hero .hero-sub{color:#e4f2e6!important}
+#section-home .class-chip{color:#fff5d8}
+body .today-hero{padding-top:52px;color:#fff9e9!important}
+body .today-hero::after{display:none}
+body .today-hero .eyebrow{color:#ffe09a}
+body .sidebar .brand{color:#174530}
+#section-home .classroom-launch .tile:nth-child(1){background:#ffedb7!important}
+#section-home .classroom-launch .tile:nth-child(2){background:#f6c9ce!important}
+#section-home .classroom-launch .tile:nth-child(3){background:#c9e8d3!important}
+#section-home .classroom-launch .tile:nth-child(4){background:#e4efe9!important}
+#section-home .classroom-launch .tile-icon{color:#204c38}
+#section-home .classroom-launch .tile:nth-child(2) .tile-icon{color:#8d1c34}
+#section-home .classroom-launch .tile:focus-visible{outline:3px solid #8d1c34;outline-offset:3px}
+@media(max-width:1100px){
+ #section-home .topbar{padding-left:134px}
+ #section-home .topbar::before{left:18px;font-size:86px}
+}
+@media(max-width:780px){
+ #section-home .topbar{padding:48px 16px 20px 84px;flex-wrap:wrap;gap:12px}
+ #section-home .topbar::before{left:12px;font-size:54px}
+}
+@media print{
+ #section-home .topbar::before,#section-home .topbar::after,body .today-hero::before{display:none}
+}
