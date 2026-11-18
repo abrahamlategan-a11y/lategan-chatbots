@@ -83,6 +83,7 @@ def release(account, token):
         if len(starts) == 1:
             start = starts[0].start()
             previous_blocks = [
+                (33320, "13dd0736b8f4c61b255aa79d993368c7394167789f5e883f130ecc6e21229480"),
                 (27496, "1cf0251df5d21771250a9b30897672feb3e5ac8c3ddd75d81e5e36f641ffa40e"),
                 (25652, "298cb6784f3dd7895991c4a00faa5ace928679cdb2dd30505e5fbb28c84aca0e"),
                 (36725, "6f3e2e4f29aa27128af413bc7443fc9a6013594cc36a267b2551d2e4749de1e6"),
@@ -248,6 +249,33 @@ def smoke_test(sql):
         teacher("plan_save", 409, revision=0, entries=[])
         print("Live planner persistence and conflict protection verified.", flush=True)
 
+        # Exercise a separate future-year draw with only synthetic students.
+        santa_year = 2099
+        if sql("SELECT school_year FROM lh_secret_santa WHERE school_year=?", santa_year):
+            raise RuntimeError("Synthetic Secret Santa year is already occupied.")
+        santa_ids = [s_id]
+        for suffix in ("A", "B", "C"):
+            santa_ids.append(sql("""INSERT INTO students(student_code,display_name,class_name,teacher_id,class_id,active)
+                VALUES(?,?,?,?,?,1) RETURNING id""", student_code+suffix, "Santa Test "+suffix, class_name, t_id, c_id)[0]["id"])
+        def santa(operation, expected=200, **payload):
+            return post("lh_assessment_santa_"+operation, expected, year=santa_year, **payload)
+        for attempt in range(10):
+            try:
+                santa("teacher_get", teacher_code=teacher_code)
+                break
+            except RuntimeError:
+                if attempt==9:
+                    raise
+                time.sleep(4)
+        santa("teacher_draw",teacher_code=teacher_code,revision=-1,student_ids=santa_ids)
+        drawn=santa("teacher_get",teacher_code=teacher_code)
+        assert len(drawn["state"]["pairs"])==4
+        assert len({pair["recipient"] for pair in drawn["state"]["pairs"]})==4
+        assert all(pair["giver"]!=pair["recipient"] for pair in drawn["state"]["pairs"])
+        santa("teacher_remove",teacher_code=teacher_code,revision=0,student_id=santa_ids[-1])
+        assert len(santa("teacher_get",teacher_code=teacher_code)["state"]["pairs"])==3
+        print("Live synthetic Secret Santa draw, register and removal verified.", flush=True)
+
         assert any(item["id"] == c_id for item in teacher("list")["classes"])
         assessment = {"title": "Temporary release check", "questions": [
             {"type": "mcq", "text": "What is 1 + 1?", "marks": 1, "options": ["1", "2"], "correct": "1"},
@@ -311,6 +339,10 @@ def smoke_test(sql):
         sql("DELETE FROM lh_assessment_ai_marks WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_responses WHERE assignment_id=?", assignment_id)
         sql("DELETE FROM lh_assessment_assignments WHERE id=?", assignment_id)
+        if "santa_ids" in locals():
+            sql("DELETE FROM lh_secret_santa WHERE school_year=?", santa_year)
+            for suffix in ("A", "B", "C"):
+                sql("DELETE FROM students WHERE student_code=?", student_code+suffix)
         sql("DELETE FROM students WHERE student_code=?", student_code)
         sql("DELETE FROM teacher_classes WHERE teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", teacher_code)
         sql("DELETE FROM classes WHERE name=? AND created_by_teacher_id=(SELECT id FROM teachers WHERE teacher_code=?)", class_name, teacher_code)

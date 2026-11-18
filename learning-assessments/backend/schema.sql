@@ -54,3 +54,5 @@ CREATE TABLE IF NOT EXISTS lh_year_plan_editors (
   teacher_id INTEGER NOT NULL,
   PRIMARY KEY (owner_id, teacher_id)
 );
+
+CREATE TABLE IF NOT EXISTS lh_secret_santa (school_year INTEGER PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0,state_json TEXT NOT NULL,revealed_json TEXT NOT NULL DEFAULT '{}');

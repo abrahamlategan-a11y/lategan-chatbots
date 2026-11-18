@@ -128,6 +128,73 @@
           assessmentContext.waitUntil(work().catch(() => console.error("Could not save assessment AI marks.")));
         }
 
+
+        if (action.startsWith("lh_assessment_santa_")) {
+          const year=Number(body.year);
+          if(!Number.isInteger(year)||year<2026||year>2100)return fail("Invalid school year.");
+          const year4=c=>/^(?:year\s*)?4$/i.test(String(c.year_level||"").trim())||/^4[A-Z]$/i.test(c.name);
+          if(action.startsWith("lh_assessment_santa_teacher_")){
+            const teacher=await getTeacher(env,body.teacher_code);
+            if(!teacher)return fail("Teacher access denied.",401);
+            if(!Number(teacher.is_admin)&&!(await teacherClasses(env,teacher.id)).some(year4))return fail("Year 4 teacher access required.",403);
+            const classes=(await query("SELECT id,name,year_level FROM classes WHERE active=1 ORDER BY name").all()).results.filter(year4);
+            const ids=classes.map(c=>c.id);
+            const roster=ids.length?(await query("SELECT id,display_name,class_id FROM students WHERE active=1 AND class_id IN ("+ids.map(()=>"?").join(",")+") ORDER BY display_name",...ids).all()).results:[];
+            const current=await query("SELECT revision,state_json FROM lh_secret_santa WHERE school_year=?",year).first();
+            const state=current?JSON.parse(current.state_json):{participants:[],pairs:[],drawn:false};
+            if(action==="lh_assessment_santa_teacher_get")return reply({classes,students:roster,revision:current?.revision??-1,state});
+            if(!["lh_assessment_santa_teacher_draw","lh_assessment_santa_teacher_remove"].includes(action))return fail("Unknown action.",404);
+            if(body.revision!==(current?.revision??-1))return fail("Another teacher changed this draw. Refresh before continuing.",409);
+            let next;
+            if(action==="lh_assessment_santa_teacher_draw"){
+              if(state.drawn)return fail("The draw has already been made.",409);
+              const participants=body.student_ids;
+              if(!Array.isArray(participants)||participants.length<3||participants.length>300||new Set(participants).size!==participants.length||participants.some(id=>!Number.isSafeInteger(id)||!roster.some(s=>s.id===id)))return fail("Select at least three active Year 4 students.");
+              const shuffled=[...participants];
+              function randomBelow(max){
+                const limit=4294967296-4294967296%max;
+                let value;
+                do{value=crypto.getRandomValues(new Uint32Array(1))[0]}while(value>=limit);
+                return value%max;
+              }
+              for(let i=shuffled.length-1;i>0;i--){
+                const j=randomBelow(i+1);
+                [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]];
+              }
+              next={drawn:true,participants:participants.map(id=>{
+                const student=roster.find(s=>s.id===id);
+                return {id,name:student.display_name,class_id:student.class_id,class_name:classes.find(c=>c.id===student.class_id)?.name||""};
+              }),pairs:shuffled.map((id,i)=>({giver:id,recipient:shuffled[(i+1)%shuffled.length]}))};
+            }else{
+              if(!state.drawn||state.participants.length<=3)return fail("Contact the organiser to manage a draw with three or fewer participants.");
+              const id=body.student_id,incoming=state.pairs.find(p=>p.recipient===id),outgoing=state.pairs.find(p=>p.giver===id);
+              if(!incoming||!outgoing)return fail("Student is not in this draw.");
+              next={...state,participants:state.participants.filter(s=>s.id!==id),pairs:state.pairs.filter(p=>p.giver!==id).map(p=>p.giver===incoming.giver?{...p,recipient:outgoing.recipient}:p)};
+            }
+            const saved=current
+              ?await query("UPDATE lh_secret_santa SET state_json=?,revision=revision+1 WHERE school_year=? AND revision=? RETURNING revision",JSON.stringify(next),year,current.revision).first()
+              :await query("INSERT OR IGNORE INTO lh_secret_santa(school_year,state_json) VALUES(?,?) RETURNING revision",year,JSON.stringify(next)).first();
+            if(!saved)return fail("Another teacher changed the draw. Refresh before continuing.",409);
+            return reply({ok:true});
+          }
+          if(!perthStudentAccessOpen())return studentHoursClosedResponse(json);
+          const student=await getStudent(env,body.student_code);
+          if(!student)return fail("Student access denied.",401);
+          const identity=await query("SELECT s.id,s.display_name,c.name AS class_name FROM students s LEFT JOIN classes c ON c.id=s.class_id WHERE s.id=? AND s.active=1",student.id).first();
+          if(!identity)return fail("Student access denied.",401);
+          if(action==="lh_assessment_santa_identity")return reply({student:identity});
+          if(action!=="lh_assessment_santa_reveal")return fail("Unknown action.",404);
+          if(body.confirmed_student_id!==student.id)return fail("Confirm who you are before revealing.",409);
+          const row=await query("SELECT state_json FROM lh_secret_santa WHERE school_year=?",year).first();
+          const state=row?JSON.parse(row.state_json):null;
+          const pair=state?.pairs.find(p=>p.giver===student.id),recipient=state?.participants.find(s=>s.id===pair?.recipient);
+          if(!recipient)return fail("Your Secret Santa name is not ready. Please check with your teacher.",404);
+          const jsonPath='$."'+student.id+'"';
+          const first=await query("UPDATE lh_secret_santa SET revealed_json=json_set(revealed_json,?,1) WHERE school_year=? AND json_extract(revealed_json,?) IS NULL RETURNING school_year",jsonPath,year,jsonPath).first();
+          return reply({recipient:{name:recipient.name,class_name:recipient.class_name},first_reveal:!!first});
+        }
+
+
         if (action.startsWith("lh_assessment_teacher_")) {
           const teacher = await getTeacher(env, body.teacher_code);
           if (!teacher) return fail("Teacher access denied.", 401);
