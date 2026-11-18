@@ -107,12 +107,20 @@ main:has(#writtenGrid:not([hidden])){max-width:1640px}
     <button type="button" id="refreshPlan">Refresh</button>
     <button type="button" id="sharePlan" hidden>Share planner</button>
     <button type="button" id="importPlan" hidden>Import assessments from this browser</button>
+    <button type="button" id="recoverPlan">Recover browser assessments</button>
     <button type="button" class="primary" id="joinPlan" hidden>Join shared planner</button>
   </div>
   <p id="planStatus" class="muted" role="status"></p>
   <div id="planTerms" tabindex="0" role="region" aria-label="Assessment planner grid"></div>
   <p class="muted">Planner changes are saved to Learning Hub.</p>
 </section>
+<dialog id="recoverPlanDialog" aria-labelledby="recoverPlanTitle">
+<h2 id="recoverPlanTitle">Recover browser assessments</h2>
+<p>Choose the saved plan you recognise. Its assessments will be added to My planner.</p>
+<div id="recoverPlanChoices"></div>
+<p id="recoverPlanStatus" role="status"></p>
+<form method="dialog"><button>Close</button></form>
+</dialog>
 <dialog id="sharePlanDialog" aria-labelledby="sharePlanTitle">
   <h2 id="sharePlanTitle">Share your planner</h2>
   <p>Anyone with this link and a Learning Hub teacher account can join as an editor for the next seven days. Creating a new link replaces the previous link.</p>
@@ -393,6 +401,7 @@ drawLibrary();
   };
   function updateControls() {
     $("planOwner").disabled = busy;
+    $("recoverPlan").disabled = busy || revision==null;
     $("addPlan").disabled = busy || revision==null;
     $("refreshPlan").disabled = busy;
     $("sharePlan").hidden = revision==null || owner!==me;
@@ -432,6 +441,12 @@ drawLibrary();
       revision = result.revision;
       cachedEntries = result.entries;
       render();
+      if (owner===me && !cachedEntries.length) {
+        const found = browserPlans();
+        $("planStatus").textContent = found.length
+          ? "Your account planner is empty. Saved assessments were found on this browser. Click Recover browser assessments to bring them across."
+          : "Your account planner is empty. Use Recover browser assessments to check for older saved plans on this device.";
+      }
     } catch (error) {
       revision = null;
       cachedEntries = [];
@@ -466,6 +481,53 @@ drawLibrary();
       updateControls();
       $("planStatus").textContent = "Imported "+entries.length+" assessments.";
     } catch (error) { $("planStatus").textContent = error.message; }
+  };
+  function browserPlans() {
+    const plans = [];
+    for (let index=0; index<localStorage.length; index++) {
+      const storageKey = localStorage.key(index);
+      if (!storageKey.startsWith("lh-year-planner-v1:") || storageKey.endsWith(":imported")) continue;
+      try {
+        const entries = JSON.parse(localStorage.getItem(storageKey));
+        if (Array.isArray(entries) && entries.length && entries.every(item=>item && typeof item.title==="string" && typeof item.id==="string")) {
+          plans.push({entries});
+        }
+      } catch {}
+    }
+    return plans;
+  }
+  $("recoverPlan").onclick = () => {
+    const dialog = $("recoverPlanDialog");
+    const choices = $("recoverPlanChoices");
+    choices.replaceChildren();
+    $("recoverPlanStatus").textContent = "";
+    const plans = browserPlans();
+    if (!plans.length) {
+      $("recoverPlanStatus").textContent = "No older planner entries were found in this browser. Check the browser and profile where you originally entered them.";
+    }
+    for (const [index,plan] of plans.entries()) {
+      const box = node("section");
+      box.append(node("h3","Saved plan "+(index+1)+" · "+plan.entries.length+" assessments"));
+      box.append(node("p",plan.entries.slice(0,5).map(item=>item.title).join(" · ")));
+      const restore = button("Import this plan",async()=>{
+        if (busy) return;
+        if (!confirm("Add these assessments to your Learning Hub account planner?")) return;
+        try {
+          dialog.inert = true;
+          await refresh(me);
+          if (revision==null || owner!==me) throw Error("Open My planner and try again.");
+          const ids = new Set(read().map(item=>item.id));
+          const additions = plan.entries.filter(item=>!ids.has(item.id))
+            .map(item=>({...item,subjects:entrySubjects(item)}));
+          if (additions.length) await save([...read(),...additions]);
+          $("recoverPlanStatus").textContent = additions.length+" assessments recovered to your account. You can now open them on your phone.";
+        } catch(error) { $("recoverPlanStatus").textContent = "Could not recover yet. "+error.message; }
+        finally { dialog.inert=false; }
+      });
+      box.append(restore);
+      choices.append(box);
+    }
+    dialog.showModal();
   };
   $("joinPlan").onclick = async () => {
     if (busy || !confirm("Join this teacher’s planner as an editor?")) return;
