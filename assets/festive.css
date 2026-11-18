@@ -1,0 +1,62 @@
+/* Seasonal colours and decorations shared by Learning Hub pages. */
+:root{
+ --bg:#f9f8f3;--ink:#192f36;--muted:#57676b;--line:#dedfd9;
+ --green:#245d4c;--deep:#173f35;--green-dark:#173f35;
+ --green-soft:#e7f2ec;--sage:#e7f2ec;--mint:#e5f2e9;
+ --lav:#f7e9eb;--yellow:#faf0d5;
+ --shadow:0 8px 26px #263f3010;
+}
+body{
+ background-color:#f9f8f3!important;
+ background-image:radial-gradient(ellipse at top left,#e8f2eac9,transparent 48%),radial-gradient(ellipse at top right,#f7e7e9a3,transparent 48%)!important;
+ background-attachment:fixed;
+}
+body .sidebar{background:#fffdf9;border-right-color:#d9e2d9}
+body .nav button.active{background:#e7f2ec;color:#173f35}
+body .topbar,body .top,body>header{
+ position:relative;
+ padding-top:25px;
+}
+body .topbar::before,body .top::before,body>header::before{
+ content:"";position:absolute;top:0;left:0;right:0;height:15px;pointer-events:none;
+ background:
+ radial-gradient(ellipse 4px 6px at 12px 5px,#bd4053 98%,transparent),
+ radial-gradient(ellipse 4px 6px at 36px 6px,#ca9c42 98%,transparent),
+ radial-gradient(ellipse 4px 6px at 60px 5px,#3d8368 98%,transparent),
+ radial-gradient(ellipse 4px 6px at 84px 6px,#ca9c42 98%,transparent);
+ background-size:96px 15px;background-repeat:repeat-x;
+}
+body>header{background:#173f35;color:#fff7e6;border-bottom:3px solid #d9b66b}
+body>header a{color:#fff7e6}
+body .hero,body .today-hero{
+ background:linear-gradient(115deg,#e0f1e7,#f9efd8)!important;
+ color:#183d34!important;border:1px solid #cdded2;
+}
+body .hero h1,body .greeting{color:#183d34!important}
+body .hero p,body .hero-sub{color:#435e54!important;opacity:1}
+body .datebox{background:#fff8e6;color:#173f35;border:1px solid #ead6a9}
+body .tile,body .action,body .botcard{border-color:#e0dfd6}
+body .tile-icon,body .action-icon{background:#e7f2ec;color:#245d4c}
+body .tile:nth-child(3n+2) .tile-icon{background:#f8e8eb;color:#8d3042}
+body .tile:nth-child(3n+3) .tile-icon{background:#faf0d5;color:#755719}
+body .btn.primary,body button.primary,body .tabs button.active{
+ background:#a53146!important;border-color:#a53146!important;color:#fff!important;
+}
+body .tabs button{border:1px solid #e2ded7}
+body .group-management>summary{background:#f5ede0;color:#3a473a}
+body .points-hero{background:#e4f1e9;color:#173f35}
+body .points-hero p{color:#435e54}
+body .switch-row{color:#173f35;background:#fffdf9}
+body .libraryCard{background:linear-gradient(135deg,#edf5ef,#fffdf9)}
+body a.tile[href*="secret-santa"],body .action[href*="secret-santa"]{
+ background:linear-gradient(130deg,#173f35,#245d4c);color:#fff7e6;border-color:#476c56;text-decoration:none;
+}
+body a.tile[href*="secret-santa"] h3,body .action[href*="secret-santa"] h3{color:#ffe2a3}
+body a.tile[href*="secret-santa"] p,body .action[href*="secret-santa"] p,body .action[href*="secret-santa"] .go{color:#e0eee3}
+body .login{background:#f3f5ef}
+body .login-card{border-top:4px solid #a53146}
+body .login-card h2{color:#173f35}
+@media print{
+ body{background:#fff!important}
+ body .topbar::before,body .top::before,body>header::before{display:none}
+}
