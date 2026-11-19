@@ -280,6 +280,61 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
 </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <link rel="stylesheet" href="../assets/festive.css?v=1">
+
+<style>
+  .tile.class-bookshelf, .action.class-bookshelf {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(105px, 205px) 1fr;
+    align-items: center;
+    gap: clamp(16px, 4vw, 48px);
+    min-height: 185px;
+    padding: clamp(16px, 4vw, 38px);
+    background: radial-gradient(ellipse at top left, #37695c, transparent 62%), #173c35;
+    border: 1px solid #285348;
+    border-radius: 24px;
+    color: #fff9eb;
+    text-decoration: none;
+  }
+  .class-bookshelf .bookshelf-title {
+    margin: 0 0 8px;
+    color: #fff9eb;
+    font-size: clamp(24px, 4vw, 38px);
+    letter-spacing: -.035em;
+    line-height: 1.1;
+  }
+  .class-bookshelf .bookshelf-link {
+    color: #ffe4a5;
+    font-size: 14px;
+    font-weight: 750;
+  }
+  .class-bookshelf:hover { background-color: #235247; }
+  .class-bookshelf:focus-visible {
+    outline: 3px solid #a76a18;
+    outline-offset: 4px;
+  }
+  .bookshelf-art {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    gap: 4px;
+    padding: 8px 8px 0;
+    border-bottom: 8px solid #c58556;
+    border-radius: 0 0 4px 4px;
+  }
+  .bookshelf-art span {
+    display: block;
+    width: 15%;
+    height: clamp(42px, 9vw, 80px);
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(to bottom, transparent 14%, #fff6df70 14% 20%, transparent 20% 76%, #fff6df70 76% 82%, transparent 82%), var(--spine);
+    box-shadow: inset 3px 0 #ffffff26;
+  }
+  .bookshelf-art span:nth-child(1) { --spine: #cada8c; height: clamp(34px, 7vw, 65px); }
+  .bookshelf-art span:nth-child(2) { --spine: #e88b7f; }
+  .bookshelf-art span:nth-child(3) { --spine: #f0bf60; height: clamp(38px, 8vw, 72px); }
+  .bookshelf-art span:nth-child(4) { --spine: #8bccd0; transform: rotate(-12deg); transform-origin: bottom left; }
+</style>
 </head>
 <body>
 <div id="ptiFlash"></div>
@@ -341,8 +396,11 @@ body{background:#fffefa;color:#101b4b;font-family:"Trebuchet MS",ui-rounded,syst
       <div class="classroom-launch"><h2>✨ Let’s get started</h2><p><div class="tilegrid"><div class="tile clickable" id="morningTile"><div class="tile-icon">☀</div><h3>Good Morning</h3><p>Open your live morning screen with helper, lunch orders, reminders, weather and Wordle.</p><div class="tile-foot">Open screen →</div></div>
 <div class="tile clickable" id="instructionsTile"><div class="tile-icon">☷</div><h3>Instructions Board</h3><p>Put step-by-step instructions on the screen, add a timer, or write with your stylus.</p><div class="tile-foot">Open board →</div></div>
 <div class="tile clickable" data-go="games"><div class="tile-icon">🎮</div><h3>Class Games</h3><p>Run live classroom games that connect to student devices.</p><div class="tile-foot">Open →</div></div>
-<div class="tile clickable" id="whiteboardsTile"><div class="tile-icon">✎</div><h3>Student Whiteboards</h3><p>See every student's live whiteboard, use Frost Mode, zoom in and save learning evidence.</p><div class="tile-foot">Open whiteboards →</div></div></div></div>
-<details class="hub-home-group"><summary>Teacher tools</summary><div class="tilegrid"><a class="tile clickable" href="https://lategan-class-books.netlify.app/teacher/"><div class="tile-icon" aria-hidden="true">📚</div><h3>Class Bookshelf</h3><p>Open the teacher bookshelf.</p></a><a class="tile clickable" href="../secret-santa/"><div class="tile-icon">🎁</div><h3>Secret Santa</h3><p>Year 4 draw and teacher register.</p></a><div class="tile clickable" id="classAssignmentsTile"><div class="tile-icon">▤</div><h3>Assessments</h3><p>Assign class tests and review student responses.</p></div><div class="tile clickable" id="assessmentsTile"><div class="tile-icon">✓</div><h3>Maths Trek</h3><p>Mark tests and review student and class results.</p><div class="tile-foot">Open Maths Trek →</div></div>
+<div class="tile clickable" id="whiteboardsTile"><div class="tile-icon">✎</div><h3>Student Whiteboards</h3><p>See every student's live whiteboard, use Frost Mode, zoom in and save learning evidence.</p><div class="tile-foot">Open whiteboards →</div></div><a class="tile class-bookshelf" href="https://lategan-class-books.netlify.app/teacher/">
+  <span class="bookshelf-art" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+  <div><h3 class="bookshelf-title">Class Bookshelf</h3><span class="bookshelf-link">Open teacher bookshelf →</span></div>
+</a></div></div>
+<details class="hub-home-group"><summary>Teacher tools</summary><div class="tilegrid"><a class="tile clickable" href="../secret-santa/"><div class="tile-icon">🎁</div><h3>Secret Santa</h3><p>Year 4 draw and teacher register.</p></a><div class="tile clickable" id="classAssignmentsTile"><div class="tile-icon">▤</div><h3>Assessments</h3><p>Assign class tests and review student responses.</p></div><div class="tile clickable" id="assessmentsTile"><div class="tile-icon">✓</div><h3>Maths Trek</h3><p>Mark tests and review student and class results.</p><div class="tile-foot">Open Maths Trek →</div></div>
 <div class="tile clickable" id="groupsTile"><div class="tile-icon">◫</div><h3>Group Maker</h3><p>Make quick random groups for a lesson.</p><div class="tile-foot">Open group maker →</div></div>
 <div class="tile clickable" id="jobsTile"><div class="tile-icon">✓</div><h3>Classroom Jobs</h3><p>Set up and manage classroom job groups.</p><div class="tile-foot">Open classroom jobs →</div></div>
 <div class="tile clickable" id="ptiTile"><div class="tile-icon">◷</div><h3>PTI Timer</h3><p>Clock-bound 8-minute parent interview slots with a one-minute visual warning and bell.</p><div class="tile-foot">Open timer →</div></div>
