@@ -14,7 +14,7 @@ async function api(action,data={}){
    if(!["alex","blair"].includes(data.student_code.toLowerCase()))throw Error("Demo codes are ALEX and BLAIR.");
    return {student:{id:data.student_code.toLowerCase()==="alex"?1:2,display_name:data.student_code.toLowerCase()==="alex"?"Alex":"Blair",class_name:data.student_code.toLowerCase()==="alex"?"4L":"4A"}};
   }
-  if(action==="password_reveal"){if(data.reveal_password!=="1234abcd5678ef90")throw Error("That Secret Santa password is incorrect.");const first_reveal=!demoRevealed;demoRevealed=true;return {recipient:{name:"Casey",class_name:"4A"},first_reveal}}
+  if(action==="password_reveal"){if(data.reveal_password!=="482715")throw Error("That Secret Santa password is incorrect.");const first_reveal=!demoRevealed;demoRevealed=true;return {recipient:{name:"Casey",class_name:"4A"},first_reveal}}
  }
  const response=await fetch("https://lategan-chatbot.abrahamlategan.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"lh_assessment_santa_"+action,year,...data})});
  const result=await response.json();
@@ -61,7 +61,7 @@ async function issuePassword(person,hasPassword){
  if(hasPassword&&!confirm("Replace the Secret Santa password for "+person.name+"?"))return;
  lock(true);
  try{
-  const {password}=demoMode?{password:"1234abcd5678ef90"}:await teacherApi("password",{student_id:person.id});
+  const {password}=demoMode?{password:"482715"}:await teacherApi("password",{student_id:person.id});
   if(!password)throw Error("The updated Worker must be deployed first.");
   const ids=state.password_student_ids??=[];
   if(!ids.includes(person.id))ids.push(person.id);
@@ -136,10 +136,10 @@ revealPassword.type="password";
 revealPassword.autocomplete="off";
 revealPassword.maxLength=16;
 revealPassword.style.cssText="width:100%;padding:12px;border:1px solid #aaa07866;border-radius:10px";
-const passwordLabel=node("label","Secret Santa password");
+const passwordLabel=node("label","Secret Santa PIN");
 passwordLabel.append(revealPassword);
 $("reveal").before(passwordLabel);
-$("revealPanel").querySelectorAll("p")[1].textContent="Enter your password and tap the card. The name hides after five seconds.";
+$("revealPanel").querySelectorAll("p")[1].textContent="Enter your PIN and tap the card. The name hides after five seconds.";
 revealPassword.onkeydown=event=>{if(event.key==="Enter"){event.preventDefault();$("reveal").click()}};
 function hide(){
  revealPassword.value="";revealPassword.disabled=false;
@@ -173,8 +173,8 @@ function fireworks(){
 $("reveal").onclick=async()=>{
  if(visible){hide();return}
  const password=revealPassword.value.trim().toLowerCase();
- if(!/^[a-f0-9]{16}$/.test(password)){
-  $("studentStatus").textContent="Enter the 16-character Secret Santa password from your teacher.";
+ if(!/^(?:[0-9]{6}|[a-f0-9]{16})$/.test(password)){
+  $("studentStatus").textContent="Enter the six-digit Secret Santa PIN from your teacher.";
   revealPassword.focus();
   return;
  }
@@ -197,7 +197,7 @@ $("teacher").hidden=studentView;$("student").hidden=!studentView;
 if(studentDemo){
  studentCode="alex";
  $("home").textContent="← Secret Santa setup";$("home").href="./";
- const note=node("p","Fictional preview · password 1234abcd5678ef90 · use ALEX or BLAIR to switch students.");
+ const note=node("p","Fictional preview · PIN 482715 · use ALEX or BLAIR to switch students.");
  $("student").before(note);
 }
 if(studentView){if(!studentDemo)$("home").href="../student/";if(studentCode)void identify();else switchStudent()}
