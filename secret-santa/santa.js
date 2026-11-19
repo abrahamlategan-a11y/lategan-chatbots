@@ -14,7 +14,7 @@ async function api(action,data={}){
    if(!["alex","blair"].includes(data.student_code.toLowerCase()))throw Error("Demo codes are ALEX and BLAIR.");
    return {student:{id:data.student_code.toLowerCase()==="alex"?1:2,display_name:data.student_code.toLowerCase()==="alex"?"Alex":"Blair",class_name:data.student_code.toLowerCase()==="alex"?"4L":"4A"}};
   }
-  if(action==="reveal"){const first_reveal=!demoRevealed;demoRevealed=true;return {recipient:{name:"Casey",class_name:"4A"},first_reveal}}
+  if(action==="password_reveal"){if(data.reveal_password!=="1234abcd5678ef90")throw Error("That Secret Santa password is incorrect.");const first_reveal=!demoRevealed;demoRevealed=true;return {recipient:{name:"Casey",class_name:"4A"},first_reveal}}
  }
  const response=await fetch("https://lategan-chatbot.abrahamlategan.workers.dev",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"lh_assessment_santa_"+action,year,...data})});
  const result=await response.json();
@@ -48,9 +48,27 @@ function drawRegister(){
   const pair=state.state.pairs.find(p=>p.giver===person.id),recipient=state.state.participants.find(s=>s.id===pair.recipient);
   const row=node("tr");
   for(const text of [person.name+" · "+person.class_name,recipient.name+" · "+recipient.class_name]){const td=node("td",text);row.append(td)}
-  const td=node("td"),remove=node("button","Remove");remove.onclick=()=>removeStudent(person);td.append(remove);row.append(td);$("pairs").append(row);
+  const td=node("td"),remove=node("button","Remove");remove.onclick=()=>removeStudent(person);td.append(remove);
+  const hasPassword=state.password_student_ids?.includes(person.id);
+  const issue=node("button",hasPassword?"Reset password":"Issue password");
+  issue.onclick=()=>issuePassword(person,hasPassword);
+  td.prepend(issue);row.append(td);$("pairs").append(row);
  }
  $("registerNote").textContent="Removing a student changes the recipient of their giver. Tell that student personally if they have already seen their name.";
+}
+async function issuePassword(person,hasPassword){
+ if(busy)return;
+ if(hasPassword&&!confirm("Replace the Secret Santa password for "+person.name+"?"))return;
+ lock(true);
+ try{
+  const {password}=demoMode?{password:"1234abcd5678ef90"}:await teacherApi("password",{student_id:person.id});
+  if(!password)throw Error("The updated Worker must be deployed first.");
+  const ids=state.password_student_ids??=[];
+  if(!ids.includes(person.id))ids.push(person.id);
+  prompt("Share this privately with "+person.name+". It is shown only now.",password);
+  render();
+ }catch(error){$("status").textContent=error.message}
+ finally{lock(false)}
 }
 function render(){
  $("setup").hidden=state.state.drawn;$("register").hidden=!state.state.drawn;
@@ -113,7 +131,18 @@ $("csv").onclick=()=>{
  const url=URL.createObjectURL(new Blob(["\uFEFF"+rows.map(row=>row.map(cell).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"}));
  const a=node("a");a.href=url;a.download="year-4-secret-santa-"+year+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
+const revealPassword=node("input");
+revealPassword.type="password";
+revealPassword.autocomplete="off";
+revealPassword.maxLength=16;
+revealPassword.style.cssText="width:100%;padding:12px;border:1px solid #aaa07866;border-radius:10px";
+const passwordLabel=node("label","Secret Santa password");
+passwordLabel.append(revealPassword);
+$("reveal").before(passwordLabel);
+$("revealPanel").querySelectorAll("p")[1].textContent="Enter your password and tap the card. The name hides after five seconds.";
+revealPassword.onkeydown=event=>{if(event.key==="Enter"){event.preventDefault();$("reveal").click()}};
 function hide(){
+ revealPassword.value="";revealPassword.disabled=false;
  clearTimeout(timer);visible=false;$("recipient").textContent="Secret recipient";$("recipient").classList.add("blur");$("recipient").setAttribute("aria-hidden","true");$("reveal").setAttribute("aria-label","Reveal your recipient");
 }
 function switchStudent(){
@@ -143,15 +172,24 @@ function fireworks(){
 }
 $("reveal").onclick=async()=>{
  if(visible){hide();return}
+ const password=revealPassword.value.trim().toLowerCase();
+ if(!/^[a-f0-9]{16}$/.test(password)){
+  $("studentStatus").textContent="Enter the 16-character Secret Santa password from your teacher.";
+  revealPassword.focus();
+  return;
+ }
+ $("studentStatus").textContent="";
+ revealPassword.value="";
+ revealPassword.disabled=true;
  const generation=studentGeneration,button=$("reveal");button.disabled=true;
  try{
-  const result=await api("reveal",{student_code:studentCode,confirmed_student_id:identity.id});
+  const result=await api("password_reveal",{student_code:studentCode,confirmed_student_id:identity.id,reveal_password:password});
   if(generation!==studentGeneration||document.hidden)return;
   visible=true;$("recipient").textContent=result.recipient.name+" · "+result.recipient.class_name;$("recipient").classList.remove("blur");$("recipient").removeAttribute("aria-hidden");button.setAttribute("aria-label","Hide your recipient");
   if(result.first_reveal)fireworks();
   timer=setTimeout(hide,5000);
  }catch(error){if(generation===studentGeneration)$("studentStatus").textContent=error.message}
- finally{button.disabled=false}
+ finally{button.disabled=false;revealPassword.disabled=visible}
 };
 document.addEventListener("visibilitychange",()=>{if(document.hidden){studentGeneration++;hide()}});
 window.addEventListener("blur",hide);
@@ -159,7 +197,7 @@ $("teacher").hidden=studentView;$("student").hidden=!studentView;
 if(studentDemo){
  studentCode="alex";
  $("home").textContent="← Secret Santa setup";$("home").href="./";
- const note=node("p","Fictional preview · use ALEX or BLAIR to switch students.");
+ const note=node("p","Fictional preview · password 1234abcd5678ef90 · use ALEX or BLAIR to switch students.");
  $("student").before(note);
 }
 if(studentView){if(!studentDemo)$("home").href="../student/";if(studentCode)void identify();else switchStudent()}
