@@ -134,6 +134,61 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
 .hub-brand-link:focus-visible{outline:3px solid #75ddc6;outline-offset:4px}
 </style>
 <link rel="stylesheet" href="../assets/festive.css?v=1">
+
+<style>
+  .tile.class-bookshelf, .action.class-bookshelf {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(105px, 205px) 1fr;
+    align-items: center;
+    gap: clamp(16px, 4vw, 48px);
+    min-height: 185px;
+    padding: clamp(16px, 4vw, 38px);
+    background: radial-gradient(ellipse at top left, #37695c, transparent 62%), #173c35;
+    border: 1px solid #285348;
+    border-radius: 24px;
+    color: #fff9eb;
+    text-decoration: none;
+  }
+  .class-bookshelf .bookshelf-title {
+    margin: 0 0 8px;
+    color: #fff9eb;
+    font-size: clamp(24px, 4vw, 38px);
+    letter-spacing: -.035em;
+    line-height: 1.1;
+  }
+  .class-bookshelf .bookshelf-link {
+    color: #ffe4a5;
+    font-size: 14px;
+    font-weight: 750;
+  }
+  .class-bookshelf:hover { background-color: #235247; }
+  .class-bookshelf:focus-visible {
+    outline: 3px solid #a76a18;
+    outline-offset: 4px;
+  }
+  .bookshelf-art {
+    display: flex;
+    justify-content: center;
+    align-items: end;
+    gap: 4px;
+    padding: 8px 8px 0;
+    border-bottom: 8px solid #c58556;
+    border-radius: 0 0 4px 4px;
+  }
+  .bookshelf-art span {
+    display: block;
+    width: 15%;
+    height: clamp(42px, 9vw, 80px);
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(to bottom, transparent 14%, #fff6df70 14% 20%, transparent 20% 76%, #fff6df70 76% 82%, transparent 82%), var(--spine);
+    box-shadow: inset 3px 0 #ffffff26;
+  }
+  .bookshelf-art span:nth-child(1) { --spine: #cada8c; height: clamp(34px, 7vw, 65px); }
+  .bookshelf-art span:nth-child(2) { --spine: #e88b7f; }
+  .bookshelf-art span:nth-child(3) { --spine: #f0bf60; height: clamp(38px, 8vw, 72px); }
+  .bookshelf-art span:nth-child(4) { --spine: #8bccd0; transform: rotate(-12deg); transform-origin: bottom left; }
+</style>
 </head>
 <body>
 
@@ -204,7 +259,10 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
     </div>
 
     <section class="action-grid">
-      <a class="action" href="https://lategan-class-books.netlify.app/"><h3><span aria-hidden="true">📚</span> Class Bookshelf</h3><p>Browse books from our class.</p><div class="go">Open bookshelf →</div></a>
+      <a class="action class-bookshelf" href="https://lategan-class-books.netlify.app/">
+  <span class="bookshelf-art" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+  <div><h3 class="bookshelf-title">Class Bookshelf</h3><span class="bookshelf-link">Browse class books →</span></div>
+</a>
       <div class="action chat" id="chatbotsTile">
         <div class="action-icon">✦</div>
         <h3>Learning Coaches</h3>
