@@ -172,6 +172,32 @@ async function removeStudent(person){
   render();
  }catch(error){$("status").textContent=error.message}finally{lock(false)}
 }
+if($("replaceCardPins"))$("replaceCardPins").onclick=async()=>{
+ if(busy)return;
+ const people=state.state.participants.filter(person=>!cardPins.has(person.id));
+ const status=$("cardStatus");
+ if(!people.length){status.textContent="Every student already has a card in this tab.";return}
+ if(!confirm("Generate new PINs for "+people.length+" students without a card in this tab? Any previous PINs for those students will stop working. Their matches will stay the same."))return;
+ lock(true);
+ let completed=0;
+ try{
+  const issued=state.password_student_ids??=[];
+  for(const person of people){
+   status.textContent="Preparing cards: "+completed+" of "+people.length+" ready…";
+   const {password}=demoMode?{password:"482715"}:await teacherApi("password",{student_id:person.id});
+   if(!password)throw Error("The Worker did not return a PIN.");
+   cardPins.set(person.id,password);
+   if(!issued.includes(person.id))issued.push(person.id);
+   completed++;
+  }
+  status.textContent=completed+" cards added. Click Print PIN cards before closing or refreshing.";
+ }catch(error){
+  status.textContent=completed+" cards added before the process stopped. "+error.message+" You can retry for the remaining students.";
+ }finally{
+  drawRegister();
+  lock(false);
+ }
+};
 if($("printCards"))$("printCards").onclick=()=>{
  const sheet=$("pinCards");
  sheet.replaceChildren();
