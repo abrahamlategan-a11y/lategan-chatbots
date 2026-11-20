@@ -26,6 +26,8 @@ function node(tag,text){const element=document.createElement(tag);if(text)elemen
 function lock(value){busy=value;$("teacherTools").querySelectorAll("button,input").forEach(control=>control.disabled=value)}
 function selected(){return [...$("roster").querySelectorAll("input[data-student]:checked")].map(input=>Number(input.value))}
 function updateCount(){$("count").textContent=selected().length+" students included."}
+const nameKey=name=>name.trim().toLowerCase();
+let pendingInitials={};
 function drawRoster(){
  $("roster").replaceChildren();
  for(const c of state.classes){
@@ -34,10 +36,21 @@ function drawRoster(){
   legend.append(classCheck,document.createTextNode(" "+c.name));field.append(legend,names);
   for(const student of state.students.filter(s=>s.class_id===c.id)){
    const label=node("label"),input=node("input");input.type="checkbox";input.checked=true;input.value=student.id;input.dataset.student="true";
-   input.onchange=()=>{classCheck.checked=[...names.querySelectorAll("input")].every(i=>i.checked);classCheck.indeterminate=!classCheck.checked&&[...names.querySelectorAll("input")].some(i=>i.checked);updateCount()};
-   label.append(input,document.createTextNode(" "+student.display_name));names.append(label);
+   input.onchange=()=>{classCheck.checked=[...names.querySelectorAll("input[data-student]")].every(i=>i.checked);classCheck.indeterminate=!classCheck.checked&&[...names.querySelectorAll("input[data-student]")].some(i=>i.checked);updateCount()};
+   const sameName=state.students.filter(other=>nameKey(other.display_name)===nameKey(student.display_name));
+   const sameClass=sameName.filter(other=>other.class_id===student.class_id).length>1;
+   const display=student.display_name+(sameClass?" (record "+student.id+")":"");
+   label.append(input,document.createTextNode(" "+display));
+   const entry=node("div");entry.append(label);
+   if(sameName.length>1){
+    const initialLabel=node("label","Surname initial for "+display),initial=node("input");
+    initial.type="text";initial.maxLength=1;initial.autocomplete="off";
+    initial.dataset.initialFor=student.id;
+    initialLabel.append(initial);entry.append(initialLabel);
+   }
+   names.append(entry);
   }
-  classCheck.onchange=()=>{names.querySelectorAll("input").forEach(i=>i.checked=classCheck.checked);classCheck.indeterminate=false;updateCount()};
+  classCheck.onchange=()=>{names.querySelectorAll("input[data-student]").forEach(i=>i.checked=classCheck.checked);classCheck.indeterminate=false;updateCount()};
   $("roster").append(field);
  }
  updateCount();
@@ -93,6 +106,23 @@ $("demo").onclick=()=>{
 $("draw").onclick=()=>{
  pendingIds=selected();
  if(pendingIds.length<3){$("status").textContent="Select at least three students.";return}
+ const selectedStudents=state.students.filter(student=>pendingIds.includes(student.id));
+ const duplicates=selectedStudents.filter(student=>selectedStudents.filter(other=>nameKey(other.display_name)===nameKey(student.display_name)).length>1);
+ if(duplicates.length&&!demoMode&&!state.supports_surname_initials){
+  $("status").textContent="Deploy the updated Secret Santa Worker before drawing with shared names.";
+  return;
+ }
+ pendingInitials={};
+ for(const student of duplicates){
+  const input=$("roster").querySelector(`[data-initial-for="${student.id}"]`);
+  const initial=input?.value.trim().toUpperCase()||"";
+  if(!/^\p{L}$/u.test(initial)){
+   $("status").textContent="Add a surname initial for each student with a shared name.";
+   input?.focus();
+   return;
+  }
+  pendingInitials[student.id]=initial;
+ }
  $("drawSummary").textContent=pendingIds.length+" students will take part"+(demoMode?" in this fictional demo.":".");
  $("confirmDraw").showModal();
 };
@@ -104,7 +134,7 @@ $("makeDraw").onclick=async()=>{
   if(demoMode){
    const ids=[...pendingIds].sort(()=>Math.random()-.5);
    state.state={drawn:true,participants:ids.map(id=>{const s=state.students.find(s=>s.id===id);return {id,name:s.display_name,class_name:state.classes.find(c=>c.id===s.class_id).name}}),pairs:ids.map((giver,i)=>({giver,recipient:ids[(i+1)%ids.length]}))};
-  }else{await teacherApi("draw",{revision:state.revision,student_ids:pendingIds});state=await teacherApi("get")}
+  }else{await teacherApi("draw",{revision:state.revision,student_ids:pendingIds,surname_initials:pendingInitials});state=await teacherApi("get")}
   render();
  }catch(error){$("status").textContent=error.message}finally{lock(false)}
 };
