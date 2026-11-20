@@ -226,10 +226,12 @@ $("csv").onclick=()=>{
  const a=node("a");a.href=url;a.download="year-4-secret-santa-"+year+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 const revealPassword=node("input");
-revealPassword.type="password";
+revealPassword.type="text";
 revealPassword.autocomplete="off";
+revealPassword.spellcheck=false;
+revealPassword.autocapitalize="off";
 revealPassword.maxLength=16;
-revealPassword.style.cssText="width:100%;padding:12px;border:1px solid #aaa07866;border-radius:10px";
+revealPassword.style.cssText="width:100%;padding:12px;border:1px solid #aaa07866;border-radius:10px;-webkit-text-security:disc";
 const passwordLabel=node("label","Secret Santa PIN");
 passwordLabel.append(revealPassword);
 $("reveal").before(passwordLabel);
