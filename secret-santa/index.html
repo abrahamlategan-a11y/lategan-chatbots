@@ -21,7 +21,7 @@
 <div class="row"><button id="refresh">Refresh</button><button id="demo">Try fictional demo</button><a href="?view=student&amp;demo=1">Preview student reveal</a></div>
 <p id="status" role="status"></p>
 <section id="setup" class="panel"><h2>Who’s taking part?</h2><p>Select classes and untick students who are opting out. The draw mixes students across the selected classes.</p><div id="roster"></div><p id="count"></p><button id="draw" class="primary">Make the draw</button></section>
-<section id="register" class="panel" hidden><div class="row"><h2>Teacher register</h2><button id="csv">Download CSV</button><button id="printCards">Print PIN cards</button></div><p id="registerNote"></p><p>Issue a PIN to add it to the print sheet, or enter a PIN you already have in its Card PIN field. Print before closing or reloading this tab.</p><div class="table-wrap"><table><thead><tr><th>Student</th><th>Buying for</th><th></th></tr></thead><tbody id="pairs"></tbody></table></div></section>
+<section id="register" class="panel" hidden><div class="row"><h2>Teacher register</h2><button id="csv">Download CSV</button><button id="replaceCardPins">Generate missing cards</button><button id="printCards">Print PIN cards</button></div><p id="registerNote"></p><p id="cardStatus" role="status"></p><p>Issue a PIN to add it to the print sheet, or enter a PIN you already have in its Card PIN field. Print before closing or reloading this tab.</p><div class="table-wrap"><table><thead><tr><th>Student</th><th>Buying for</th><th></th></tr></thead><tbody id="pairs"></tbody></table></div></section>
 </div></section>
 <section id="student" class="student" hidden>
 <div class="lights" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -31,4 +31,4 @@
 <div id="revealPanel" hidden><p>You’re buying a gift for</p><button id="reveal" class="recipient" aria-label="Reveal your recipient"><span id="recipient" class="blur" aria-hidden="true">Secret recipient</span></button><p>Tap to reveal. The name hides after five seconds.</p><button id="switch">Switch student</button></div>
 <p id="studentStatus" role="status" aria-live="polite"></p></div><div class="effects" aria-hidden="true"></div></section>
 <dialog id="confirmDraw"><h2>Ready to make the draw?</h2><p id="drawSummary"></p><p>Each student gets one recipient. The draw is saved for all Year 4 teachers and students can reveal their names once you issue their passwords.</p><div class="row"><button id="cancelDraw">Go back</button><button id="makeDraw" class="primary">Confirm draw</button></div></dialog>
-</main><section id="pinCards" aria-label="Secret Santa PIN cards"></section><script src="santa.js?v=6"></script></body></html>
+</main><section id="pinCards" aria-label="Secret Santa PIN cards"></section><script src="santa.js?v=7"></script></body></html>
