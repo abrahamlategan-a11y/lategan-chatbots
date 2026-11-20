@@ -59,6 +59,7 @@ function drawRoster(){
  }
  updateCount();
 }
+const cardPins=new Map();
 function drawRegister(){
  $("pairs").replaceChildren();
  for(const person of [...state.state.participants].sort((a,b)=>a.name.localeCompare(b.name))){
@@ -69,7 +70,16 @@ function drawRegister(){
   const hasPassword=state.password_student_ids?.includes(person.id);
   const issue=node("button",hasPassword?"Reset password":"Issue password");
   issue.onclick=()=>issuePassword(person,hasPassword);
-  td.prepend(issue);row.append(td);$("pairs").append(row);
+  td.prepend(issue);
+  const label=node("label","Card PIN"),input=node("input");
+  input.type="password";input.autocomplete="off";input.maxLength=16;
+  input.value=cardPins.get(person.id)||"";
+  input.addEventListener("input",()=>{
+   const pin=input.value.trim();
+   if(/^(?:[0-9]{6}|[a-f0-9]{16})$/i.test(pin))cardPins.set(person.id,pin);
+   else cardPins.delete(person.id);
+  });
+  label.append(input);td.append(label);row.append(td);$("pairs").append(row);
  }
  $("registerNote").textContent="Removing a student changes the recipient of their giver. Tell that student personally if they have already seen their name.";
 }
@@ -82,7 +92,8 @@ async function issuePassword(person,hasPassword){
   if(!password)throw Error("The updated Worker must be deployed first.");
   const ids=state.password_student_ids??=[];
   if(!ids.includes(person.id))ids.push(person.id);
-  prompt("Share this privately with "+person.name+". It is shown only now.",password);
+  if($("printCards"))cardPins.set(person.id,password);
+  else prompt("Share this privately with "+person.name+".",password);
   render();
  }catch(error){$("status").textContent=error.message}
  finally{lock(false)}
@@ -104,6 +115,7 @@ $("teacherLogin").onsubmit=event=>{event.preventDefault();teacherCode=$("teacher
 $("refresh").onclick=()=>{if(demoMode){render();return}void load()};
 $("demo").onclick=()=>{
  if(busy)return;
+ cardPins.clear();
  demoMode=!demoMode;
  if(demoMode){state=structuredClone(demoState);render()}else void load();
 };
@@ -160,6 +172,25 @@ async function removeStudent(person){
   render();
  }catch(error){$("status").textContent=error.message}finally{lock(false)}
 }
+if($("printCards"))$("printCards").onclick=()=>{
+ const sheet=$("pinCards");
+ sheet.replaceChildren();
+ const people=[...state.state.participants].sort((a,b)=>a.class_name.localeCompare(b.class_name)||a.name.localeCompare(b.name));
+ for(const person of people){
+  const pin=cardPins.get(person.id);
+  if(!pin)continue;
+  const card=node("article");
+  card.append(node("p","Secret Santa"),node("h2",person.name+" · "+person.class_name),node("strong",pin),node("p","Keep this PIN private."));
+  sheet.append(card);
+ }
+ if(!sheet.children.length){
+  $("status").textContent="Issue a PIN or enter an existing PIN in a Card PIN field first.";
+  return;
+ }
+ document.body.classList.add("printing-pin-cards");
+ try{window.print()}
+ finally{document.body.classList.remove("printing-pin-cards");sheet.replaceChildren()}
+};
 $("csv").onclick=()=>{
  const rows=[["Student","Class","Buying for","Recipient class"],...state.state.pairs.map(pair=>{
   const a=state.state.participants.find(p=>p.id===pair.giver),b=state.state.participants.find(p=>p.id===pair.recipient);return [a.name,a.class_name,b.name,b.class_name];
