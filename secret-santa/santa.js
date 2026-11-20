@@ -28,7 +28,11 @@ function selected(){return [...$("roster").querySelectorAll("input[data-student]
 function updateCount(){$("count").textContent=selected().length+" students included."}
 const nameKey=name=>name.trim().toLowerCase();
 let pendingInitials={};
+if(!$("drawStatus")){
+ const status=node("p");status.id="drawStatus";status.setAttribute("role","status");status.style.color="#943248";$("draw").after(status);
+}
 function drawRoster(){
+ $("drawStatus").textContent="";
  $("roster").replaceChildren();
  for(const c of state.classes){
   const field=node("fieldset"),legend=node("legend"),classCheck=node("input"),names=node("div");
@@ -104,12 +108,13 @@ $("demo").onclick=()=>{
  if(demoMode){state=structuredClone(demoState);render()}else void load();
 };
 $("draw").onclick=()=>{
+ $("drawStatus").textContent="";
  pendingIds=selected();
- if(pendingIds.length<3){$("status").textContent="Select at least three students.";return}
+ if(pendingIds.length<3){$("drawStatus").textContent="Select at least three students.";return}
  const selectedStudents=state.students.filter(student=>pendingIds.includes(student.id));
  const duplicates=selectedStudents.filter(student=>selectedStudents.filter(other=>nameKey(other.display_name)===nameKey(student.display_name)).length>1);
  if(duplicates.length&&!demoMode&&!state.supports_surname_initials){
-  $("status").textContent="Deploy the updated Secret Santa Worker before drawing with shared names.";
+  $("drawStatus").textContent="The active Cloudflare Worker does not support surname initials. Deploy the surname-initial Worker and refresh this page.";
   return;
  }
  pendingInitials={};
@@ -117,7 +122,7 @@ $("draw").onclick=()=>{
   const input=$("roster").querySelector(`[data-initial-for="${student.id}"]`);
   const initial=input?.value.trim().toUpperCase()||"";
   if(!/^\p{L}$/u.test(initial)){
-   $("status").textContent="Add a surname initial for each student with a shared name.";
+   $("drawStatus").textContent="Add a surname initial for each student with a shared name.";
    input?.focus();
    return;
   }
@@ -130,13 +135,15 @@ $("cancelDraw").onclick=()=>$("confirmDraw").close();
 $("makeDraw").onclick=async()=>{
  if(busy)return;
  $("confirmDraw").close();lock(true);
+ $("drawStatus").textContent="Saving the draw…";
  try{
   if(demoMode){
    const ids=[...pendingIds].sort(()=>Math.random()-.5);
    state.state={drawn:true,participants:ids.map(id=>{const s=state.students.find(s=>s.id===id);return {id,name:s.display_name,class_name:state.classes.find(c=>c.id===s.class_id).name}}),pairs:ids.map((giver,i)=>({giver,recipient:ids[(i+1)%ids.length]}))};
   }else{await teacherApi("draw",{revision:state.revision,student_ids:pendingIds,surname_initials:pendingInitials});state=await teacherApi("get")}
+  $("drawStatus").textContent="";
   render();
- }catch(error){$("status").textContent=error.message}finally{lock(false)}
+ }catch(error){$("drawStatus").textContent=error.message}finally{lock(false)}
 };
 async function removeStudent(person){
  const incoming=state.state.pairs.find(p=>p.recipient===person.id);
