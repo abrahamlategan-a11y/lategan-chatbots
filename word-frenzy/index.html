@@ -16,7 +16,7 @@
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Lategrams</h1><span>Solo play · saves on this device</span></header><main>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
-<button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="reset">New game</button><button id="pause">Pause</button></div>
+<button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
@@ -269,6 +269,14 @@ function beginSwap(id){
 }
 swapDialog.addEventListener('cancel',event=>event.preventDefault());
 document.getElementById('swap').onclick=()=>beginSwap(selected);
+function sortTray(){
+ const sorted=state.tiles.filter(tile=>tile.x===null).sort((a,b)=>a.letter.localeCompare(b.letter));
+ let next=0;
+ remember();
+ state.tiles=state.tiles.map(tile=>tile.x===null?sorted[next++]:tile);
+ save();draw();
+}
+document.getElementById('sortTray').onclick=sortTray;
 document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.filter(t=>t.x===null),letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
