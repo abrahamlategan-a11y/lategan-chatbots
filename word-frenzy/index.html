@@ -27,15 +27,26 @@ function fresh(){state={tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null
 try{state=JSON.parse(localStorage.getItem(KEY));if(!state||!Array.isArray(state.tiles))fresh()}catch{fresh()}
 function remember(){history.push(JSON.stringify(state.tiles));if(history.length>80)history.shift()}
 function cellSize(){return Math.min(54,Math.max(38,Math.floor((viewport.clientWidth-20)/13)))}
-function gridPosition(x,y){const step=cellSize();return {x:Math.max(0,Math.round(x/step)),y:Math.max(0,Math.round(y/step))}}
-function closestCell(x,y,id){const step=cellSize(),raw=gridPosition(x,y);if(!occupied(raw.x,raw.y,id))return raw;let best=raw,dist=Infinity;for(const t of state.tiles){if(t.id===id||t.x===null)continue;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const cx=t.x+dx,cy=t.y+dy;if(cx<0||cy<0||occupied(cx,cy,id))continue;const d=Math.hypot(x-cx*step,y-cy*step);if(d<dist){dist=d;best={x:cx,y:cy}}}}return dist<step*.85?best:raw}
-function expandBoard(){const placed=state.tiles.filter(t=>t.x!==null),step=cellSize();board.style.width=Math.max(viewport.clientWidth,20*step,...placed.map(t=>(t.x+8)*step))+'px';board.style.height=Math.max(viewport.clientHeight,12*step,...placed.map(t=>(t.y+7)*step))+'px'}
+let originX=0,originY=0;
+function gridPosition(x,y){const step=cellSize();return {x:Math.round(x/step),y:Math.round(y/step)}}
+function closestCell(x,y,id){const step=cellSize(),raw=gridPosition(x,y);if(!occupied(raw.x,raw.y,id))return raw;let best=raw,dist=Infinity;for(const t of state.tiles){if(t.id===id||t.x===null)continue;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const cx=t.x+dx,cy=t.y+dy;if(occupied(cx,cy,id))continue;const d=Math.hypot(x-cx*step,y-cy*step);if(d<dist){dist=d;best={x:cx,y:cy}}}}return dist<step*.85?best:raw}
+function expandBoard(){
+ const placed=state.tiles.filter(t=>t.x!==null),step=cellSize();
+ const nextX=Math.max(originX,0,...placed.map(t=>6-t.x));
+ const nextY=Math.max(originY,0,...placed.map(t=>6-t.y));
+ const left=viewport.scrollLeft+(nextX-originX)*step;
+ const top=viewport.scrollTop+(nextY-originY)*step;
+ originX=nextX;originY=nextY;
+ board.style.width=Math.max(viewport.clientWidth,(20+originX)*step,...placed.map(t=>(t.x+originX+8)*step))+'px';
+ board.style.height=Math.max(viewport.clientHeight,(12+originY)*step,...placed.map(t=>(t.y+originY+7)*step))+'px';
+ viewport.scrollLeft=left;viewport.scrollTop=top;
+}
 function occupied(x,y,ignore){return state.tiles.some(t=>t.id!==ignore&&t.x===x&&t.y===y)}
 function place(id,x,y){if(occupied(x,y,id)){message('That space is occupied. Try another spot.',true);return}remember();const t=state.tiles.find(t=>t.id===id);t.x=x;t.y=y;save();draw()}
 function message(t,bad=false){notice.textContent=t;notice.className='notice'+(bad?' badText':'')}
 function wordsFound(){const cells=new Map(state.tiles.filter(t=>t.x!==null).map(t=>[t.x+','+t.y,t]));const words=[];for(const t of state.tiles.filter(t=>t.x!==null)){for(const [dx,dy] of [[1,0],[0,1]]){if(cells.has((t.x-dx)+','+(t.y-dy)))continue;let x=t.x,y=t.y,tiles=[];while(cells.has(x+','+y)){tiles.push(cells.get(x+','+y));x+=dx;y+=dy}if(tiles.length>=2)words.push({word:tiles.map(v=>v.letter).join('').toLowerCase(),tiles})}}return words}
 function validate(){const words=wordsFound(),bad=words.filter(w=>!dictionary.has(w.word));const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));return {words,bad,ids}}
-function draw(){expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':'');b.textContent=t.letter;b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=t.x*step+7+'px';b.style.top=t.y*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent='Valid words: '+(v.words.length-v.bad.length);if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
+function draw(){expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':'');b.textContent=t.letter;b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent='Valid words: '+(v.words.length-v.bad.length);if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
 function beginDrag(e,t,element,fromTray){
  if(e.button!==0)return;
  e.preventDefault();e.stopPropagation();
@@ -54,10 +65,10 @@ function beginDrag(e,t,element,fromTray){
   if(Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)>5)moved=true;
   const br=board.getBoundingClientRect(),vr=viewport.getBoundingClientRect();
   if(ev.clientX>=vr.left&&ev.clientX<vr.left+viewport.clientWidth&&ev.clientY>=vr.top&&ev.clientY<vr.top+viewport.clientHeight){
-   const pos=closestCell(x-br.left-7,y-br.top-7,t.id);
+   const pos=closestCell(x-br.left-7-originX*step,y-br.top-7-originY*step,t.id);
 
-   drop=pos;if(pos.x*step>board.clientWidth-step*3)board.style.width=(board.clientWidth+step*8)+'px';if(pos.y*step>board.clientHeight-step*3)board.style.height=(board.clientHeight+step*8)+'px';target.style.display='block';target.style.width=(step-3)+'px';target.style.height=(step-3)+'px';
-   target.style.left=(pos.x*step+7)+'px';target.style.top=(pos.y*step+7)+'px';
+   drop=pos;if((pos.x+originX)*step>board.clientWidth-step*3)board.style.width=(board.clientWidth+step*8)+'px';if((pos.y+originY)*step>board.clientHeight-step*3)board.style.height=(board.clientHeight+step*8)+'px';target.style.display='block';target.style.width=(step-3)+'px';target.style.height=(step-3)+'px';
+   target.style.left=((pos.x+originX)*step+7)+'px';target.style.top=((pos.y+originY)*step+7)+'px';
    target.classList.toggle('blocked',occupied(pos.x,pos.y,t.id));
   }else{drop=null;target.style.display='none'}
  }
@@ -79,7 +90,7 @@ function beginDrag(e,t,element,fromTray){
  function cancel(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);ghost.remove();target.remove();draw()}
  document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cancel);
 }
-board.addEventListener('click',e=>{if(e.target!==board||selected===null)return;const r=board.getBoundingClientRect(),p=closestCell(e.clientX-r.left-7,e.clientY-r.top-7,selected);const id=selected;selected=null;place(id,p.x,p.y)});
+board.addEventListener('click',e=>{if(e.target!==board||selected===null)return;const r=board.getBoundingClientRect(),p=closestCell(e.clientX-r.left-7-originX*cellSize(),e.clientY-r.top-7-originY*cellSize(),selected);const id=selected;selected=null;place(id,p.x,p.y)});
 document.getElementById('undo').onclick=()=>{if(!history.length){message('Nothing to undo yet.');return}state.tiles=JSON.parse(history.pop());save();draw()};
 document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.filter(t=>t.x===null),letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
