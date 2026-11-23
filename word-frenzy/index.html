@@ -10,7 +10,7 @@
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Lategrams</h1><span>Solo play · saves on this device</span></header><main>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
-<div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="reset">New game</button><button id="pause">Pause</button></div>
+<div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="swap">Swap tile</button><button id="shuffle">Shuffle tray</button><button id="reset">New game</button><button id="pause">Pause</button></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><button class="primary" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
@@ -71,9 +71,17 @@ function save(){
  try{localStorage.setItem(KEY,JSON.stringify(state))}
  catch{message("This device could not save your board.",true)}
 }
-function fresh(){state={tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null})),seconds:0};history=[];selected=null;save();draw()}
+function makeStash(){
+ const stash=[...LETTERS];
+ for(let i=stash.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [stash[i],stash[j]]=[stash[j],stash[i]];
+ }
+ return stash;
+}
+function fresh(){state={tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null})),stash:makeStash(),seconds:0};history=[];selected=null;save();draw()}
 try{state=JSON.parse(localStorage.getItem(KEY));if(!state||!Array.isArray(state.tiles))fresh()}catch{fresh()}
-function remember(){history.push(JSON.stringify(state.tiles));if(history.length>80)history.shift()}
+function remember(){history.push(JSON.stringify({tiles:state.tiles,stash:state.stash}));if(history.length>80)history.shift()}
 function cellSize(){return Math.min(54,Math.max(38,Math.floor((viewport.clientWidth-20)/13)))}
 function gridPosition(x,y){const step=cellSize();return {x:Math.round(x/step),y:Math.round(y/step)}}
 function closestCell(x,y,id){const step=cellSize(),raw=gridPosition(x,y);if(!occupied(raw.x,raw.y,id))return raw;let best=raw,dist=Infinity;for(const t of state.tiles){if(t.id===id||t.x===null)continue;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const cx=t.x+dx,cy=t.y+dy;if(occupied(cx,cy,id))continue;const d=Math.hypot(x-cx*step,y-cy*step);if(d<dist){dist=d;best={x:cx,y:cy}}}}return dist<step*.85?best:raw}
@@ -185,7 +193,23 @@ board.addEventListener('pointerup',endPan);
 board.addEventListener('pointercancel',endPan);
 board.addEventListener('lostpointercapture',endPan);
 board.addEventListener('click',e=>{if(suppressBoardClick){suppressBoardClick=false;return}if(e.target!==board||selected===null)return;const r=board.getBoundingClientRect(),p=closestCell(e.clientX-r.left-7-originX*cellSize(),e.clientY-r.top-7-originY*cellSize(),selected);const id=selected;selected=null;place(id,p.x,p.y)});
-document.getElementById('undo').onclick=()=>{if(!history.length){message('Nothing to undo yet.');return}state.tiles=JSON.parse(history.pop());save();draw()};
+document.getElementById('undo').onclick=()=>{if(!history.length){message('Nothing to undo yet.');return}const previous=JSON.parse(history.pop());state.tiles=previous.tiles;state.stash=previous.stash;selected=null;save();draw()};
+function swapTrayTile(){
+ const index=state.tiles.findIndex(tile=>tile.id===selected&&tile.x===null);
+ if(index<0)return message('Choose a tile in your tray to swap.',true);
+ state.stash??=makeStash();
+ if(state.stash.length<3)return message('You need three tiles in the stash to swap.',true);
+ remember();
+ const returned=state.tiles[index];
+ const nextId=Math.max(...state.tiles.map(tile=>tile.id))+1;
+ const replacements=state.stash.splice(-3).map((letter,i)=>({id:nextId+i,letter,x:null,y:null}));
+ state.stash.splice(Math.floor(Math.random()*(state.stash.length+1)),0,returned.letter);
+ state.tiles.splice(index,1,...replacements);
+ selected=null;
+ save();draw();
+ message('Swapped '+returned.letter+' for '+replacements.map(tile=>tile.letter).join(', ')+'.');
+}
+document.getElementById('swap').onclick=swapTrayTile;
 document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.filter(t=>t.x===null),letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
