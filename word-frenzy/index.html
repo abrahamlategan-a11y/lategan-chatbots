@@ -6,7 +6,7 @@
 .dragGhost{position:fixed!important;z-index:9999!important;pointer-events:none;opacity:.92;transform:scale(1.07);box-shadow:0 8px 22px #453b2670}
 .snapTarget{position:absolute;z-index:1;pointer-events:none;border:3px dashed #23a789;border-radius:10px;background:#36c4a62b;box-shadow:0 0 0 5px #23a78920}
 .snapTarget.blocked{border-color:#edaa42;background:#f3c7774a}
-.boardViewport{width:100%;height:min(62vh,590px);min-height:330px;overflow:auto;overscroll-behavior:contain;border-radius:18px;background:#faf1df;scrollbar-width:thin;touch-action:pan-x pan-y}.board{width:100%;height:100%;min-height:100%;overflow:visible;touch-action:none;cursor:grab;user-select:none}.board.panning,.board.panning .tile{cursor:grabbing}.tile,.trayTile{touch-action:none}@media(max-width:600px){.boardViewport{height:53vh;min-height:350px}}.tile.good{background:linear-gradient(#f6edb4,#e1e6a2);outline:2px solid #53a76c;box-shadow:0 4px 0 #82994f,0 0 10px #43a86a66}
+.boardViewport{width:100%;height:min(62vh,590px);min-height:330px;overflow:auto;overscroll-behavior:contain;border-radius:18px;background:#faf1df;scrollbar-width:thin;touch-action:pan-x pan-y}.board{width:100%;height:100%;min-height:100%;overflow:visible;touch-action:none;cursor:grab;user-select:none}.board.panning,.board.panning .tile{cursor:grabbing}.tile,.trayTile{touch-action:none}@media(max-width:600px){.boardViewport{height:53vh;min-height:350px}}.tile.good{box-shadow:0 4px 0 #c89c50,0 0 9px 2px #4ab97555}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Lategrams</h1><span>Solo play · saves on this device</span></header><main>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
@@ -92,7 +92,29 @@ function occupied(x,y,ignore){return state.tiles.some(t=>t.id!==ignore&&t.x===x&
 function place(id,x,y){if(occupied(x,y,id)){message('That space is occupied. Try another spot.',true);return}remember();const t=state.tiles.find(t=>t.id===id);t.x=x;t.y=y;save();draw()}
 function message(t,bad=false){notice.textContent=t;notice.className='notice'+(bad?' badText':'')}
 function wordsFound(){const cells=new Map(state.tiles.filter(t=>t.x!==null).map(t=>[t.x+','+t.y,t]));const words=[];for(const t of state.tiles.filter(t=>t.x!==null)){for(const [dx,dy] of [[1,0],[0,1]]){if(cells.has((t.x-dx)+','+(t.y-dy)))continue;let x=t.x,y=t.y,tiles=[];while(cells.has(x+','+y)){tiles.push(cells.get(x+','+y));x+=dx;y+=dy}if(tiles.length>=2)words.push({word:tiles.map(v=>v.letter).join('').toLowerCase(),tiles})}}return words}
-function validate(){const words=wordsFound(),bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const goodIds=new Set(dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)).flatMap(w=>w.tiles.map(t=>t.id)):[]);return {words,bad,ids,goodIds}}
+function connectedWordTiles(words){
+ const cells=new Map(words.flatMap(word=>word.tiles).map(tile=>[tile.x+','+tile.y,tile]));
+ const visited=new Set();
+ let main=new Set();
+ for(const tile of cells.values()){
+  if(visited.has(tile.id))continue;
+  const group=new Set(),queue=[tile];
+  visited.add(tile.id);
+  for(let i=0;i<queue.length;i++){
+   const {id,x,y}=queue[i];
+   group.add(id);
+   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+    const neighbour=cells.get((x+dx)+','+(y+dy));
+    if(!neighbour||visited.has(neighbour.id))continue;
+    visited.add(neighbour.id);
+    queue.push(neighbour);
+   }
+  }
+  if(group.size>main.size)main=group;
+ }
+ return main;
+}
+function validate(){const words=wordsFound(),bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const validWords=dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)):[];const goodIds=connectedWordTiles(validWords);return {words,bad,ids,goodIds}}
 function draw(){expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
 function beginDrag(e,t,element,fromTray){
  if(e.button!==0)return;
