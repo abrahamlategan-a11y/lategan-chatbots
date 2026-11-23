@@ -13,7 +13,19 @@
 .stashTiles button{min-width:0;aspect-ratio:1;padding:0;background:#d5ab74;color:#4e3520;box-shadow:0 3px 0 #a97e4c;transform:translate(var(--nudge),var(--lift)) rotate(var(--tilt))}
 .stashTiles button.flipped{background:#ffe4a3;color:#153d35;opacity:1;cursor:default}
 .stashTiles button:focus-visible{outline:3px solid #177b64}
+.viewTools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.zoomTools{display:flex;gap:4px}.zoomTools button{min-width:44px}.zoomTools #zoomReset{min-width:71px}
+html.expanded{overflow:hidden}
+html.expanded body{height:100dvh;display:flex;flex-direction:column;background:#edf5ed}
+html.expanded header{padding:8px 16px}html.expanded header h1{font-size:21px}
+html.expanded main{width:100%;max-width:none;flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;margin:0;padding:10px}
+html.expanded .game{display:flex;flex-direction:column;flex:1;min-height:0}
+html.expanded .boardViewport{flex:1;min-height:120px;height:auto}
+html.expanded .tray{min-height:58px;padding:6px}
+html.expanded .actions{margin:7px 0}
+html.expanded .legend{display:none}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Lategrams</h1><span>Solo play · saves on this device</span></header><main>
+<div class="viewTools" aria-label="Board view"><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
 <button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div>
@@ -71,7 +83,7 @@ async function loadDictionary(){
  }catch{dictionaryStatus='unavailable'}
  draw();
 }
-let originX=0,originY=0;
+let originX=0,originY=0,boardZoom=100;
 let state,history=[],selected=null,paused=false;
 const viewport=document.getElementById('viewport'),board=document.getElementById('board'),tray=document.getElementById('tray'),notice=document.getElementById('notice');
 function save(){
@@ -89,7 +101,7 @@ function makeStash(){
 function fresh(){state={tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null})),stash:makeStash(),seconds:0};history=[];selected=null;save();draw()}
 try{state=JSON.parse(localStorage.getItem(KEY));if(!state||!Array.isArray(state.tiles))fresh()}catch{fresh()}
 function remember(){history.push(JSON.stringify({tiles:state.tiles,stash:state.stash}));if(history.length>80)history.shift()}
-function cellSize(){return Math.min(54,Math.max(38,Math.floor((viewport.clientWidth-20)/13)))}
+function cellSize(){return Math.round(Math.min(54,Math.max(38,Math.floor((viewport.clientWidth-20)/13)))*boardZoom/100)}
 function gridPosition(x,y){const step=cellSize();return {x:Math.round(x/step),y:Math.round(y/step)}}
 function closestCell(x,y,id){const step=cellSize(),raw=gridPosition(x,y);if(!occupied(raw.x,raw.y,id))return raw;let best=raw,dist=Infinity;for(const t of state.tiles){if(t.id===id||t.x===null)continue;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const cx=t.x+dx,cy=t.y+dy;if(occupied(cx,cy,id))continue;const d=Math.hypot(x-cx*step,y-cy*step);if(d<dist){dist=d;best={x:cx,y:cy}}}}return dist<step*.85?best:raw}
 function expandBoard(){
@@ -130,7 +142,7 @@ function connectedWordTiles(words){
  return main;
 }
 function validate(){const words=wordsFound(),bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const validWords=dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)):[];const goodIds=connectedWordTiles(validWords);return {words,bad,ids,goodIds}}
-function draw(){expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
+function draw(){expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
 function beginDrag(e,t,element,fromTray){
  if(e.button!==0)return;
  e.preventDefault();e.stopPropagation();
@@ -139,7 +151,7 @@ function beginDrag(e,t,element,fromTray){
  const offsetX=fromTray?r0.width/2:e.clientX-r0.left;
  const offsetY=fromTray?r0.height/2:e.clientY-r0.top;
  const ghost=document.createElement('div');ghost.className='tile dragGhost';ghost.textContent=t.letter;
- ghost.style.width=(step-3)+'px';ghost.style.height=(step-3)+'px';
+ ghost.style.fontSize=Math.round(step*.49)+'px';ghost.style.width=(step-3)+'px';ghost.style.height=(step-3)+'px';
  document.body.append(ghost);
  const target=document.createElement('div');target.className='snapTarget';board.append(target);
  let moved=false,drop=null;
@@ -282,5 +294,47 @@ document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game?
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
 document.getElementById('finish').onclick=()=>{const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
 setInterval(()=>{if(!paused){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
+const zoomOut=document.getElementById('zoomOut'),zoomIn=document.getElementById('zoomIn'),zoomReset=document.getElementById('zoomReset');
+function setBoardZoom(value){
+ const oldStep=cellSize();
+ const centreX=viewport.clientWidth/2,centreY=viewport.clientHeight/2;
+ const x=(viewport.scrollLeft+centreX-7)/oldStep-originX;
+ const y=(viewport.scrollTop+centreY-7)/oldStep-originY;
+ boardZoom=Math.max(50,Math.min(175,value));
+ draw();
+ const step=cellSize();
+ viewport.scrollLeft=(x+originX)*step+7-centreX;
+ viewport.scrollTop=(y+originY)*step+7-centreY;
+ zoomReset.textContent=boardZoom+'%';
+ zoomOut.disabled=boardZoom===50;
+ zoomIn.disabled=boardZoom===175;
+}
+zoomOut.onclick=()=>setBoardZoom(boardZoom-25);
+zoomIn.onclick=()=>setBoardZoom(boardZoom+25);
+zoomReset.onclick=()=>setBoardZoom(100);
+const fullscreen=document.getElementById('fullscreen'),root=document.documentElement;
+let fallbackFullscreen=false;
+function syncFullscreen(){
+ const active=Boolean(document.fullscreenElement)||fallbackFullscreen;
+ root.classList.toggle('expanded',active);
+ fullscreen.textContent=active?'Exit full screen':'⛶ Full screen';
+ fullscreen.setAttribute('aria-pressed',String(active));
+ requestAnimationFrame(draw);
+}
+fullscreen.onclick=async()=>{
+ if(document.fullscreenElement){await document.exitFullscreen();return}
+ if(fallbackFullscreen){fallbackFullscreen=false;syncFullscreen();return}
+ try{
+  if(!root.requestFullscreen)throw Error();
+  await root.requestFullscreen();
+ }catch{fallbackFullscreen=true}
+ syncFullscreen();
+};
+document.addEventListener('fullscreenchange',syncFullscreen);
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&fallbackFullscreen&&!document.querySelector('dialog[open]')){
+  fallbackFullscreen=false;syncFullscreen();
+ }
+});
 window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap){swapDialog.showModal();renderStash()}void loadDictionary();
 </script></body></html>
