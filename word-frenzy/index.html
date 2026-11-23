@@ -15,20 +15,34 @@
 .stashTiles button:focus-visible{outline:3px solid #177b64}
 .viewTools{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .zoomTools{display:flex;gap:4px}.zoomTools button{min-width:44px}.zoomTools #zoomReset{min-width:71px}
+.gameControls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.gameControls .swapZone,.gameControls .actions{margin:0}
+.game .notice{margin-top:6px}
 html.expanded{overflow:hidden}
-html.expanded body{height:100dvh;display:flex;flex-direction:column;background:#edf5ed}
-html.expanded header{padding:8px 16px}html.expanded header h1{font-size:21px}
-html.expanded main{width:100%;max-width:none;flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;margin:0;padding:10px}
-html.expanded .game{display:flex;flex-direction:column;flex:1;min-height:0}
-html.expanded .boardViewport{flex:1;min-height:120px;height:auto}
-html.expanded .tray{min-height:58px;padding:6px}
-html.expanded .actions{margin:7px 0}
+html.expanded body{height:100dvh;background:#edf5ed}
+html.expanded header{display:none}
+html.expanded main{height:100%;width:100%;max-width:none;display:flex;flex-direction:column;overflow:auto;padding:6px;gap:6px}
+html.expanded .gameToolbar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:4px 10px}
+html.expanded .viewTools,html.expanded .top{margin:0;gap:4px}
+html.expanded .chip{padding:5px 8px;font-size:12px}
+html.expanded .game{display:flex;flex-direction:column;flex:1;min-height:0;padding:5px;border-radius:12px;box-shadow:none}
+html.expanded .boardViewport{flex:1 0 120px;min-height:120px;height:auto;border-radius:8px}
+html.expanded .tray{min-height:48px;margin-top:5px;padding:5px 8px;border-width:4px;gap:6px;flex:0 0 auto}
+html.expanded .trayTile{width:34px;height:35px;font-size:19px}
+html.expanded .gameControls{margin-top:5px;gap:5px;flex:0 0 auto}
+html.expanded .actions{gap:4px}
+html.expanded button:not(dialog button){padding:5px 9px;min-height:32px;font-size:13px}
+html.expanded .notice{min-height:0;margin-top:4px;font-size:12px}
 html.expanded .legend{display:none}
+@media(pointer:coarse){
+ html.expanded button:not(dialog button){min-height:40px}
+ html.expanded .trayTile{width:36px;height:39px}
+}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Lategrams</h1><span>Solo play · saves on this device</span></header><main>
-<div class="viewTools" aria-label="Board view"><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
-<div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div>
+<div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
+<div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
-<button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div>
+<div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
