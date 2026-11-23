@@ -46,13 +46,49 @@ header h1::before{content:"";width:20px;height:23px;border:2px solid #bed09e;bor
 .board,.boardViewport{background:#fcf5e9}
 button.primary{background:#edb1ab;color:#452925}
 .swapZone{background:#f7e3df;border-color:#bf9386}
+#lobby{width:min(460px,calc(100% - 28px));max-width:none;padding:0;background:#fffaf0;color:#244b3a}
+#lobby::backdrop{background:#142f27b8}
+.lobbyHero{padding:25px 24px 21px;background:#dcebd3;display:flex;justify-content:space-between;align-items:center;gap:14px}
+.lobbyHero h2{margin:0;font-size:clamp(27px,7vw,40px);letter-spacing:-.05em}
+.guavaSlice{flex:none;width:52px;height:60px;border:4px solid #73975f;border-radius:49% 49% 46% 46%;background:radial-gradient(ellipse,#c48769 0 8%,transparent 9%),radial-gradient(ellipse,#f3a3a1 0 55%,#fbe1ab 57%);transform:rotate(20deg);box-shadow:-14px 7px 0 -2px #96b67a}
+.lobbyBody{padding:18px 24px 24px}
+.lobbyChoices{display:grid;gap:9px}#lobby [hidden]{display:none}.lobbyChoices button{text-align:left}
+#lobby fieldset{border:1px solid #d7dfcf;border-radius:10px;margin:0 0 12px;padding:10px}
+#lobby fieldset label{display:block;padding:6px}
+#joinCode{display:block;margin:7px 0 12px;width:100%;font:inherit;padding:10px;border:1px solid #a3b39e;border-radius:8px;text-transform:uppercase}
+.lobbyDetail p{font-size:14px}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Solo play · saves on this device</span></header><main>
-<div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
+<div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
 <div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
+<dialog id="lobby" aria-labelledby="lobbyTitle">
+ <div class="lobbyHero"><h2 id="lobbyTitle">Guavagrams</h2><span class="guavaSlice" aria-hidden="true"></span></div>
+ <div class="lobbyBody">
+  <div class="lobbyChoices" id="lobbyChoices">
+   <button type="button" class="primary" id="playSolo">Play solo →</button>
+   <button type="button" id="hostGame">Host game →</button>
+   <button type="button" id="joinGame">Join game →</button>
+  </div>
+  <div id="hostSetup" class="lobbyDetail" hidden>
+   <fieldset><legend>Choose a difficulty</legend>
+    <label><input type="radio" name="difficulty" value="easy" checked> <strong>Easy</strong> · Check words as you build</label>
+    <label><input type="radio" name="difficulty" value="hard"> <strong>Hard</strong> · Check words when you call Guava!</label>
+   </fieldset>
+   <p>Multiplayer rooms are still being built.</p>
+   <button type="button" disabled>Create room</button>
+  </div>
+  <div id="joinSetup" class="lobbyDetail" hidden>
+   <label for="joinCode">Game code</label>
+   <input id="joinCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false">
+   <p>You’ll be able to join with a friend’s code when multiplayer rooms are ready.</p>
+   <button type="button" disabled>Join room</button>
+  </div>
+  <button type="button" id="lobbyBack" hidden>← Back</button>
+ </div>
+</dialog>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
 <dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><button class="primary" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
 </main><script>
@@ -315,7 +351,7 @@ document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
 document.getElementById('finish').onclick=()=>{const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
-setInterval(()=>{if(!paused){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
+setInterval(()=>{if(!paused&&!document.getElementById('lobby').open){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
 const zoomOut=document.getElementById('zoomOut'),zoomIn=document.getElementById('zoomIn'),zoomReset=document.getElementById('zoomReset');
 function setBoardZoom(value){
  const oldStep=cellSize();
@@ -358,5 +394,28 @@ document.addEventListener('keydown',event=>{
   fallbackFullscreen=false;syncFullscreen();
  }
 });
-window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap){swapDialog.showModal();renderStash()}void loadDictionary();
+const lobby=document.getElementById('lobby');
+const lobbyChoices=document.getElementById('lobbyChoices');
+const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
+function showLobbyPage(page){
+ lobbyChoices.hidden=page!=='menu';
+ hostSetup.hidden=page!=='host';
+ joinSetup.hidden=page!=='join';
+ lobbyBack.hidden=page==='menu';
+ const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
+ target.focus();
+}
+function openLobby(){
+ lobby.showModal();
+ showLobbyPage('menu');
+}
+document.getElementById('openLobby').onclick=openLobby;
+document.getElementById('playSolo').onclick=()=>lobby.close();
+document.getElementById('hostGame').onclick=()=>showLobbyPage('host');
+document.getElementById('joinGame').onclick=()=>showLobbyPage('join');
+lobbyBack.onclick=()=>showLobbyPage('menu');
+lobby.addEventListener('cancel',event=>{
+ if(lobbyChoices.hidden){event.preventDefault();showLobbyPage('menu')}
+});
+window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
 </script></body></html>
