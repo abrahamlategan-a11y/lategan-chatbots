@@ -7,13 +7,18 @@
 .snapTarget{position:absolute;z-index:1;pointer-events:none;border:3px dashed #23a789;border-radius:10px;background:#36c4a62b;box-shadow:0 0 0 5px #23a78920}
 .snapTarget.blocked{border-color:#edaa42;background:#f3c7774a}
 .boardViewport{width:100%;height:min(62vh,590px);min-height:330px;overflow:auto;overscroll-behavior:contain;border-radius:18px;background:#faf1df;scrollbar-width:thin;touch-action:pan-x pan-y}.board{width:100%;height:100%;min-height:100%;overflow:visible;touch-action:none;cursor:grab;user-select:none}.board.panning,.board.panning .tile{cursor:grabbing}.tile,.trayTile{touch-action:none}@media(max-width:600px){.boardViewport{height:53vh;min-height:350px}}.tile.good{box-shadow:0 4px 0 #c89c50,0 0 9px 2px #4ab97555}
-.stashTiles{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}.stashTiles button{background:#e9c487;color:#4e3520;padding:10px 5px}.stashTiles button:focus-visible{outline:3px solid #177b64}
+.swapZone{display:block;margin:10px 0 0;border:2px dashed #b08e64;background:#f7edda}.swapZone span{margin-right:4px}.swapZone.over{border-color:#177b64;background:#d9f1e6}
+#swapDialog{width:min(490px,calc(100% - 24px));max-width:none}
+.stashTiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(36px,1fr));gap:10px;padding:8px}
+.stashTiles button{min-width:0;aspect-ratio:1;padding:0;background:#d5ab74;color:#4e3520;box-shadow:0 3px 0 #a97e4c;transform:translate(var(--nudge),var(--lift)) rotate(var(--tilt))}
+.stashTiles button.flipped{background:#ffe4a3;color:#153d35;opacity:1;cursor:default}
+.stashTiles button:focus-visible{outline:3px solid #177b64}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Lategrams</h1><span>Solo play · saves on this device</span></header><main>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
-<div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="swap">Swap tile</button><button id="shuffle">Shuffle tray</button><button id="reset">New game</button><button id="pause">Pause</button></div>
+<button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="reset">New game</button><button id="pause">Pause</button></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
-</div><p class="legend">Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
+</div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
 <dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><button class="primary" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
 </main><script>
@@ -142,6 +147,7 @@ function beginDrag(e,t,element,fromTray){
   const x=ev.clientX-offsetX,y=ev.clientY-offsetY;
   ghost.style.left=x+'px';ghost.style.top=y+'px';
   if(Math.hypot(ev.clientX-e.clientX,ev.clientY-e.clientY)>5)moved=true;
+  document.getElementById('swap').classList.toggle('over',moved&&overSwapZone(ev));
   const br=board.getBoundingClientRect(),vr=viewport.getBoundingClientRect();
   if(ev.clientX>=vr.left&&ev.clientX<vr.left+viewport.clientWidth&&ev.clientY>=vr.top&&ev.clientY<vr.top+viewport.clientHeight){
    const pos=closestCell(x-br.left-7-originX*step,y-br.top-7-originY*step,t.id);
@@ -155,6 +161,9 @@ function beginDrag(e,t,element,fromTray){
  function up(ev){
   document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);
   ghost.remove();target.remove();
+  const swapZone=document.getElementById('swap');
+  swapZone.classList.remove('over');
+  if(moved&&overSwapZone(ev)){beginSwap(t.id);draw();return}
   const tr=tray.getBoundingClientRect();
   if(ev.clientX>=tr.left&&ev.clientX<=tr.right&&ev.clientY>=tr.top&&ev.clientY<=tr.bottom){
    if(t.x!==null){remember();t.x=null;t.y=null;save()}draw();return;
@@ -166,7 +175,7 @@ function beginDrag(e,t,element,fromTray){
    t.x=drop.x;t.y=drop.y;save();draw();
   }else{draw()}
  }
- function cancel(){document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);ghost.remove();target.remove();draw()}
+ function cancel(){document.getElementById('swap').classList.remove('over');document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',up);document.removeEventListener('pointercancel',cancel);ghost.remove();target.remove();draw()}
  document.addEventListener('pointermove',move);document.addEventListener('pointerup',up);document.addEventListener('pointercancel',cancel);
 }
 let pan=null,suppressBoardClick=false;
@@ -198,50 +207,68 @@ board.addEventListener('click',e=>{if(suppressBoardClick){suppressBoardClick=fal
 document.getElementById('undo').onclick=()=>{if(!history.length){message('Nothing to undo yet.');return}const previous=JSON.parse(history.pop());state.tiles=previous.tiles;state.stash=previous.stash;selected=null;save();draw()};
 const swapDialog=document.getElementById('swapDialog');
 const stashTiles=document.getElementById('stashTiles');
+function overSwapZone(event){
+ const rect=document.getElementById('swap').getBoundingClientRect();
+ return event.clientX>=rect.left&&event.clientX<rect.right&&event.clientY>=rect.top&&event.clientY<rect.bottom;
+}
 function renderStash(){
  const swap=state.pendingSwap;
- document.getElementById('swapProgress').textContent='Pick '+swap.remaining+' more'+(swap.drawn.length?' · Flipped: '+swap.drawn.join(', '):'');
+ swap.picked??={};
+ document.getElementById('swapProgress').textContent='Pick '+swap.remaining+' more · '+state.stash.filter(letter=>letter!==null).length+' face-down';
  stashTiles.replaceChildren();
- state.stash.forEach((_,index)=>{
-  const tile=document.createElement('button');
-  tile.type='button';tile.textContent='◆';tile.setAttribute('aria-label','Flip tile '+(index+1));
+ state.stash.forEach((letter,index)=>{
+  const tile=document.createElement('button'),flipped=letter===null;
+  tile.type='button';
+  tile.textContent=flipped?swap.picked[index]:'◆';
+  tile.disabled=flipped;
+  tile.classList.toggle('flipped',flipped);
+  tile.style.setProperty('--nudge',((index*17)%7-3)+'px');
+  tile.style.setProperty('--lift',((index*13)%7-3)+'px');
+  tile.style.setProperty('--tilt',((index*19)%23-11)+'deg');
+  tile.setAttribute('aria-label',flipped?'Flipped '+tile.textContent:'Flip tile '+(index+1));
   tile.onclick=()=>flipStashTile(index);
   stashTiles.append(tile);
  });
- stashTiles.firstElementChild?.focus();
+ stashTiles.querySelector('button:not(:disabled)')?.focus();
 }
 function flipStashTile(index){
- const swap=state.pendingSwap;
- if(!swap||index<0||index>=state.stash.length)return;
- const [letter]=state.stash.splice(index,1);
+ const swap=state.pendingSwap,letter=state.stash[index];
+ if(!swap||!letter)return;
+ state.stash[index]=null;
+ swap.picked[index]=letter;
  state.tiles.push({id:swap.nextId++,letter,x:null,y:null});
  swap.drawn.push(letter);
  swap.remaining--;
- if(swap.remaining===0){
+ renderStash();
+ const finished=swap.remaining===0;
+ if(finished){
+  state.stash=state.stash.filter(letter=>letter!==null);
   state.stash.splice(Math.floor(Math.random()*(state.stash.length+1)),0,swap.returned);
   delete state.pendingSwap;
-  swapDialog.close();
+  setTimeout(()=>{
+   swapDialog.close();
+   message('Swapped '+swap.returned+' for '+swap.drawn.join(', ')+'.');
+   document.getElementById('swap').focus();
+  },450);
  }
  save();draw();
- if(state.pendingSwap)renderStash();
- else message('Swapped '+swap.returned+' for '+swap.drawn.join(', ')+'.');
 }
-function swapTrayTile(){
- const index=state.tiles.findIndex(tile=>tile.id===selected&&tile.x===null);
- if(index<0)return message('Choose a tile in your tray to swap.',true);
+function beginSwap(id){
+ const index=state.tiles.findIndex(tile=>tile.id===id);
+ if(index<0)return message('Drag a board or tray tile onto Swap, or select it and tap Swap.',true);
  state.stash??=makeStash();
  if(state.stash.length<3)return message('You need three tiles in the stash to swap.',true);
  remember();
  const nextId=Math.max(...state.tiles.map(tile=>tile.id))+1;
  const [returned]=state.tiles.splice(index,1);
- state.pendingSwap={returned:returned.letter,nextId,drawn:[],remaining:3};
+ state.pendingSwap={returned:returned.letter,nextId,drawn:[],picked:{},remaining:3};
  selected=null;
  save();draw();
  swapDialog.showModal();
  renderStash();
 }
 swapDialog.addEventListener('cancel',event=>event.preventDefault());
-document.getElementById('swap').onclick=swapTrayTile;
+document.getElementById('swap').onclick=()=>beginSwap(selected);
 document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.filter(t=>t.x===null),letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
