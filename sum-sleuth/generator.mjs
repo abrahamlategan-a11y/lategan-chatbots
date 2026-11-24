@@ -2,10 +2,17 @@ export const LEVELS = Object.freeze({
   1: Object.freeze({operation: 'addition', limit: 20}),
   2: Object.freeze({operation: 'addition', limit: 100}),
   3: Object.freeze({operation: 'addition', limit: 250, centreMinimum: 100}),
-  4: Object.freeze({operation: 'multiplication', limit: 64, factorLimit: 8}),
-  5: Object.freeze({operation: 'multiplication', limit: 100, factorLimit: 10, centreMinimum: 60}),
-  6: Object.freeze({operation: 'multiplication', limit: 144, factorLimit: 12, centreMinimum: 80}),
+  4: Object.freeze({operation: 'multiplication', limit: 120, factorLimit: 12, factTier: 0}),
+  5: Object.freeze({operation: 'multiplication', limit: 144, factorLimit: 12, factTier: 1}),
+  6: Object.freeze({operation: 'multiplication', limit: 240, factorLimit: 16, factTier: 2}),
 });
+
+export function multiplicationTier(left, right) {
+  if ([left, right].some(factor => [2, 5, 10].includes(factor))) return 0;
+  if ([left, right].some(factor => [3, 4].includes(factor))) return 1;
+  if (Math.min(left, right) === 6 && [8, 12].includes(Math.max(left, right))) return 1;
+  return 2;
+}
 
 function seededRandom(seed) {
   let state = 2166136261;
@@ -46,7 +53,7 @@ export function generatePuzzle(level, seed) {
   const settings = LEVELS[level];
   if (!settings) throw new RangeError('Choose a level from 1 to 6.');
   const random = seededRandom(seed);
-  const {operation, limit, factorLimit, centreMinimum} = settings;
+  const {operation, limit, factorLimit, centreMinimum, factTier} = settings;
   const multiply = operation === 'multiplication';
   const values = range(multiply ? 2 : 1, limit);
   const operands = range(multiply ? 2 : 1, factorLimit ?? limit);
@@ -55,7 +62,7 @@ export function generatePuzzle(level, seed) {
   for (const [index, left] of operands.entries()) {
     for (const right of operands.slice(index + 1)) {
       const result = multiply ? left * right : left + right;
-      if (result > limit) continue;
+      if (result > limit || (multiply && multiplicationTier(left, right) > factTier)) continue;
       if (!pairsByTarget.has(result)) pairsByTarget.set(result, []);
       pairsByTarget.get(result).push([left, right]);
     }
@@ -79,7 +86,7 @@ export function generatePuzzle(level, seed) {
   for (const [target, pairs] of pairsByTarget) {
     if (target < (centreMinimum ?? (multiply ? 24 : 10))) continue;
     for (const pair of pairs) {
-      if (pair.every(number => pairsByTarget.has(number))) eligibleCentrePairs.push([...pair, target]);
+      if ((!multiply || multiplicationTier(...pair) === factTier) && pair.every(number => pairsByTarget.has(number))) eligibleCentrePairs.push([...pair, target]);
     }
   }
 
@@ -87,7 +94,9 @@ export function generatePuzzle(level, seed) {
     const numbers = buildGroup(triple, solvable, 4);
     if (!numbers) continue;
     const petals = numbers.map(answer => {
-      for (const pair of shuffled(pairsByTarget.get(answer), random)) {
+      const candidates = shuffled(pairsByTarget.get(answer), random);
+      if (multiply) candidates.sort((a, b) => multiplicationTier(...b) - multiplicationTier(...a));
+      for (const pair of candidates) {
         const cards = buildGroup([...pair, answer], values, 5);
         if (cards) return {numbers: cards, answer};
       }
