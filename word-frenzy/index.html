@@ -290,7 +290,11 @@ function soloChallengeDeck(){
    ['spellOo','Build a word with OO and another with EE',({words})=>[...words].some(a=>a.includes('oo')&&[...words].some(b=>b!==a&&b.includes('ee')))]
   ],
   [
-   ['rhymingPair','Build a rhyming pair from the -at, -ain or -ight family',({words})=>pair(words,[['cat','hat'],['bat','mat'],['rain','train'],['pain','rain'],['light','night'],['fight','light']])],
+   ['rhymingPair','Build a rhyming pair from the -at, -ain or -ight family',({words})=>[
+    'at bat brat cat chat fat flat gnat hat mat pat rat sat scat slat spat splat tat that vat',
+    'brain chain drain gain grain main pain plain rain slain sprain stain strain train vain complain contain explain maintain obtain refrain remain retain',
+    'bright fight flight fright knight light might night plight right sight slight tight'
+   ].some(family=>family.split(' ').filter(word=>words.has(word)).length>=2)],
    ['oppositesPair','Build two opposites. Think size, speed or direction',({words})=>pair(words,[['big','small'],['fast','slow'],['up','down'],['in','out'],['left','right']])],
    ['wordFamily','Build the present and past forms of the same verb',({words})=>pair(words,[['play','played'],['rain','rained'],['walk','walked'],['eat','ate'],['run','ran'],['sing','sang'],['grow','grew'],['sit','sat'],['ride','rode']])]
   ],
