@@ -50,7 +50,6 @@ button.primary{background:#edb1ab;color:#452925}
 #lobby::backdrop{background:#142f27b8}
 .lobbyHero{padding:25px 24px 21px;background:#dcebd3;display:flex;justify-content:space-between;align-items:center;gap:14px}
 .lobbyHero h2{margin:0;font-size:clamp(27px,7vw,40px);letter-spacing:-.05em}
-.guavaSlice{flex:none;width:52px;height:60px;border:4px solid #73975f;border-radius:49% 49% 46% 46%;background:radial-gradient(ellipse,#c48769 0 8%,transparent 9%),radial-gradient(ellipse,#f3a3a1 0 55%,#fbe1ab 57%);transform:rotate(20deg);box-shadow:-14px 7px 0 -2px #96b67a}
 .lobbyBody{padding:18px 24px 24px}
 .lobbyChoices{display:grid;gap:9px}#lobby [hidden]{display:none}.lobbyChoices button{text-align:left}
 #lobby fieldset{border:1px solid #d7dfcf;border-radius:10px;margin:0 0 12px;padding:10px}
@@ -78,6 +77,36 @@ html.expanded .soloChallenges{margin:0;flex:none}
 .soloBests dt{font-size:.85em;color:#4e615a}
 .soloBests dd{margin:0;font-weight:800}
 .soloBests p{font-size:.82em;margin:0 2px 9px;color:#4e615a}
+
+#lobby{width:min(620px,calc(100% - 20px));max-height:calc(100dvh - 20px);border:1px solid #ffffff8a;border-radius:24px;background:#fffcf3;color:#233b30}
+#lobby::backdrop{background:#153328cf}
+.lobbyHero{min-height:106px;padding:22px clamp(14px,5vw,30px);background:linear-gradient(112deg,#173f33,#2f6550);color:#fff9e6;overflow:hidden}
+.lobbyHero h2{font-size:clamp(24px,7vw,52px);line-height:1}
+.heroTiles{display:flex;gap:4px;transform:rotate(-8deg)}
+.heroTiles span{display:grid;place-items:center;width:clamp(24px,7vw,48px);aspect-ratio:1;border-radius:9px;background:#f8d798;color:#244235;font-weight:900;box-shadow:0 4px #9d7549;font-size:clamp(1rem,4vw,1.8rem)}
+.heroTiles span:nth-child(2){background:#f8ad9c;transform:translateY(5px);box-shadow:0 4px #b16c62}
+.lobbyBody{padding:12px clamp(12px,4vw,26px) 25px}
+.setupNav{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px}
+.setupNav button{background:transparent;color:#284e3d;padding:7px 10px}
+#lobbyClose{margin-left:auto;font-size:1.45rem;line-height:1}
+#setupHeading{margin:8px 0 14px;font-size:1.45rem}
+#lobbyChoices,#soloModes{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#lobby .modeCard{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;min-height:85px;padding:11px;border:1px solid #c9d9be;background:#e9f2df;color:#253c31;border-radius:15px;box-shadow:0 3px #d4e1c9}
+#lobby .modeCard.peach{background:#ffe7da;border-color:#f0cbbc;box-shadow:0 3px #f0cbbc}
+#lobby .modeCard.lavender{background:#ede7f6;border-color:#ded1eb;box-shadow:0 3px #ded1eb}
+#lobby .modeCard.gold{background:#fff0cb;border-color:#ead8a9;box-shadow:0 3px #ead8a9}
+#lobby .modeCard.level{min-height:62px}
+#lobby .modeCard:hover{filter:brightness(.97)}
+#lobby button:focus-visible,#lobby input:focus-visible{outline:3px solid #417d65;outline-offset:2px}
+.modeIcon{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:#ffffffab;font-size:1.05rem;font-weight:900}
+.modeCard strong,.modeCard small{display:block}
+.modeCard small{margin-top:3px;color:#435448;font-size:.79rem;font-weight:500;line-height:1.3}
+.modeArrow{font-weight:900;color:#365f4c}
+#lobby label[for]{display:block;font-weight:750;margin-bottom:5px}
+#lobby input:not([type=radio]){display:block;width:100%;padding:10px;margin-bottom:12px;border:1px solid #b9cbbc;border-radius:9px;background:#fff;font:inherit;color:inherit}
+#lobby #roomCode{display:inline-block;padding:8px 14px;border-radius:10px;background:#eaf1df;letter-spacing:.12em;user-select:all}
+#roomPlayers{padding:10px 12px;border-radius:9px;background:#f3f5eb}
+@media(max-width:490px){#lobbyChoices,#soloModes{grid-template-columns:1fr}#lobby .modeCard{min-height:62px}}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
@@ -91,25 +120,34 @@ html.expanded .soloChallenges{margin:0;flex:none}
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="lobby" aria-labelledby="lobbyTitle">
- <div class="lobbyHero"><h2 id="lobbyTitle">Guavagrams</h2><span class="guavaSlice" aria-hidden="true"></span></div>
+ <div class="lobbyHero"><h2 id="lobbyTitle">Guavagrams</h2><div class="heroTiles" aria-hidden="true"><span>G</span><span>O</span><span>!</span></div></div>
  <div class="lobbyBody">
+  <nav class="setupNav" aria-label="Game setup">
+   <button type="button" id="lobbyBack" hidden>← Back</button>
+   <button type="button" id="lobbyClose" aria-label="Close play menu">×</button>
+  </nav>
+  <h3 id="setupHeading" tabindex="-1">Choose how to play</h3>
   <div class="lobbyChoices" id="lobbyChoices">
-   <button type="button" class="primary" id="playSolo">Play solo →</button>
-   <button type="button" id="hostGame">Host game →</button>
-   <button type="button" id="joinGame">Join game →</button>
-   <button type="button" id="openSoloBests">🏆 Personal bests →</button>
+   <button type="button" id="playSolo"  class="modeCard mint"><span class="modeIcon" aria-hidden="true">✦</span><span><strong>Play solo</strong><small>Choose a mode and build your own grid.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" id="hostGame"  class="modeCard peach"><span class="modeIcon" aria-hidden="true">⚑</span><span><strong>Host game</strong><small>Create a room and invite friends.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" id="joinGame"  class="modeCard lavender"><span class="modeIcon" aria-hidden="true">#</span><span><strong>Join game</strong><small>Enter a friend’s room code.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" id="openSoloBests"  class="modeCard gold"><span class="modeIcon" aria-hidden="true">🏆</span><span><strong>Personal bests</strong><small>See your solo records.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
   </div>
   <div id="soloModes" class="lobbyChoices" hidden role="group" aria-label="Solo game modes">
-   <button type="button" data-solo-mode="free">Free Play · Make any words</button>
-   <h3 style="margin:8px 0 0">Grid Sprint</h3>
-   <button type="button" data-solo-mode="sprint15">Easy · 15 tiles</button>
-   <button type="button" data-solo-mode="sprint21">Medium · 21 tiles</button>
-   <button type="button" data-solo-mode="sprint30">Hard · 30 tiles</button>
-   <button type="button" data-solo-mode="streak">Tile Streak · 5 minutes</button>
-   <h3 style="margin:8px 0 0">Word Challenges</h3>
-   <button type="button" data-solo-mode="easy">Easy · 6 entry-level challenges</button>
-   <button type="button" data-solo-mode="medium">Medium · Build a bigger grid</button>
-   <button type="button" data-solo-mode="hard">Hard · Longer words and more crossings</button>
+   <button type="button" data-solo-mode="free" class="modeCard mint"><span class="modeIcon" aria-hidden="true">Aa</span><span><strong>Free Play</strong><small>Make any words at your own pace.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" id="openSprint"  class="modeCard gold"><span class="modeIcon" aria-hidden="true">⚡</span><span><strong>Grid Sprint</strong><small>Use every tile and race your best time.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" data-solo-mode="streak" class="modeCard peach"><span class="modeIcon" aria-hidden="true">↗</span><span><strong>Tile Streak</strong><small>Build, draw three more, and repeat for five minutes.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" id="openChallenges"  class="modeCard lavender"><span class="modeIcon" aria-hidden="true">✓</span><span><strong>Word Challenges</strong><small>Complete six goals in one round.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+  </div>
+  <div id="sprintLevels" class="lobbyChoices" hidden role="group" aria-label="Grid Sprint difficulty">
+   <button type="button" data-solo-mode="sprint15" class="modeCard level"><span class="modeIcon" aria-hidden="true">E</span><span><strong>Easy</strong><small>15 starting tiles</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" data-solo-mode="sprint21" class="modeCard level"><span class="modeIcon" aria-hidden="true">M</span><span><strong>Medium</strong><small>21 starting tiles</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" data-solo-mode="sprint30" class="modeCard level"><span class="modeIcon" aria-hidden="true">H</span><span><strong>Hard</strong><small>30 starting tiles</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+  </div>
+  <div id="challengeLevels" class="lobbyChoices" hidden role="group" aria-label="Word Challenges difficulty">
+   <button type="button" data-solo-mode="easy" class="modeCard level"><span class="modeIcon" aria-hidden="true">E</span><span><strong>Easy</strong><small>Six entry-level challenges</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" data-solo-mode="medium" class="modeCard level"><span class="modeIcon" aria-hidden="true">M</span><span><strong>Medium</strong><small>Build a bigger grid</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" data-solo-mode="hard" class="modeCard level"><span class="modeIcon" aria-hidden="true">H</span><span><strong>Hard</strong><small>Longer words and more crossings</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
   </div>
   <section class="soloBests" id="soloBests" aria-labelledby="soloBestsTitle" hidden>
  <h3 id="soloBestsTitle" tabindex="-1">🏆 Personal bests</h3>
@@ -125,6 +163,8 @@ html.expanded .soloChallenges{margin:0;flex:none}
  <div><dt>Tile Streak · Most tiles</dt><dd id="streakBest">—</dd></div></dl>
  <p id="bestStatus">Saved on this browser.</p>
 </section>
+  <div id="roomLogin" hidden><label for="roomStudentCode">Learning Hub student code</label>
+   <input id="roomStudentCode" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
   <div id="hostSetup" class="lobbyDetail" hidden>
    <fieldset><legend>Choose a difficulty</legend>
     <label><input type="radio" name="difficulty" value="easy" checked> <strong>Easy</strong> · Check words as you build</label>
@@ -137,15 +177,13 @@ html.expanded .soloChallenges{margin:0;flex:none}
    <input id="joinCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false">
    <button type="button" id="joinRoom">Join room</button>
   </div>
-  <div id="roomLogin" hidden><label for="roomStudentCode">Learning Hub student code</label>
-   <input id="roomStudentCode" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+
   <div id="roomWaiting" hidden>
    <p>Share this game code with friends</p><strong id="roomCode"></strong>
    <p id="roomMode"></p><p id="roomPlayers" aria-live="polite"></p>
    <button class="primary" type="button" id="roomStart">Begin game</button>
   </div>
   <p id="roomStatus" role="status"></p>
-  <button type="button" id="lobbyBack" hidden>← Back</button>
  </div>
 </dialog>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
@@ -692,7 +730,14 @@ document.addEventListener('keydown',event=>{
 const lobby=document.getElementById('lobby');
 const lobbyChoices=document.getElementById('lobbyChoices');
 const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
+let setupPage='menu';
 function showLobbyPage(page){
+ setupPage=page;
+ const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Personal bests'};
+ $('setupHeading').textContent=titles[page];
+ $('setupHeading').hidden=page==='records';
+ $('sprintLevels').hidden=page!=='sprint';
+ $('challengeLevels').hidden=page!=='challenges';
  lobbyChoices.hidden=page!=='menu';
  $('soloModes').hidden=page!=='solo';
  $('soloBests').hidden=page!=='records';
@@ -706,7 +751,7 @@ function showLobbyPage(page){
  joinSetup.hidden=page!=='join';
  lobbyBack.hidden=page==='menu';
  if(page==='room')return;
- if(page==='solo'){$('soloModes').querySelector('button').focus();return}
+ if(page==='solo'||page==='sprint'||page==='challenges'){$('setupHeading').focus();return}
  if(page==='records'){renderTimedBests();$('soloBestsTitle').focus();return}
  const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
  target.focus();
@@ -751,7 +796,18 @@ document.getElementById('soloResult').addEventListener('cancel',event=>{
 });
 document.getElementById('hostGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('host')}};
 document.getElementById('joinGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('join')}};
-lobbyBack.onclick=()=>{if(roomBusy)return;if(room?.phase==='waiting')roomAction('leave');else showLobbyPage('menu')};
+document.getElementById('openSprint').onclick=()=>showLobbyPage('sprint');
+document.getElementById('openChallenges').onclick=()=>showLobbyPage('challenges');
+document.getElementById('lobbyClose').onclick=()=>{if(!roomBusy){if(room?.phase==='waiting')roomAction('leave');else lobby.close()}};
+lobbyBack.onclick=()=>{
+ if(roomBusy)return;
+ if(room?.phase==='waiting')return roomAction('leave');
+ const parent=setupPage==='sprint'||setupPage==='challenges'?'solo':'menu';
+ const child=setupPage;
+ showLobbyPage(parent);
+ if(child==='sprint')$('openSprint').focus();
+ if(child==='challenges')$('openChallenges').focus();
+};
 lobby.addEventListener('cancel',event=>{
  if(lobbyChoices.hidden||roomBusy){event.preventDefault();if(!roomBusy)lobbyBack.click()}
 });
