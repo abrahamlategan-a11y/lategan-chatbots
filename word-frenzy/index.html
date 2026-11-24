@@ -73,27 +73,17 @@ html.expanded .soloChallenges{margin:0;flex:none}
 .trayTile.awaitingReveal{visibility:hidden}
 
 .soloBests{margin:0 0 10px;border:1px solid #d8e6d7;border-radius:14px;background:#fff;padding:0 12px}
-.soloBests summary{cursor:pointer;padding:8px 2px;font-weight:800}
+.soloBests h3{margin:0;padding:12px 2px;font-weight:800}
 .soloBests dl{display:flex;flex-wrap:wrap;gap:8px 24px;margin:0;padding:0 2px 9px}
 .soloBests dt{font-size:.85em;color:#4e615a}
 .soloBests dd{margin:0;font-weight:800}
 .soloBests p{font-size:.82em;margin:0 2px 9px;color:#4e615a}
-html.expanded .soloBests{margin:0;flex:none}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
 <details class="soloChallenges" id="soloChallenges" open>
 <summary>Solo challenges <span class="soloChallengeProgress" id="soloChallengeProgress" role="status"></span></summary>
 <ul id="soloChallengeList" aria-label="Challenges for this game"></ul>
-</details>
-<details class="soloBests" id="soloBests">
- <summary>🏆 Personal bests</summary>
- <dl>
-  <div><dt>Longest word</dt><dd id="bestWord">—</dd></div>
-  <div><dt>Most different words on one board</dt><dd id="bestWordCount">—</dd></div>
-  <div><dt>Most challenges in one round</dt><dd id="bestChallenges">—</dd></div>
- </dl>
- <p id="bestStatus">Saved on this browser.</p>
 </details>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
 <div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap 1 for 3 <span class="stashCount" id="stashCount"></span></button><div class="actions"><button id="soloDraw">Draw a tile</button><button id="guavaPick" hidden>Pick!</button><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
@@ -106,7 +96,17 @@ html.expanded .soloBests{margin:0;flex:none}
    <button type="button" class="primary" id="playSolo">Play solo →</button>
    <button type="button" id="hostGame">Host game →</button>
    <button type="button" id="joinGame">Join game →</button>
+   <button type="button" id="openSoloBests">🏆 Personal bests →</button>
   </div>
+  <section class="soloBests" id="soloBests" aria-labelledby="soloBestsTitle" hidden>
+ <h3 id="soloBestsTitle" tabindex="-1">🏆 Personal bests</h3>
+ <dl>
+  <div><dt>Longest word</dt><dd id="bestWord">—</dd></div>
+  <div><dt>Most different words on one board</dt><dd id="bestWordCount">—</dd></div>
+  <div><dt>Most challenges in one round</dt><dd id="bestChallenges">—</dd></div>
+ </dl>
+ <p id="bestStatus">Saved on this browser.</p>
+</section>
   <div id="hostSetup" class="lobbyDetail" hidden>
    <fieldset><legend>Choose a difficulty</legend>
     <label><input type="radio" name="difficulty" value="easy" checked> <strong>Easy</strong> · Check words as you build</label>
@@ -367,7 +367,6 @@ function studentCodeForBests(){
 function drawSoloChallenges(validation){
  const panel=document.getElementById('soloChallenges');
  panel.hidden=roomClientReady&&!!room;
- document.getElementById('soloBests').hidden=panel.hidden;
  if(panel.hidden)return;
  const selected=soloChallengeDeck().map(group=>group.find(([id])=>state.challenges.includes(id)));
  const board=soloChallengeBoard(validation);
@@ -596,6 +595,7 @@ const lobbyChoices=document.getElementById('lobbyChoices');
 const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
 function showLobbyPage(page){
  lobbyChoices.hidden=page!=='menu';
+ $('soloBests').hidden=page!=='records';
  $('roomWaiting').hidden=page!=='room';
  $('roomLogin').hidden=page!=='join'&&page!=='host';
  if(!$('roomLogin').hidden&&!$('roomStudentCode').value){
@@ -606,6 +606,7 @@ function showLobbyPage(page){
  joinSetup.hidden=page!=='join';
  lobbyBack.hidden=page==='menu';
  if(page==='room')return;
+ if(page==='records'){$('soloBestsTitle').focus();return}
  const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
  target.focus();
 }
@@ -614,6 +615,7 @@ function openLobby(){
  showLobbyPage(room?.phase==='waiting'?'room':'menu');
 }
 document.getElementById('openLobby').onclick=openLobby;
+document.getElementById('openSoloBests').onclick=()=>{if(!roomBusy)showLobbyPage('records')};
 document.getElementById('playSolo').onclick=()=>{if(roomBusy)return;leaveRoom();lobby.close()};
 document.getElementById('hostGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('host')}};
 document.getElementById('joinGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('join')}};
