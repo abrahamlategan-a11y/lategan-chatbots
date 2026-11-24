@@ -8,11 +8,11 @@ function assertGroup(group, size, level) {
   assert(numbers.every(number => Number.isInteger(number) && number > 0 && number <= LEVELS[level].limit));
   const solutions = numbers.filter((target, index) => numbers.some((left, a) =>
     a !== index && numbers.some((right, b) => b !== index && b !== a &&
-      (level === 3 ? left * right : left + right) === target)));
+      (LEVELS[level].operation === 'multiplication' ? left * right : left + right) === target)));
   assert.deepEqual(solutions, [answer]);
 }
 
-for (const level of [1, 2, 3]) {
+for (const level of Object.keys(LEVELS).map(Number)) {
   const layouts = new Set();
   for (let i = 0; i < 1000; i++) {
     const seed = 'daily-' + i;
@@ -29,4 +29,4 @@ for (const level of [1, 2, 3]) {
   assert(layouts.size > 990);
   console.log('Level ' + level + ': 1,000 seeds passed.');
 }
-console.log('3,000 centres and 12,000 petals passed uniqueness, bounds and seeded replay checks.');
+console.log('6,000 centres and 24,000 petals passed uniqueness, bounds and seeded replay checks.');
