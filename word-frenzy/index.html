@@ -57,11 +57,14 @@ button.primary{background:#edb1ab;color:#452925}
 #lobby fieldset label{display:block;padding:6px}
 #joinCode{display:block;margin:7px 0 12px;width:100%;font:inherit;padding:10px;border:1px solid #a3b39e;border-radius:8px;text-transform:uppercase}
 .lobbyDetail p{font-size:14px}
-</style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Solo play · saves on this device</span></header><main>
+#roomCode{font-size:2.3rem;letter-spacing:.17em;color:#a3375e}
+#roomLogin{margin-top:14px}#roomLogin input{display:block}
+#roomStatus:empty{display:none}
+</style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
-<div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
+<div class="top"><span class="chip" id="guavaPool" hidden></span><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
-<div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
+<div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button id="guavaPick" hidden>Pick!</button><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="lobby" aria-labelledby="lobbyTitle">
@@ -77,15 +80,21 @@ button.primary{background:#edb1ab;color:#452925}
     <label><input type="radio" name="difficulty" value="easy" checked> <strong>Easy</strong> · Check words as you build</label>
     <label><input type="radio" name="difficulty" value="hard"> <strong>Hard</strong> · Check words when you call Guava!</label>
    </fieldset>
-   <p>Multiplayer rooms are still being built.</p>
-   <button type="button" disabled>Create room</button>
+   <button type="button" id="createRoom">Create room</button>
   </div>
   <div id="joinSetup" class="lobbyDetail" hidden>
    <label for="joinCode">Game code</label>
    <input id="joinCode" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false">
-   <p>You’ll be able to join with a friend’s code when multiplayer rooms are ready.</p>
-   <button type="button" disabled>Join room</button>
+   <button type="button" id="joinRoom">Join room</button>
   </div>
+  <div id="roomLogin" hidden><label for="roomStudentCode">Learning Hub student code</label>
+   <input id="roomStudentCode" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
+  <div id="roomWaiting" hidden>
+   <p>Share this game code with friends</p><strong id="roomCode"></strong>
+   <p id="roomMode"></p><p id="roomPlayers" aria-live="polite"></p>
+   <button class="primary" type="button" id="roomStart">Begin game</button>
+  </div>
+  <p id="roomStatus" role="status"></p>
   <button type="button" id="lobbyBack" hidden>← Back</button>
  </div>
 </dialog>
@@ -94,7 +103,7 @@ button.primary{background:#edb1ab;color:#452925}
 </main><script>
 const LETTERS='A A A A E E E E E E I I I O O U B C D F G H L M N N P R R S S T T W Y'.split(' ');
 const SIZE=52,KEY='word-frenzy-solo-prototype-v1';
-const dictionary=new Set(('lefty leftie lefties walking walked jumping jumped played playing colour colours coloured colouring favourite favourites organise organised organises organising koala koalas caring a i an as at am be by do go he hi if in is it me my no of oh on or ox so to up us we ace act add age ago aid aim air all and ant any ape apt arc are arm art ash ask ate awe bad bag ban bar bat bay bed bee beg bet bid big bin bit boa bob bog boo bow box boy bud bug bun bus but buy cab can cap car cat cob cod cog con coo cop cot cow coy cry cub cue cup cur cut dab dad dam day den dew did die dig dim dip doe dog dot dry dub due dug dye ear eat ebb eel egg ego elf elk elm end era eve eye fad fan far fat fax fed fee few fib fig fin fir fit fix flu fly foe fog for fox fry fun fur gag gap gas gel gem get gig gin god got gum gun gut guy gym had ham has hat hay hem hen her hew hey hid him hip his hit hog hop hot how hub hug hum hut ice icy ill ink inn ion ire its ivy jab jag jam jar jaw jay jet jig job jog jot joy jug jut keg key kid kin kit lab lad lag lap law lay led leg let lid lie lip lit lob log lot lot low lug mad man map mar mat maw may men met mew mid mix mob mom mop mow mud mug mum nab nag nap nay net new nib nil nip nod nor not now nub nun nut oak oar oat odd ode off oft oil old one opt orb ore our out owl own pad pal pan par pat paw pay pea peg pen pep per pet pew pie pig pin pip pit ply pod pop pot pow pry pub pug pun pup put rag ram ran rap rat raw ray red rib rid rig rim rip rob rod roe rot row rub rug rum run rut rye sad sag sap sat saw say sea see set sew she shy sic sin sip sir sis sit six ski sky sly sob sod son sop sot sow soy spa spy sub sue sum sun sup tab tad tag tan tap tar tax tea tee ten the thy tic tie tin tip toe tog ton too top tot tow toy try tub tug two use van vat vet via vie vow wad wag war was wax way web wed wee wet who why wig win wit woe won woo wow yak yam yap yaw yea yes yet yew you zip zoo able also area army away baby back ball band bank bare bark barn base bath bead beam bean bear beat been beer bell belt bend bent best bike bill bird bite blow blue boat body boil bold bolt bone book boom boot born boss both bowl bulk burn bush busy cake call calm came camp cane card care cart case cash cast cave cell chat chip city clap clay clip club clue coal coat code cold come cook cool cope copy core corn cost cosy crab crew crop crow cube curl cute dark data date dawn days dead deal dear deck deep deer desk dial dice diet dirt dish dive dock does doll done door dose down draw drew drop duck dull dump dusk dust duty each earn ease east easy echo edge else even ever evil exam exit face fact fade fail fair fake fall fame farm fast fate fear feed feel feet fell felt file fill film find fine fire firm fish fist five flag flat flew flip flow foam fold folk food fool foot ford fork form fort four free frog from fuel full game gang gate gave gear gift girl give glad glow glue goal goat goes gold golf gone good grab gram gray grew grid grin grip grow gulf hair half hall hand hang hard hare harm harp hate have hawk head heal hear heat heel held help herb herd here hero hide high hike hill hint hire hive hold hole holy home hood hook hope horn host hour huge hung hunt hurt idea inch into iron item jack jail jazz jeep join joke jolt jump just keen keep kept kick kill kind king kite knee knew knit knob knot know lace lack lady lake lamb lamp land lane last late lawn lazy lead leaf leak lean leap left lend lens less liar lick life lift like limb lime line link lion list live load loaf loan lock loft logo lone long look loom loop lose loss lost loud love luck lump lung made mail main make male mall many mark mask mass mate math meal mean meat meet melt memo menu mere mesh mess mice mild mile milk mill mind mine mint miss mist mode mole moon more moss most move much mule must mute name navy near neat neck need nest news next nice nick nine node none noon nose note noun obey odds okay once only onto open oral ours oven over pace pack page paid pain pair pale palm park part pass past path peak pear peel peer pick pile pill pine pink pipe plan play plea plot plug plum plus poem poet pole pond pool poor pope pork port pose post pour pray prey pull pump pure push quit quiz race rack rage raid rail rain rake rank rare rash rate read real rear reed reef reel rent rest rice rich ride ring rise risk road roam roar rock role roll roof room root rope rose rosy rude rule rush rust safe sail sake sale salt same sand sane sang sank save says scan scar seal seam seat seed seek seem seen self sell send sent ship shoe shop shot show shut sick side sigh sign silk sill sing sink site size skin skip slam slap sled slim slip slow slug snap snow soap sock soda soft soil sold sole some song soon soot sore sort soul soup sour span spin spot star stay stem step stew stir stop store storm story stove straw stream strong string spring summer table take tale talk tall tame tank tape task taxi team tear teen tell tend tent term test text than that them then there these thick thin thing think third this those three throw tick tide tidy tile till time tiny tire toad told tone took tool tour town toys trap tray tree trek trim trip true tube tune turn twin type ugly undo unit upon used user uses vain vale vast veil vein very vest view vine visa vote wage wait wake walk wall want warm warn wash wave ways weak wear weed week well went were west what when where which while white whole whose wide wife wild will wind wine wing wink wire wise wish with wolf wood wool word wore work worm worn wrap yard year yell yoga your zero zone').split(' '));
+const dictionary=new Set(('lefty leftie lefties walking walked jumping jumped played playing colour colours coloured colouring favourite favourites organise organised organises organising koala koalas caring daring beg rips a i an as at am be by do go he hi if in is it me my no of oh on or ox so to up us we ace act add age ago aid aim air all and ant any ape apt arc are arm art ash ask ate awe bad bag ban bar bat bay bed bee beg bet bid big bin bit boa bob bog boo bow box boy bud bug bun bus but buy cab can cap car cat cob cod cog con coo cop cot cow coy cry cub cue cup cur cut dab dad dam day den dew did die dig dim dip doe dog dot dry dub due dug dye ear eat ebb eel egg ego elf elk elm end era eve eye fad fan far fat fax fed fee few fib fig fin fir fit fix flu fly foe fog for fox fry fun fur gag gap gas gel gem get gig gin god got gum gun gut guy gym had ham has hat hay hem hen her hew hey hid him hip his hit hog hop hot how hub hug hum hut ice icy ill ink inn ion ire its ivy jab jag jam jar jaw jay jet jig job jog jot joy jug jut keg key kid kin kit lab lad lag lap law lay led leg let lid lie lip lit lob log lot lot low lug mad man map mar mat maw may men met mew mid mix mob mom mop mow mud mug mum nab nag nap nay net new nib nil nip nod nor not now nub nun nut oak oar oat odd ode off oft oil old one opt orb ore our out owl own pad pal pan par pat paw pay pea peg pen pep per pet pew pie pig pin pip pit ply pod pop pot pow pry pub pug pun pup put rag ram ran rap rat raw ray red rib rid rig rim rip rob rod roe rot row rub rug rum run rut rye sad sag sap sat saw say sea see set sew she shy sic sin sip sir sis sit six ski sky sly sob sod son sop sot sow soy spa spy sub sue sum sun sup tab tad tag tan tap tar tax tea tee ten the thy tic tie tin tip toe tog ton too top tot tow toy try tub tug two use van vat vet via vie vow wad wag war was wax way web wed wee wet who why wig win wit woe won woo wow yak yam yap yaw yea yes yet yew you zip zoo able also area army away baby back ball band bank bare bark barn base bath bead beam bean bear beat been beer bell belt bend bent best bike bill bird bite blow blue boat body boil bold bolt bone book boom boot born boss both bowl bulk burn bush busy cake call calm came camp cane card care cart case cash cast cave cell chat chip city clap clay clip club clue coal coat code cold come cook cool cope copy core corn cost cosy crab crew crop crow cube curl cute dark data date dawn days dead deal dear deck deep deer desk dial dice diet dirt dish dive dock does doll done door dose down draw drew drop duck dull dump dusk dust duty each earn ease east easy echo edge else even ever evil exam exit face fact fade fail fair fake fall fame farm fast fate fear feed feel feet fell felt file fill film find fine fire firm fish fist five flag flat flew flip flow foam fold folk food fool foot ford fork form fort four free frog from fuel full game gang gate gave gear gift girl give glad glow glue goal goat goes gold golf gone good grab gram gray grew grid grin grip grow gulf hair half hall hand hang hard hare harm harp hate have hawk head heal hear heat heel held help herb herd here hero hide high hike hill hint hire hive hold hole holy home hood hook hope horn host hour huge hung hunt hurt idea inch into iron item jack jail jazz jeep join joke jolt jump just keen keep kept kick kill kind king kite knee knew knit knob knot know lace lack lady lake lamb lamp land lane last late lawn lazy lead leaf leak lean leap left lend lens less liar lick life lift like limb lime line link lion list live load loaf loan lock loft logo lone long look loom loop lose loss lost loud love luck lump lung made mail main make male mall many mark mask mass mate math meal mean meat meet melt memo menu mere mesh mess mice mild mile milk mill mind mine mint miss mist mode mole moon more moss most move much mule must mute name navy near neat neck need nest news next nice nick nine node none noon nose note noun obey odds okay once only onto open oral ours oven over pace pack page paid pain pair pale palm park part pass past path peak pear peel peer pick pile pill pine pink pipe plan play plea plot plug plum plus poem poet pole pond pool poor pope pork port pose post pour pray prey pull pump pure push quit quiz race rack rage raid rail rain rake rank rare rash rate read real rear reed reef reel rent rest rice rich ride ring rise risk road roam roar rock role roll roof room root rope rose rosy rude rule rush rust safe sail sake sale salt same sand sane sang sank save says scan scar seal seam seat seed seek seem seen self sell send sent ship shoe shop shot show shut sick side sigh sign silk sill sing sink site size skin skip slam slap sled slim slip slow slug snap snow soap sock soda soft soil sold sole some song soon soot sore sort soul soup sour span spin spot star stay stem step stew stir stop store storm story stove straw stream strong string spring summer table take tale talk tall tame tank tape task taxi team tear teen tell tend tent term test text than that them then there these thick thin thing think third this those three throw tick tide tidy tile till time tiny tire toad told tone took tool tour town toys trap tray tree trek trim trip true tube tune turn twin type ugly undo unit upon used user uses vain vale vast veil vein very vest view vine visa vote wage wait wake walk wall want warm warn wash wave ways weak wear weed week well went were west what when where which while white whole whose wide wife wild will wind wine wing wink wire wise wish with wolf wood wool word wore work worm worn wrap yard year yell yoga your zero zone').split(' '));
 const dictionarySource='https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/';
 let dictionaryStatus='loading';
 function addAustralianWords(entries,affixes){
@@ -143,8 +152,10 @@ async function loadDictionary(){
 }
 let originX=0,originY=0,boardZoom=100;
 let state,history=[],selected=null,paused=false;
+let roomClientReady=false;
 const viewport=document.getElementById('viewport'),board=document.getElementById('board'),tray=document.getElementById('tray'),notice=document.getElementById('notice');
 function save(){
+ if(roomClientReady&&room){saveRoom();return}
  try{localStorage.setItem(KEY,JSON.stringify(state))}
  catch{message("This device could not save your board.",true)}
 }
@@ -158,7 +169,7 @@ function makeStash(){
 }
 function fresh(){state={tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null})),stash:makeStash(),seconds:0};history=[];selected=null;save();draw()}
 try{state=JSON.parse(localStorage.getItem(KEY));if(!state||!Array.isArray(state.tiles))fresh()}catch{fresh()}
-function remember(){history.push(JSON.stringify({tiles:state.tiles,stash:state.stash}));if(history.length>80)history.shift()}
+function remember(){if(roomClientReady&&room)return;history.push(JSON.stringify({tiles:state.tiles,stash:state.stash}));if(history.length>80)history.shift()}
 function cellSize(){return Math.round(Math.min(54,Math.max(38,Math.floor((viewport.clientWidth-20)/13)))*boardZoom/100)}
 function gridPosition(x,y){const step=cellSize();return {x:Math.round(x/step),y:Math.round(y/step)}}
 function closestCell(x,y,id){const step=cellSize(),raw=gridPosition(x,y);if(!occupied(raw.x,raw.y,id))return raw;let best=raw,dist=Infinity;for(const t of state.tiles){if(t.id===id||t.x===null)continue;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const cx=t.x+dx,cy=t.y+dy;if(occupied(cx,cy,id))continue;const d=Math.hypot(x-cx*step,y-cy*step);if(d<dist){dist=d;best={x:cx,y:cy}}}}return dist<step*.85?best:raw}
@@ -174,7 +185,7 @@ function expandBoard(){
  viewport.scrollLeft=left;viewport.scrollTop=top;
 }
 function occupied(x,y,ignore){return state.tiles.some(t=>t.id!==ignore&&t.x===x&&t.y===y)}
-function place(id,x,y){if(occupied(x,y,id)){message('That space is occupied. Try another spot.',true);return}remember();const t=state.tiles.find(t=>t.id===id);t.x=x;t.y=y;save();draw()}
+function place(id,x,y){if(roomClientReady&&room?.phase==='finished')return;if(occupied(x,y,id)){message('That space is occupied. Try another spot.',true);return}remember();const t=state.tiles.find(t=>t.id===id);t.x=x;t.y=y;save();draw()}
 function message(t,bad=false){notice.textContent=t;notice.className='notice'+(bad?' badText':'')}
 function wordsFound(){const cells=new Map(state.tiles.filter(t=>t.x!==null).map(t=>[t.x+','+t.y,t]));const words=[];for(const t of state.tiles.filter(t=>t.x!==null)){for(const [dx,dy] of [[1,0],[0,1]]){if(cells.has((t.x-dx)+','+(t.y-dy)))continue;let x=t.x,y=t.y,tiles=[];while(cells.has(x+','+y)){tiles.push(cells.get(x+','+y));x+=dx;y+=dy}if(tiles.length>=2)words.push({word:tiles.map(v=>v.letter).join('').toLowerCase(),tiles})}}return words}
 function connectedWordTiles(words){
@@ -199,9 +210,10 @@ function connectedWordTiles(words){
  }
  return main;
 }
-function validate(){const words=wordsFound(),bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const validWords=dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)):[];const goodIds=connectedWordTiles(validWords);return {words,bad,ids,goodIds}}
-function draw(){expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
+function validate(){const words=wordsFound();if(roomClientReady&&room?.mode==='hard')return {words,bad:[],ids:new Set(),goodIds:new Set()};const bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const validWords=dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)):[];const goodIds=connectedWordTiles(validWords);return {words,bad,ids,goodIds}}
+function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
 function beginDrag(e,t,element,fromTray){
+ if(room&&room.phase!=='playing')return;
  if(e.button!==0)return;
  e.preventDefault();e.stopPropagation();
  selected=t.id;
@@ -324,6 +336,7 @@ function flipStashTile(index){
  save();draw();
 }
 function beginSwap(id){
+ if(room){if(id==null)return message("Select or drag a tile to swap.",true);return roomAction("swap",{tile:id})}
  const index=state.tiles.findIndex(tile=>tile.id===id);
  if(index<0)return message('Drag a board or tray tile onto Swap, or select it and tap Swap.',true);
  state.stash??=makeStash();
@@ -347,11 +360,16 @@ function sortTray(){
  save();draw();
 }
 document.getElementById('sortTray').onclick=sortTray;
-document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.filter(t=>t.x===null),letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
+document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.filter(t=>t.x===null);
+ if(room){
+  for(let i=on.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[on[i],on[j]]=[on[j],on[i]]}
+  let index=0;state.tiles=state.tiles.map(t=>t.x===null?on[index++]:t);save();draw();return;
+ }
+ const letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
-document.getElementById('finish').onclick=()=>{const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
-setInterval(()=>{if(!paused&&!document.getElementById('lobby').open){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
+document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
+setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!document.getElementById('lobby').open){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
 const zoomOut=document.getElementById('zoomOut'),zoomIn=document.getElementById('zoomIn'),zoomReset=document.getElementById('zoomReset');
 function setBoardZoom(value){
  const oldStep=cellSize();
@@ -399,23 +417,194 @@ const lobbyChoices=document.getElementById('lobbyChoices');
 const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
 function showLobbyPage(page){
  lobbyChoices.hidden=page!=='menu';
+ $('roomWaiting').hidden=page!=='room';
+ $('roomLogin').hidden=page!=='join'&&page!=='host';
+ if(!$('roomLogin').hidden&&!$('roomStudentCode').value){
+  try{$('roomStudentCode').value=localStorage.getItem('lategan_student_code')||''}catch{}
+ }
+ if(page!=='room')$('roomStatus').textContent='';
  hostSetup.hidden=page!=='host';
  joinSetup.hidden=page!=='join';
  lobbyBack.hidden=page==='menu';
+ if(page==='room')return;
  const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
  target.focus();
 }
 function openLobby(){
  lobby.showModal();
- showLobbyPage('menu');
+ showLobbyPage(room?.phase==='waiting'?'room':'menu');
 }
 document.getElementById('openLobby').onclick=openLobby;
-document.getElementById('playSolo').onclick=()=>lobby.close();
-document.getElementById('hostGame').onclick=()=>showLobbyPage('host');
-document.getElementById('joinGame').onclick=()=>showLobbyPage('join');
-lobbyBack.onclick=()=>showLobbyPage('menu');
+document.getElementById('playSolo').onclick=()=>{if(roomBusy)return;leaveRoom();lobby.close()};
+document.getElementById('hostGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('host')}};
+document.getElementById('joinGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('join')}};
+lobbyBack.onclick=()=>{if(roomBusy)return;if(room?.phase==='waiting')roomAction('leave');else showLobbyPage('menu')};
 lobby.addEventListener('cancel',event=>{
- if(lobbyChoices.hidden){event.preventDefault();showLobbyPage('menu')}
+ if(lobbyChoices.hidden||roomBusy){event.preventDefault();if(!roomBusy)lobbyBack.click()}
 });
+const roomApi='https://lategan-chatbot.abrahamlategan.workers.dev';
+const $=id=>document.getElementById(id);
+let room=null, studentCode='', roomBusy=false, soloState=null, soloHistory=null;
+let flipPreview=null, flipTimer=null;
+function connectedBoard(v){
+ return state.tiles.length>1 && state.tiles.every(tile=>tile.x!==null) &&
+  connectedWordTiles(v.words).size===state.tiles.length;
+}
+function roomBoard(){
+ return state.tiles.filter(t=>t.x!==null).map(({id,x,y})=>({id,x,y}));
+}
+function roomControls(){
+ const playing=room?.phase==='playing', hard=room?.mode==='hard';
+ $('guavaPick').hidden=!room;
+ $('guavaPool').hidden=!room;
+ $('reset').hidden=$('pause').hidden=$('undo').hidden=!!room;
+ $('finish').textContent=room?'Guava!':'Check my board';
+ $('words').hidden=!!hard;
+ if(!room){ $('finish').disabled=$('swap').disabled=false; return }
+ const v=validate();
+ const canCall=playing&&!roomBusy&&!room.swap&&!room.pending&&connectedBoard(v)&&
+   (hard||(dictionaryStatus==='ready'&&!v.bad.length));
+ $('guavaPool').textContent='Stash: '+room.pool;
+ $('finish').disabled=!canCall||room.pool>=room.players.length;
+ $('guavaPick').disabled=!canCall||room.available<room.players.length;
+ $('swap').disabled=!playing||roomBusy||!!room.swap||!!room.pending||room.available<3;
+}
+function savedRoomBoard(){
+ try{return JSON.parse(sessionStorage.getItem('guava-board:'+room.code))}catch{return null}
+}
+function saveRoom(){
+ try{sessionStorage.setItem('guava-board:'+room.code,JSON.stringify({reset:room.reset,tiles:state.tiles}))}catch{}
+}
+function applyRoom(next){
+ if(room&&next.code===room.code&&next.revision<room.revision)return;
+ const previous=room;
+ if(!previous){
+  soloState=state;
+  soloHistory=history;
+  history=[];
+  selected=null;
+  room=next;
+  state={tiles:savedRoomBoard()?.tiles||[],seconds:0};
+  const saved=savedRoomBoard();
+  if(saved?.reset!==next.reset)state.tiles=[];
+  originX=originY=0;
+ }
+ room=next;
+ const reset=previous&&room.reset!==previous.reset;
+ const owned=new Map(room.tiles.map(tile=>[tile.id,tile]));
+ state.tiles=reset?[]:state.tiles.filter(t=>owned.delete(t.id));
+ state.tiles.push(...[...owned.values()].map(t=>({...t,x:null,y:null})));
+ if(reset){
+  selected=null;
+  message('Not ripe yet! Back to your tray. Check '+room.invalid.join(', ').toUpperCase()+'.',true);
+ }
+ if(room.phase==='waiting'){
+  showLobbyPage('room');
+  $('roomCode').textContent=room.code;
+  $('roomPlayers').textContent=room.players.join(', ');
+  $('roomMode').textContent=room.mode==='easy'?'Easy · Live dictionary':'Hard · Check at the finish';
+  $('roomStart').hidden=!room.host;
+  $('roomStart').disabled=roomBusy||room.players.length<2;
+ }else if(previous?.phase!=='playing'&&room.phase==='playing'){
+  lobby.close();
+  message('Build one connected board. Use every tile to call Pick! or Guava!');
+ }
+ if(room.phase==='finished'&&previous?.phase!=='finished'){
+  if(swapDialog.open)swapDialog.close();
+  $('winMessage').textContent=room.winner+' called Guava! and won.';
+  $('win').showModal();
+ }
+ if(room.phase==='playing'&&(room.swap||room.pending||flipPreview)){
+  if(!swapDialog.open)swapDialog.showModal();
+  renderRoomStash();
+ }else if(swapDialog.open&&previous)swapDialog.close();
+ if(room.phase==='playing')saveRoom();
+ if(!previous||next.revision!==previous.revision)draw();
+}
+function renderRoomStash(){
+ const ids=room.swap?.slots||(room.pending?['pick']:[]);
+ if(flipPreview&&!ids.includes(flipPreview.id))ids.push(flipPreview.id);
+ $('swapProgress').textContent=room.swap
+  ?'Pick '+room.swap.remaining+' more · '+room.pool+' face-down'
+  :room.pending?'Flip your next tile · '+room.pending+' waiting':'Your new tile';
+ const buttons=ids.map((id,index)=>{
+  const tile=document.createElement('button');
+  const flipped=flipPreview?.id===id;
+  tile.type='button';
+  tile.textContent=flipped?flipPreview.letter:'◆';
+  tile.disabled=flipped||roomBusy;
+  tile.classList.toggle('flipped',flipped);
+  tile.style.setProperty('--nudge',((index*17)%7-3)+'px');
+  tile.style.setProperty('--lift',((index*13)%7-3)+'px');
+  tile.style.setProperty('--tilt',((index*19)%23-11)+'deg');
+  tile.setAttribute('aria-label',flipped?'Flipped '+tile.textContent:'Flip tile '+(index+1));
+  tile.onclick=()=>roomAction('flip',{tile:id});
+  return tile;
+ });
+ stashTiles.replaceChildren(...buttons);
+}
+async function roomAction(action,extra={}){
+ if(roomBusy)return;
+ roomBusy=true;
+ if(action!=='state')$('roomStatus').textContent='';
+ roomControls();
+ if(swapDialog.open&&room)renderRoomStash();
+ try{
+  const response=await fetch(roomApi,{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({action:'guava_'+action,student_code:studentCode,code:room?.code,...extra}),
+   signal:AbortSignal.timeout(15000)});
+  const next=await response.json();
+  if(!response.ok||!next.phase)throw Error(next.error==='Unknown action.'||!next.error?'Multiplayer is waiting for the Learning Hub Worker update.':next.error);
+  if(action==='flip'){
+   const letter=next.tiles.find(t=>!room.tiles.some(old=>old.id===t.id))?.letter;
+   if(letter){
+    clearTimeout(flipTimer);
+    flipPreview={id:extra.tile,letter};
+    flipTimer=setTimeout(()=>{
+     flipPreview=null;
+     if(!room)return;
+     if(room.swap||room.pending)renderRoomStash();else swapDialog.close();
+    },450);
+   }
+  }
+  if(action==='leave'){leaveRoom();showLobbyPage('menu')}else applyRoom(next);
+ }catch(error){
+  const target=lobby.open?$('roomStatus'):swapDialog.open?$('swapProgress'):null;
+  const detail=error.name==='TimeoutError'?'The room didn’t respond. Try again.':error.message;
+  if(target)target.textContent=detail;else if(action!=='state'||error.message.includes('expired'))message(detail,true);
+ }finally{
+  roomBusy=false;
+  roomControls();
+  if(room?.phase==='waiting')$('roomStart').disabled=room.players.length<2;
+  if(swapDialog.open&&room)for(const tile of stashTiles.querySelectorAll('button:not(.flipped)'))tile.disabled=false;
+ }
+}
+function leaveRoom(){
+ if(!room)return;
+ if(swapDialog.open)swapDialog.close();
+ clearTimeout(flipTimer);
+ flipPreview=null;
+ room=null;
+ state=soloState;
+ history=soloHistory;
+ selected=null;
+ originX=originY=0;
+ draw();
+}
+function enterRoom(action,extra){
+ studentCode=$('roomStudentCode').value.trim();
+ if(!studentCode){$('roomStatus').textContent='Enter your Learning Hub student code.';return}
+ roomAction(action,extra);
+}
+$('createRoom').onclick=()=>enterRoom('create',{mode:hostSetup.querySelector('input:checked').value});
+$('joinRoom').onclick=()=>enterRoom('join',{code:$('joinCode').value.trim()});
+$('joinCode').addEventListener('keydown',event=>{
+ if(event.key==='Enter')$('joinRoom').click();
+});
+$('roomStart').onclick=()=>roomAction('start');
+$('guavaPick').onclick=()=>roomAction('pick',{board:roomBoard()});
+setInterval(()=>{if(room&&room.phase!=='finished')roomAction('state')},3500);
+
+roomClientReady=true;
 window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
 </script></body></html>
