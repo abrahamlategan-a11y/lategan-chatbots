@@ -1,7 +1,10 @@
 export const LEVELS = Object.freeze({
   1: Object.freeze({operation: 'addition', limit: 20}),
   2: Object.freeze({operation: 'addition', limit: 100}),
-  3: Object.freeze({operation: 'multiplication', limit: 144, factorLimit: 12}),
+  3: Object.freeze({operation: 'addition', limit: 250, centreMinimum: 100}),
+  4: Object.freeze({operation: 'multiplication', limit: 64, factorLimit: 8}),
+  5: Object.freeze({operation: 'multiplication', limit: 100, factorLimit: 10, centreMinimum: 60}),
+  6: Object.freeze({operation: 'multiplication', limit: 144, factorLimit: 12, centreMinimum: 80}),
 });
 
 function seededRandom(seed) {
@@ -41,9 +44,9 @@ export function validAnswers(numbers, operation) {
 
 export function generatePuzzle(level, seed) {
   const settings = LEVELS[level];
-  if (!settings) throw new RangeError('Choose level 1, 2 or 3.');
+  if (!settings) throw new RangeError('Choose a level from 1 to 6.');
   const random = seededRandom(seed);
-  const {operation, limit, factorLimit} = settings;
+  const {operation, limit, factorLimit, centreMinimum} = settings;
   const multiply = operation === 'multiplication';
   const values = range(multiply ? 2 : 1, limit);
   const operands = range(multiply ? 2 : 1, factorLimit ?? limit);
@@ -74,7 +77,7 @@ export function generatePuzzle(level, seed) {
   const solvable = [...pairsByTarget.keys()];
   const eligibleCentrePairs = [];
   for (const [target, pairs] of pairsByTarget) {
-    if (target < (multiply ? 24 : 10)) continue;
+    if (target < (centreMinimum ?? (multiply ? 24 : 10))) continue;
     for (const pair of pairs) {
       if (pair.every(number => pairsByTarget.has(number))) eligibleCentrePairs.push([...pair, target]);
     }
