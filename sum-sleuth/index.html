@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sum Sleuth · Learning Hub</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f2fb;color:#231e40;font:1rem system-ui,sans-serif}main{width:min(100% - 2rem,42rem);margin:2rem auto}a{color:#504384}h1{font-size:clamp(2.4rem,8vw,4rem);letter-spacing:-.055em;margin:.6rem 0;line-height:1}p{line-height:1.5}.setup{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin:1rem 0}button,select{font:inherit}button,select{border:1px solid #c9c2df;border-radius:.7rem;padding:.5rem .75rem;background:white;color:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #7a52d5;outline-offset:3px}.board{background:white;border:1px solid #ded8ed;border-radius:1.5rem;padding:clamp(1rem,4vw,2rem);box-shadow:0 12px 40px #31215213}.round{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap}.target{font-size:clamp(2rem,7vw,3rem);margin:0}.score{font-variant-numeric:tabular-nums}.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.35rem,2vw,.85rem);margin:1rem 0}.tile{min-height:3.4rem;font-size:clamp(1.25rem,5vw,2rem);font-weight:800;background:#eee9fc}.tile[aria-pressed=true]{background:#5c38a8;border-color:#5c38a8;color:white}.tile.correct{background:#146744;border-color:#146744;color:white}.tile[aria-disabled=true]{cursor:default}.feedback{min-height:2.8rem;margin:.65rem 0}.controls{display:flex;gap:.5rem;flex-wrap:wrap}.next{background:#231e40;color:white}.controls button[hidden]{display:none}@media(max-width:360px){main{width:calc(100% - 1rem)}.tile{padding:.35rem}}
+</style>
+</head>
+<body><main>
+<a id="hubLink" href="../student/">← Student Hub</a>
+<h1>Sum Sleuth</h1>
+<p>Pick two tiles that add up to the target. Solve on your first try to build a streak.</p>
+<div class="setup"><label for="level">Target range</label><select id="level"><option value="20">Up to 20</option><option value="50">Up to 50</option><option value="100">Up to 100</option></select></div>
+<section class="board" aria-label="Addition puzzle">
+ <div class="round"><h2 class="target" id="target" tabindex="-1"></h2><div class="score" id="score"></div></div>
+ <div class="tiles" id="tiles" role="group" aria-label="Number tiles"></div>
+ <p class="feedback" id="feedback" role="status"></p>
+ <div class="controls"><button id="hint">Hint</button><button id="skip">Skip</button><button id="next" class="next" hidden>Next puzzle →</button></div>
+</section>
+</main><script>
+const $=id=>document.getElementById(id);
+const level=$('level'),tiles=$('tiles'),feedback=$('feedback'),next=$('next'),hint=$('hint'),skip=$('skip');
+let puzzle,selected=[],streak=0,solved=0,assisted=false,done=false;
+function random(min,max){return min+Math.floor(Math.random()*(max-min+1))}
+function makePuzzle(limit){
+ const target=random(Math.max(14,Math.ceil(limit*.58)),limit);
+ const lower=random(Math.ceil(target/4),Math.floor((target-1)/2));
+ const answer=[lower,target-lower];
+ const numbers=[...answer];
+ const choices=Array.from({length:target-1},(_,index)=>index+1);
+ while(numbers.length<8){
+  const value=choices.splice(random(0,choices.length-1),1)[0];
+  if(!numbers.includes(value)&&!numbers.includes(target-value))numbers.push(value);
+ }
+ for(let index=numbers.length-1;index>0;index--){
+  const other=random(0,index);
+  [numbers[index],numbers[other]]=[numbers[other],numbers[index]];
+ }
+ return {target,numbers,answer};
+}
+function updateScore(){$('score').textContent='Solved: '+solved+' · Streak: '+streak}
+function paint(){
+ Array.from(tiles.children).forEach((button,index)=>{
+  button.setAttribute('aria-pressed',String(selected.includes(index)));
+  button.setAttribute('aria-disabled',String(done));
+  button.classList.toggle('correct',done&&selected.includes(index));
+ });
+}
+function start(focus=false){
+ puzzle=makePuzzle(Number(level.value));selected=[];assisted=false;done=false;
+ $('target').textContent='Target '+puzzle.target;
+ feedback.textContent='Choose two tiles.';
+ next.hidden=true;hint.hidden=skip.hidden=false;
+ tiles.replaceChildren(...puzzle.numbers.map((number,index)=>{
+  const button=document.createElement('button');
+  button.className='tile';button.type='button';button.textContent=number;
+  button.onclick=()=>choose(index);return button;
+ }));
+ paint();updateScore();
+ if(focus)$('target').focus();
+}
+function choose(index){
+ if(done)return;
+ if(selected.includes(index)){
+  selected=[];feedback.textContent='Choose two tiles.';paint();return;
+ }
+ selected.push(index);
+ if(selected.length===1){
+  feedback.textContent='You picked '+puzzle.numbers[index]+'. Choose one more tile.';paint();return;
+ }
+ const [first,second]=selected.map(position=>puzzle.numbers[position]);
+ const sum=first+second;
+ if(sum===puzzle.target){
+  done=true;solved++;if(!assisted)streak++;
+  feedback.textContent=first+' + '+second+' = '+sum+'. You found it!';
+  hint.hidden=skip.hidden=true;next.hidden=false;next.focus();
+ }else{
+  assisted=true;streak=0;selected=[];
+  feedback.textContent=first+' + '+second+' = '+sum+'. That’s '+(sum>puzzle.target?'too high':'too low')+'. Try another pair.';
+ }
+ paint();updateScore();
+}
+hint.onclick=()=>{
+ assisted=true;streak=0;updateScore();
+ feedback.textContent='Try starting with '+puzzle.answer[0]+'. How much more do you need?';
+};
+skip.onclick=()=>{streak=0;start(true)};
+next.onclick=()=>start(true);
+level.onchange=()=>{streak=0;start()};
+if(new URLSearchParams(location.search).get('from')==='teacher'){
+ $('hubLink').href='../teacher/';$('hubLink').textContent='← Teacher Hub';
+}
+start();
+</script></body></html>
