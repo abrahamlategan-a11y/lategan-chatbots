@@ -101,9 +101,9 @@ html.expanded .soloChallenges{margin:0;flex:none}
   <div id="soloModes" class="lobbyChoices" hidden role="group" aria-label="Solo game modes">
    <button type="button" data-solo-mode="free">Free Play · Make any words</button>
    <h3 style="margin:8px 0 0">Challenge Mode</h3>
-   <button type="button" data-solo-mode="easy">Easy · 3 challenges</button>
-   <button type="button" data-solo-mode="medium">Medium · 4 challenges</button>
-   <button type="button" data-solo-mode="hard">Hard · 6 challenges</button>
+   <button type="button" data-solo-mode="easy">Easy · 6 entry-level challenges</button>
+   <button type="button" data-solo-mode="medium">Medium · Build a bigger grid</button>
+   <button type="button" data-solo-mode="hard">Hard · Longer words and more crossings</button>
   </div>
   <section class="soloBests" id="soloBests" aria-labelledby="soloBestsTitle" hidden>
  <h3 id="soloBestsTitle" tabindex="-1">🏆 Personal bests</h3>
@@ -239,10 +239,7 @@ try{
    changed=true;
   }
   if(!state.mode){state.mode='hard';changed=true}
-  const groups=soloModeGroups(state.mode);
-  if(!Array.isArray(state.challenges)||groups.length!==state.challenges.length||!groups.every(group=>group.some(([id])=>state.challenges.includes(id)))){
-   state.challenges=rollSoloChallenges(state.mode);changed=true;
-  }
+  if(refreshSoloGoals(state))changed=true;
   if(changed)save();
  }
 }catch{fresh()}
@@ -340,11 +337,34 @@ function soloChallengeDeck(){
  ];
 }
 function soloModeGroups(mode){
- const groups=soloChallengeDeck();
  if(mode==='free')return [];
- if(mode==='easy')return [groups[0],groups[1].filter(([id])=>id==='threeVowels'),groups[2].slice(0,1)];
- if(mode==='medium')return [groups[0],groups[1],groups[2],groups[3]];
- return groups;
+ if(mode==='easy')return soloChallengeDeck();
+ const hard=mode==='hard';
+ const wordCount=hard?16:10;
+ const crossCount=hard?8:4;
+ const longCount=hard?3:2;
+ const longSize=hard?8:7;
+ const vowelCount=hard?5:4;
+ const letterCount=hard?4:3;
+ const lengthCount=hard?6:4;
+ return [
+  [[mode+'Grid','Connect '+wordCount+' different words in one grid',({words})=>words.size>=wordCount]],
+  [[mode+'Long','Build '+longCount+' different words with '+longSize+' or more letters',({words})=>[...words].filter(word=>word.length>=longSize).length>=longCount]],
+  [[mode+'Cross','Make '+crossCount+' crossings in one grid',({crossings})=>crossings.length>=crossCount]],
+  [[mode+'Vowels','Use '+vowelCount+' different vowels in one word',({words})=>[...words].some(word=>new Set(word.match(/[aeiou]/g)).size>=vowelCount)]],
+  [
+   [mode+'Rare','Use '+letterCount+' different letters from J, K, Q, V, X and Z in your words',({words})=>new Set([...words].join('').match(/[jkqvxz]/g)).size>=letterCount],
+   [mode+'Double','Build '+(hard?4:2)+' different words with a double letter',({words})=>[...words].filter(word=>/([a-z])\1/.test(word)).length>=(hard?4:2)]
+  ],
+  [[mode+'Lengths','Build words of '+lengthCount+' different lengths',({words})=>new Set([...words].map(word=>word.length)).size>=lengthCount]]
+ ];
+}
+function refreshSoloGoals(board){
+ const groups=soloModeGroups(board.mode);
+ if(Array.isArray(board.challenges)&&groups.length===board.challenges.length&&groups.every(group=>group.some(([id])=>board.challenges.includes(id))))return false;
+ board.challenges=rollSoloChallenges(board.mode);
+ delete board.completed;
+ return true;
 }
 function rollSoloChallenges(mode,previous=[]){
  return soloModeGroups(mode).map(group=>{
@@ -671,6 +691,7 @@ for(const button of document.querySelectorAll('[data-solo-mode]')){
     localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify(state));
     saved=JSON.parse(localStorage.getItem(KEY+'-board:'+mode));
    }catch{}
+   if(saved?.mode===mode)refreshSoloGoals(saved);
    if(saved?.mode===mode&&!saved.completed){
     state=saved;history=[];selected=null;save();draw();
     if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}
