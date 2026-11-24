@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {LEVELS, generatePuzzle} from './generator.mjs';
+import {LEVELS, generatePuzzle, multiplicationTier} from './generator.mjs';
 
 function assertGroup(group, size, level) {
   const {numbers, answer} = group;
@@ -19,6 +19,13 @@ for (const level of Object.keys(LEVELS).map(Number)) {
     const puzzle = generatePuzzle(level, seed);
     assert.deepEqual(generatePuzzle(level, seed), puzzle);
     assertGroup(puzzle.centre, 4, level);
+    if (level >= 4) {
+      const groups = level === 4 ? [puzzle.centre, ...puzzle.petals] : [puzzle.centre];
+      for (const {numbers, answer} of groups) {
+        assert(numbers.some(a => numbers.some(b => a !== b && a * b === answer &&
+          multiplicationTier(a, b) === level - 4)));
+      }
+    }
     assert.equal(puzzle.petals.length, 4);
     for (const [position, petal] of puzzle.petals.entries()) {
       assertGroup(petal, 5, level);
