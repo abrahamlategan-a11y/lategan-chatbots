@@ -24,16 +24,17 @@ function numberButton(number) {
   button.type = 'button';
   button.className = 'number';
   button.textContent = number;
+  button.setAttribute('aria-pressed', 'false');
   return button;
 }
 
 function begin(level, seed) {
   round = {level, seed, puzzle: generatePuzzle(level, seed), solved: [false,false,false,false],
-    finished: false};
+    finished: false, selections: new Map()};
   const multiply = round.puzzle.operation === 'multiplication';
   $('instruction').textContent = multiply
-    ? 'Tap the product of two other numbers in each petal.'
-    : 'Tap the sum of two other numbers in each petal.';
+    ? 'Tap two factors, then their product.'
+    : 'Tap two numbers, then their sum.';
   const petals = round.puzzle.petals.map((petal, index) => {
     const section = document.createElement('section');
     section.className = 'petal';
@@ -94,14 +95,34 @@ function tap(petal, number, button, section) {
   const isCentre = petal === 'centre';
   if (round.finished || (isCentre ? !round.solved.every(Boolean) : round.solved[petal])) return;
   const group = isCentre ? round.puzzle.centre : round.puzzle.petals[petal];
-  if (number !== group.answer) {
+  const selected = round.selections.get(petal) ?? [];
+  const repeated = selected.findIndex(item => item.number === number);
+  if (repeated !== -1) {
+    selected.splice(repeated, 1);
+    button.setAttribute('aria-pressed', 'false');
+    return;
+  }
+  if (selected.length < 2) {
+    selected.push({number, button});
+    round.selections.set(petal, selected);
+    button.setAttribute('aria-pressed', 'true');
+    $('announce').textContent = selected.length === 1 ? 'Pick the second number.' : 'Now pick the result.';
+    return;
+  }
+  const [first, second] = selected;
+  const multiply = round.puzzle.operation === 'multiplication';
+  const expected = multiply ? first.number * second.number : first.number + second.number;
+  round.selections.delete(petal);
+  if (expected !== number || number !== group.answer) {
+    for (const item of selected) item.button.setAttribute('aria-pressed', 'false');
     button.classList.remove('wrong');
     void button.offsetWidth;
     button.classList.add('wrong');
     setTimeout(() => button.classList.remove('wrong'), 300);
-    $('announce').textContent = number + ' is not the answer. Try again.';
+    $('announce').textContent = 'That equation doesn’t work. Start with two numbers and try again.';
     return;
   }
+  button.setAttribute('aria-pressed', 'true');
   button.classList.add('correct');
   if (isCentre) return finish();
   round.solved[petal] = true;
@@ -117,8 +138,8 @@ function tap(petal, number, button, section) {
     slots.closest('.centre').classList.add('ready');
     for (const centreButton of slots.children) centreButton.disabled = false;
     $('instruction').textContent = round.puzzle.operation === 'multiplication'
-      ? 'Final puzzle: tap the product of two other numbers in the centre.'
-      : 'Final puzzle: tap the sum of two other numbers in the centre.';
+      ? 'Final puzzle: tap two factors, then their product.'
+      : 'Final puzzle: tap two numbers, then their sum.';
     $('announce').textContent = 'The final puzzle is ready.';
     slots.children[0].focus();
   } else {
