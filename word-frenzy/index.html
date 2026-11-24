@@ -68,15 +68,18 @@ button.primary{background:#edb1ab;color:#452925}
 .soloChallenges li{display:flex;gap:7px;font-size:.9em;line-height:1.35}
 .soloChallenges li.complete{color:#24654f;font-weight:700}
 html.expanded .soloChallenges{margin:0;flex:none}
+
+.swapZone .stashCount{display:inline-block;margin:0 0 0 4px;padding:2px 7px;border-radius:8px;background:#fff9;color:#553c32;font-size:.82em;white-space:nowrap}
+.trayTile.awaitingReveal{visibility:hidden}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
-<div class="top"><span class="chip" id="guavaPool" hidden></span><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
+<div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
 <details class="soloChallenges" id="soloChallenges" open>
 <summary>Solo challenges <span class="soloChallengeProgress" id="soloChallengeProgress" role="status"></span></summary>
 <ul id="soloChallengeList" aria-label="Challenges for this game"></ul>
 </details>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
-<div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button id="soloDraw">Draw a tile</button><button id="guavaPick" hidden>Pick!</button><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
+<div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap 1 for 3 <span class="stashCount" id="stashCount"></span></button><div class="actions"><button id="soloDraw">Draw a tile</button><button id="guavaPick" hidden>Pick!</button><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
 </div><p class="legend">Drag a tile onto Swap to exchange it for three · Drag empty board space to look around · Invisible snap-to-grid · Drag letters freely · Drag a tile back to the wooden tray to return it · Tap a tray tile, then tap the board to place it · Red outlines flag unrecognised words. <a href="https://raw.githubusercontent.com/LibreOffice/dictionaries/c0865a85eb67dc377f2cf8e8fe2c4fa9e53f0dcb/en/README_en_AU.txt">Word list credits</a></p>
 <dialog id="lobby" aria-labelledby="lobbyTitle">
@@ -337,7 +340,7 @@ function drawSoloChallenges(validation){
  }));
 }
 
-function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
+function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(roomClientReady&&flipPreview?.tileId===t.id)b.classList.add('awaitingReveal');if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
 function beginDrag(e,t,element,fromTray){
  if(room&&room.phase!=='playing')return;
  if(e.button!==0)return;
@@ -584,7 +587,9 @@ function roomControls(){
  $('guavaPick').hidden=!room;
  $('soloDraw').hidden=!!room;
  $('soloDraw').disabled=!state.stash?.length||!!state.pendingSwap;
- $('guavaPool').hidden=!room;
+ const stashCount=room?room.pool:(state.stash||[]).filter(letter=>letter!==null).length;
+ $('stashCount').textContent=stashCount+' in stash';
+ $('swap').title='Drag a tile here or select a tile and click Swap. Trade one tile for three.';
  $('reset').hidden=$('pause').hidden=$('undo').hidden=!!room;
  $('finish').textContent=room?'Guava!':'Check my board';
  $('words').hidden=!!hard;
@@ -592,7 +597,6 @@ function roomControls(){
  const v=validate();
  const canCall=playing&&!roomBusy&&!room.swap&&!room.pending&&connectedBoard(v)&&
    (hard||(dictionaryStatus==='ready'&&!v.bad.length));
- $('guavaPool').textContent='Stash: '+room.pool;
  $('finish').disabled=!canCall||room.pool>=room.players.length;
  $('guavaPick').disabled=!canCall||room.available<room.players.length;
  $('swap').disabled=!playing||roomBusy||!!room.swap||!!room.pending||room.available<3;
@@ -643,15 +647,16 @@ function applyRoom(next){
   $('win').showModal();
  }
  if(room.phase==='playing'&&(room.swap||room.pending||flipPreview)){
-  if(!swapDialog.open)swapDialog.showModal();
-  renderRoomStash();
+  const opening=!swapDialog.open;
+  if(opening)swapDialog.showModal();
+  if(opening||flipPreview||next.revision!==previous?.revision)renderRoomStash();
  }else if(swapDialog.open&&previous)swapDialog.close();
  if(room.phase==='playing')saveRoom();
  if(!previous||next.revision!==previous.revision)draw();
 }
 function renderRoomStash(){
- const ids=room.swap?.slots||(room.pending?['pick']:[]);
- if(flipPreview&&!ids.includes(flipPreview.id))ids.push(flipPreview.id);
+ const ids=room.swap ? [...room.swap.slots] : room.pending&&!flipPreview ? ['pick'] : [];
+ if(flipPreview&&!ids.includes(flipPreview.id))ids.splice(flipPreview.index,0,flipPreview.id);
  $('swapProgress').textContent=room.swap
   ?'Pick '+room.swap.remaining+' more · '+room.pool+' face-down'
   :room.pending?'Flip your next tile · '+room.pending+' waiting':'Your new tile';
@@ -660,7 +665,7 @@ function renderRoomStash(){
   const flipped=flipPreview?.id===id;
   tile.type='button';
   tile.textContent=flipped?flipPreview.letter:'◆';
-  tile.disabled=flipped||roomBusy;
+  tile.disabled=flipped||roomBusy||!!flipPreview;
   tile.classList.toggle('flipped',flipped);
   tile.style.setProperty('--nudge',((index*17)%7-3)+'px');
   tile.style.setProperty('--lift',((index*13)%7-3)+'px');
@@ -671,12 +676,33 @@ function renderRoomStash(){
  });
  stashTiles.replaceChildren(...buttons);
 }
+function releaseRoomTile(){
+ const preview=flipPreview;
+ flipPreview=null;
+ if(!room||!preview)return;
+ const from=stashTiles.querySelector('.flipped')?.getBoundingClientRect();
+ const tile=Array.from(tray.children).find(node=>node.dataset.id===String(preview.tileId));
+ const more=room.swap||room.pending;
+ if(more){
+  renderRoomStash();
+  stashTiles.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
+ }else if(swapDialog.open)swapDialog.close();
+ if(!tile)return;
+ tile.classList.remove('awaitingReveal');
+ const to=tile.getBoundingClientRect();
+ if(!more&&from&&tile.animate&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  tile.animate([
+   {translate:(from.left-to.left)+'px '+(from.top-to.top)+'px',scale:'.7',opacity:.65},
+   {translate:'0 0',scale:'1',opacity:1}
+  ],{duration:330,easing:'ease-out'});
+ }
+}
 async function roomAction(action,extra={}){
- if(roomBusy)return;
+ if(roomBusy||flipPreview)return;
  roomBusy=true;
  if(action!=='state')$('roomStatus').textContent='';
  roomControls();
- if(swapDialog.open&&room)renderRoomStash();
+ if(swapDialog.open&&room)for(const tile of stashTiles.querySelectorAll('button'))tile.disabled=true;
  try{
   const response=await fetch(roomApi,{method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({action:'guava_'+action,student_code:studentCode,code:room?.code,...extra}),
@@ -684,15 +710,11 @@ async function roomAction(action,extra={}){
   const next=await response.json();
   if(!response.ok||!next.phase)throw Error(next.error==='Unknown action.'||!next.error?'Multiplayer is waiting for the Learning Hub Worker update.':next.error);
   if(action==='flip'){
-   const letter=next.tiles.find(t=>!room.tiles.some(old=>old.id===t.id))?.letter;
-   if(letter){
-    clearTimeout(flipTimer);
-    flipPreview={id:extra.tile,letter};
-    flipTimer=setTimeout(()=>{
-     flipPreview=null;
-     if(!room)return;
-     if(room.swap||room.pending)renderRoomStash();else swapDialog.close();
-    },450);
+   const received=next.tiles.find(t=>!room.tiles.some(old=>old.id===t.id));
+   if(received){
+    const index=room.swap?.slots.indexOf(extra.tile)??0;
+    flipPreview={id:extra.tile,letter:received.letter,tileId:received.id,index:Math.max(0,index)};
+    flipTimer=setTimeout(releaseRoomTile,500);
    }
   }
   if(action==='leave'){leaveRoom();showLobbyPage('menu')}else applyRoom(next);
@@ -704,7 +726,7 @@ async function roomAction(action,extra={}){
   roomBusy=false;
   roomControls();
   if(room?.phase==='waiting')$('roomStart').disabled=room.players.length<2;
-  if(swapDialog.open&&room)for(const tile of stashTiles.querySelectorAll('button:not(.flipped)'))tile.disabled=false;
+  if(swapDialog.open&&room&&!flipPreview)for(const tile of stashTiles.querySelectorAll('button:not(.flipped)'))tile.disabled=false;
  }
 }
 function leaveRoom(){
