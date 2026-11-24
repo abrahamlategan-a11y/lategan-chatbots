@@ -181,7 +181,7 @@ html.expanded .soloChallenges{margin:0;flex:none}
     <label><input type="radio" name="difficulty" value="easy" checked> <strong>Easy</strong> · Check words as you build</label>
     <label><input type="radio" name="difficulty" value="hard"> <strong>Hard</strong> · Check words when you call Guava!</label>
    </fieldset>
-   <button type="button" id="createRoom">Create room</button>
+   <button type="button" id="createRoom" class="primary" aria-describedby="roomStatus">Create game</button>
   </div>
   <div id="joinSetup" class="lobbyDetail" hidden>
    <label for="joinCode">Game code</label>
@@ -1063,12 +1063,21 @@ function releaseRoomTile(){
  }
 }
 async function requestRoom(action,extra={}){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),15000);
+ try{
   const response=await fetch(roomApi,{method:'POST',headers:{'Content-Type':'application/json'},
    body:JSON.stringify({action:'guava_'+action,student_code:studentCode,code:room?.code,...extra}),
-   signal:AbortSignal.timeout(15000)});
-  const next=await response.json();
+   signal:controller.signal});
+  const next=await response.json().catch(()=>null);
+  if(!next)throw Error('The Learning Hub returned an unexpected response. Try again.');
   if(!response.ok||!next.phase)throw Error(next.error==='Unknown action.'||!next.error?'Multiplayer is waiting for the Learning Hub Worker update.':next.error);
- return next;
+  return next;
+ }catch(error){
+  if(controller.signal.aborted)throw Error('The room didn’t respond. Try again.');
+  if(error instanceof TypeError)throw Error('Couldn’t reach the Learning Hub. Check your connection and try again.');
+  throw error;
+ }finally{clearTimeout(timer)}
 }
 let roomPollPending=false;
 async function pollRoom(){
@@ -1087,10 +1096,12 @@ async function pollRoom(){
 async function roomAction(action,extra={}){
  if(roomBusy||flipPreview)return;
  roomBusy=true;
- if(action!=='state')$('roomStatus').textContent='';
- roomControls();
- if(swapDialog.open&&room)for(const tile of stashTiles.querySelectorAll('button'))tile.disabled=true;
+ const setupButton=action==='create'?$('createRoom'):action==='join'?$('joinRoom'):null;
+ $('roomStatus').textContent=action==='create'?'Creating your game…':action==='join'?'Joining the game…':'';
+ if(setupButton)setupButton.disabled=true;
  try{
+  roomControls();
+  if(swapDialog.open&&room)for(const tile of stashTiles.querySelectorAll('button'))tile.disabled=true;
   const next=await requestRoom(action,extra);  if(action==='flip'){
    const received=next.tiles.find(t=>!room.tiles.some(old=>old.id===t.id));
    if(received){
@@ -1106,6 +1117,7 @@ async function roomAction(action,extra={}){
   if(target)target.textContent=detail;else if(action!=='state'||error.message.includes('expired'))message(detail,true);
  }finally{
   roomBusy=false;
+  if(setupButton)setupButton.disabled=false;
   roomControls();
   if(room?.phase==='waiting')$('roomStart').disabled=room.players.length<2;
   if(swapDialog.open&&room&&!flipPreview)for(const tile of stashTiles.querySelectorAll('button:not(.flipped)'))tile.disabled=false;
@@ -1142,10 +1154,22 @@ function leaveRoom(){
 }
 function enterRoom(action,extra){
  studentCode=$('roomStudentCode').value.trim();
- if(!studentCode){$('roomStatus').textContent='Enter your Learning Hub student code.';return}
+ if(!studentCode){
+  $('roomStatus').textContent='Enter your Learning Hub student code, then try again.';
+  $('roomStudentCode').focus();
+  return;
+ }
+ if(action==='join'&&!extra.code){
+  $('roomStatus').textContent='Enter the game code from the host.';
+  $('joinCode').focus();
+  return;
+ }
  roomAction(action,extra);
 }
-$('createRoom').onclick=()=>enterRoom('create',{mode:hostSetup.querySelector('input:checked').value});
+$('createRoom').onclick=()=>enterRoom('create',{mode:hostSetup.querySelector('input:checked')?.value||'easy'});
+$('roomStudentCode').addEventListener('keydown',event=>{
+ if(event.key==='Enter'&&setupPage==='host')$('createRoom').click();
+});
 $('joinRoom').onclick=()=>enterRoom('join',{code:$('joinCode').value.trim()});
 $('joinCode').addEventListener('keydown',event=>{
  if(event.key==='Enter')$('joinRoom').click();
