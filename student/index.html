@@ -132,6 +132,13 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
 .hub-brand-link .logo,.hub-brand-link .hub-mark{display:inline-grid!important;place-items:center!important;flex:0 0 52px!important;width:52px!important;height:54px!important;padding:12px 3px 0!important;box-sizing:border-box!important;background:#58d5bb!important;color:#142450!important;border:0!important;border-radius:0!important;clip-path:polygon(50% 0%,100% 37%,90% 37%,90% 100%,10% 100%,10% 37%,0% 37%)!important;transform:none!important;box-shadow:none!important;font-size:16px!important;font-weight:900!important;line-height:1!important}
 .hub-brand-link{display:inline-flex;align-items:center;gap:10px;text-decoration:none!important;cursor:pointer}
 .hub-brand-link:focus-visible{outline:3px solid #75ddc6;outline-offset:4px}
+
+.class-games summary{cursor:pointer}
+.class-games-title{display:inline-block;font-size:22px;font-weight:750;margin-bottom:7px}
+.class-games-links{display:grid;gap:8px;margin-top:12px}
+.class-games-links a{display:flex;justify-content:space-between;gap:12px;padding:10px 12px;border-radius:10px;background:white;color:var(--green);font-weight:750;text-decoration:none}
+.class-games-links a:hover{text-decoration:underline}
+.class-games :focus-visible{outline:2px solid var(--green);outline-offset:3px}
 </style>
 <link rel="stylesheet" href="../assets/festive.css?v=1">
 
@@ -277,18 +284,17 @@ body{background:radial-gradient(circle at 90% 0,#e8d8fa 0,transparent 28%),#fffe
         <p>Open tests assigned by your teacher and continue saved work.</p>
         <div class="go" id="classAssessmentsStatus">Open assessments →</div>
       </a>
-      <a class="action games" href="../pirate/">
-        <div class="action-icon">🎮</div>
-        <h3>Class Games</h3>
-        <p>Join a live class game your teacher has started.</p>
-        <div class="go">Open games →</div>
-      </a>
-      <a class="action" href="../word-frenzy/">
-        <div class="action-icon" aria-hidden="true">Aa</div>
-        <h3>Guavagrams</h3>
-        <p>Build crossing words with letter tiles.</p>
-        <div class="go">Play solo →</div>
-      </a>
+      <details class="action games class-games">
+        <summary>
+          <div class="action-icon" aria-hidden="true">🎮</div>
+          <span class="class-games-title">Class Games</span>
+          <p>Choose a game to play.</p>
+        </summary>
+        <div class="class-games-links">
+          <a href="../pirate/">The Pirate Game <span aria-hidden="true">→</span></a>
+          <a href="../word-frenzy/">Guavagrams <span aria-hidden="true">→</span></a>
+        </div>
+      </details>
       <a class="action" href="../stwhiteboard/" style="background:linear-gradient(145deg,#f8fbf8,#edf4ef)">
         <div class="action-icon" style="background:#e5f0e4">✎</div>
         <h3>Whiteboard</h3>
