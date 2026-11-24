@@ -221,8 +221,8 @@ function makeStash(game){
  if(game.pendingSwap)counts[game.pendingSwap.returned]--;
  return shuffleSoloTiles(Object.entries(counts).flatMap(([letter,count])=>Array(Math.max(0,count)).fill(letter)));
 }
-function fresh(mode=state?.mode||'free'){
- const challenges=rollSoloChallenges(mode,state?.challenges);
+function fresh(mode=state?.mode||'free',previous=state?.challenges){
+ const challenges=rollSoloChallenges(mode,previous);
  const stash=makeStash({tiles:[]});
  const tiles=stash.splice(0,35).map((letter,id)=>({id,letter,x:null,y:null}));
  state={mode,challenges,tiles,stash,seconds:0,fullPool:true};
@@ -347,16 +347,41 @@ function soloModeGroups(mode){
  const vowelCount=hard?5:4;
  const letterCount=hard?4:3;
  const lengthCount=hard?6:4;
+ const wordList=words=>[...words];
+ const longMatch=(words,size)=>wordList(words).filter(word=>word.length>=size).length;
+ const vowels=word=>new Set(word.match(/[aeiou]/g)).size;
  return [
-  [[mode+'Grid','Connect '+wordCount+' different words in one grid',({words})=>words.size>=wordCount]],
-  [[mode+'Long','Build '+longCount+' different words with '+longSize+' or more letters',({words})=>[...words].filter(word=>word.length>=longSize).length>=longCount]],
-  [[mode+'Cross','Make '+crossCount+' crossings in one grid',({crossings})=>crossings.length>=crossCount]],
-  [[mode+'Vowels','Use '+vowelCount+' different vowels in one word',({words})=>[...words].some(word=>new Set(word.match(/[aeiou]/g)).size>=vowelCount)]],
   [
-   [mode+'Rare','Use '+letterCount+' different letters from J, K, Q, V, X and Z in your words',({words})=>new Set([...words].join('').match(/[jkqvxz]/g)).size>=letterCount],
-   [mode+'Double','Build '+(hard?4:2)+' different words with a double letter',({words})=>[...words].filter(word=>/([a-z])\1/.test(word)).length>=(hard?4:2)]
+   [mode+'Grid','Connect '+wordCount+' different words in one grid',({words})=>words.size>=wordCount],
+   [mode+'TileGrid','Connect '+(hard?55:32)+' tiles in valid words',({tiles})=>tiles.size>=(hard?55:32)],
+   [mode+'GridMix','Connect '+(wordCount-2)+' different words, including '+(hard?6:4)+' of at least 5 letters',({words})=>words.size>=wordCount-2&&longMatch(words,5)>=(hard?6:4)]
   ],
-  [[mode+'Lengths','Build words of '+lengthCount+' different lengths',({words})=>new Set([...words].map(word=>word.length)).size>=lengthCount]]
+  [
+   [mode+'Long','Build '+longCount+' different words with '+longSize+' or more letters',({words})=>longMatch(words,longSize)>=longCount],
+   [mode+'Longest','Build a word with at least '+(hard?11:9)+' letters',({words})=>longMatch(words,hard?11:9)>0],
+   [mode+'ExactPair','Build a word with exactly '+longSize+' letters and another with exactly '+(longSize+1),({words})=>[longSize,longSize+1].every(size=>wordList(words).some(word=>word.length===size))]
+  ],
+  [
+   [mode+'Cross','Make '+crossCount+' crossings in one grid',({crossings})=>crossings.length>=crossCount],
+   [mode+'CrossVariety','Make crossings on '+(hard?6:4)+' different letters',({crossings})=>new Set(crossings).size>=(hard?6:4)],
+   [mode+'ConsonantCross','Make '+(hard?5:3)+' crossings on consonants',({crossings})=>crossings.filter(letter=>!'AEIOU'.includes(letter)).length>=(hard?5:3)]
+  ],
+  [
+   [mode+'Vowels','Use '+vowelCount+' different vowels in one word',({words})=>wordList(words).some(word=>vowels(word)>=vowelCount)],
+   [mode+'VowelMix','Build '+(hard?4:2)+' different words with at least 3 different vowels each',({words})=>wordList(words).filter(word=>vowels(word)>=3).length>=(hard?4:2)],
+   [mode+'VowelOpening','Start '+(hard?5:3)+' different words with vowels',({words})=>wordList(words).filter(word=>/^[aeiou]/.test(word)).length>=(hard?5:3)],
+   [mode+'VowelEnds','Start and end '+(hard?3:2)+' different words with vowels',({words})=>wordList(words).filter(word=>/^[aeiou].*[aeiou]$/.test(word)).length>=(hard?3:2)]
+  ],
+  [
+   [mode+'Rare','Use '+letterCount+' different letters from J, K, Q, V, X and Z in your words',({words})=>new Set(wordList(words).join('').match(/[jkqvxz]/g)).size>=letterCount],
+   [mode+'Double','Build '+(hard?4:2)+' different words with a double letter',({words})=>wordList(words).filter(word=>/([a-z])\1/.test(word)).length>=(hard?4:2)],
+   [mode+'Endings','Build words ending in '+(hard?'ING, ED and LY':'ING and ED'),({words})=>(hard?['ing','ed','ly']:['ing','ed']).every(ending=>wordList(words).some(word=>word.length>ending.length&&word.endsWith(ending)))]
+  ],
+  [
+   [mode+'Lengths','Build words of '+lengthCount+' different lengths',({words})=>new Set(wordList(words).map(word=>word.length)).size>=lengthCount],
+   [mode+'Starts','Start words with '+(hard?12:8)+' different letters',({words})=>new Set(wordList(words).map(word=>word[0])).size>=(hard?12:8)],
+   [mode+'Ends','End words with '+(hard?10:7)+' different letters',({words})=>new Set(wordList(words).map(word=>word.at(-1))).size>=(hard?10:7)]
+  ]
  ];
 }
 function refreshSoloGoals(board){
@@ -685,8 +710,8 @@ for(const button of document.querySelectorAll('[data-solo-mode]')){
   const mode=button.dataset.soloMode;
   lobby.close();
   if(state.mode===mode&&!state.completed){draw();return}
+  let saved;
   if(state.mode!==mode){
-   let saved;
    try{
     localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify(state));
     saved=JSON.parse(localStorage.getItem(KEY+'-board:'+mode));
@@ -698,7 +723,7 @@ for(const button of document.querySelectorAll('[data-solo-mode]')){
     return;
    }
   }
-  fresh(mode);
+  fresh(mode,saved?.challenges??state.challenges);
  };
 }
 function backFromSoloResult(){
