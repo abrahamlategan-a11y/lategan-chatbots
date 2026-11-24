@@ -1,4 +1,4 @@
-import {generatePuzzle} from './generator.mjs?v=facts';
+import {generatePuzzle} from './generator.mjs?v=challenge';
 
 const $ = id => document.getElementById(id);
 const setup = $('setup'), flower = $('flower'), result = $('result');
