@@ -107,6 +107,13 @@ html.expanded .soloChallenges{margin:0;flex:none}
 #lobby #roomCode{display:inline-block;padding:8px 14px;border-radius:10px;background:#eaf1df;letter-spacing:.12em;user-select:all}
 #roomPlayers{padding:10px 12px;border-radius:9px;background:#f3f5eb}
 @media(max-width:490px){#lobbyChoices,#soloModes{grid-template-columns:1fr}#lobby .modeCard{min-height:62px}}
+
+#soloResultMessage{white-space:pre-line;line-height:1.65}
+#soloResult.sprintCelebration{border:3px solid #e3aa62;background:linear-gradient(145deg,#fff7dc,#fff1e9);box-shadow:0 20px 70px #21463550}
+@media(prefers-reduced-motion:no-preference){
+ #soloResult.sprintCelebration[open]{animation:sprintPop .33s cubic-bezier(.2,.8,.3,1.3) both}
+}
+@keyframes sprintPop{from{opacity:0;transform:translateY(12px) scale(.93)}to{opacity:1;transform:none}}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
@@ -505,6 +512,7 @@ function drawSoloChallenges(validation){
   save();
   document.querySelector('.game').inert=true;
   const title=state.mode[0].toUpperCase()+state.mode.slice(1);
+  document.getElementById('soloResult').classList.remove('sprintCelebration');
   document.getElementById('soloResultTitle').textContent='🎉 Challenge complete!';
   document.getElementById('soloResultMessage').textContent=title+' · '+total+' of '+total+' challenges complete.';
   if(roomClientReady){
@@ -529,7 +537,9 @@ function drawSoloChallenges(validation){
  }));
 }
 
-function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(roomClientReady&&flipPreview?.tileId===t.id)b.classList.add('awaitingReveal');if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
+function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(roomClientReady&&flipPreview?.tileId===t.id)b.classList.add('awaitingReveal');if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.');
+ if(roomClientReady&&!room&&sprintSize(state.mode)&&!state.completed&&validTimedGrid(v))finishSprint(v);
+}
 function beginDrag(e,t,element,fromTray){
  if(room&&room.phase!=='playing')return;
  if(e.button!==0)return;
@@ -863,9 +873,9 @@ function renderSoloClock(){
  const streak=!room&&state.mode==='streak';
  $('time').textContent=(streak?'Time left: ':'Time: ')+clockText(streak?Math.max(0,300-state.seconds):state.seconds);
 }
-function validTimedGrid(){
+function validTimedGrid(validation){
  if(dictionaryStatus!=='ready'||state.pendingSwap)return false;
- const validation=validate();
+ validation??=validate();
  return !validation.bad.length&&connectedBoard(validation);
 }
 function timedBestKey(mode){return KEY+'-timed:'+mode+':'+(studentCodeForBests()||'guest')}
@@ -889,14 +899,25 @@ function completeTimedRound(title,description,score){
  }
  save();
  if(swapDialog.open)swapDialog.close();
+ if(lobby.open)lobby.close();
+ $('soloResult').classList.toggle('sprintCelebration',!!sprintSize(mode));
  $('soloResultTitle').textContent=title;
  $('soloResultMessage').textContent=description+(improved?' · Personal best!':'');
  draw();
  $('soloResult').showModal();
 }
-function finishSprint(){
- if(!validTimedGrid()||state.completed)return;
- completeTimedRound('🎉 Sprint complete!',state.tiles.length+' connected tiles in '+clockText(state.seconds),state.seconds);
+function sprintResultText(mode,seconds,best){
+ const level={sprint15:'Easy',sprint21:'Medium',sprint30:'Hard'}[mode];
+ const time=clockText(seconds);
+ if(best===null)return level+' sprint · Your time: '+time+'\nFirst time recorded for '+level+'.';
+ const difference=Math.abs(seconds-best);
+ const comparison=seconds===best?'Matched your best.':clockText(difference)+(seconds<best?' faster.':' slower.');
+ return level+' sprint · Your time: '+time+'\nPrevious best: '+clockText(best)+' · '+comparison;
+}
+function finishSprint(validation){
+ if(state.completed||!validTimedGrid(validation))return;
+ const {mode,seconds}=state;
+ completeTimedRound('🎉 Sprint complete!',sprintResultText(mode,seconds,readTimedBest(mode)),seconds);
 }
 function finishStreak(){
  const score=Math.max(state.checkpoint||0,validTimedGrid()?state.tiles.length:0);
@@ -909,7 +930,7 @@ function roomControls(){
  instructions.hidden=!timedSolo();
  if(!instructions.hidden)instructions.textContent=state.mode==='streak'
   ?'Connect every tile in one valid grid to draw 3 more. Best complete grid this round: '+Math.max(state.checkpoint||0,validTimedGrid()?state.tiles.length:0)+' tiles.'
-  :'Use every tile in one valid grid, then select Finish sprint.';
+  :'Use every tile in one valid grid to finish automatically.';
  $('soloDraw').hidden=!!room||!!sprintSize(state.mode);
  $('soloDraw').textContent=!room&&state.mode==='streak'?'Draw 3 tiles':'Draw a tile';
  $('soloDraw').disabled=!state.stash?.length||!!state.pendingSwap||(!room&&state.mode==='streak'&&(state.stash.length<3||!validTimedGrid()));
@@ -919,7 +940,7 @@ function roomControls(){
  $('swap').title='Drag a tile here or select a tile and click Swap. Trade one tile for three.';
  $('reset').hidden=$('pause').hidden=$('undo').hidden=!!room;
  $('finish').textContent=room?'Guava!':sprintSize(state.mode)?'Finish sprint':'Check my board';
- $('finish').hidden=!room&&state.mode==='streak';
+ $('finish').hidden=!room&&!!timedSolo();
  $('words').hidden=!!hard;
  if(!room){ $('finish').disabled=!!sprintSize(state.mode)&&!validTimedGrid();$('swap').disabled=false; return }
  const v=validate();
