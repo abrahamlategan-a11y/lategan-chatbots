@@ -47,12 +47,22 @@ dialog{width:min(390px,calc(100% - 28px));padding:1.5rem;border:1px solid #b9dac
 <div class="clock" id="clock" hidden><span id="time">0:00</span><button id="toggleTime" type="button" aria-controls="time" aria-expanded="true">Hide timer</button></div></header>
 <form class="setup" id="setup">
 <h2>Choose a puzzle</h2>
-<label for="level">Level</label><select id="level"><option value="1">Level 1 · Addition to 20</option><option value="2">Level 2 · Addition to 100</option><option value="3">Level 3 · Multiplication</option></select>
-<label for="seed">Puzzle seed <small>(optional)</small></label><input id="seed" maxlength="80" type="text" autocomplete="off" placeholder="Leave blank for a random puzzle">
-<button class="action" type="button" id="daily">Use today’s seed</button>
+<label for="level">Choose an operation and difficulty</label>
+<select id="level">
+ <optgroup label="Addition">
+  <option value="1">Addition · Easy (up to 20)</option>
+  <option value="2">Addition · Medium (up to 100)</option>
+  <option value="3">Addition · Hard (up to 250)</option>
+ </optgroup>
+ <optgroup label="Multiplication">
+  <option value="4">Multiplication · Easy (factors up to 8)</option>
+  <option value="5">Multiplication · Medium (factors up to 10)</option>
+  <option value="6">Multiplication · Hard (factors up to 12)</option>
+ </optgroup>
+</select>
 <button class="action primary" type="submit">Start puzzle</button>
 </form>
 <section id="play" hidden aria-label="Flower puzzle"><p class="instruction" id="instruction"></p><div class="flower" id="flower"></div><p class="sr" id="announce" role="status"></p></section>
 </main>
 <dialog id="result" aria-labelledby="resultTitle"><h2 id="resultTitle">Puzzle solved!</h2><p class="resultTime" id="resultTime"></p><button class="action primary" id="again" type="button">Play again</button></dialog>
-<script type="module" src="./game.mjs?v=proof"></script></body></html>
+<script type="module" src="./game.mjs?v=levels"></script></body></html>
