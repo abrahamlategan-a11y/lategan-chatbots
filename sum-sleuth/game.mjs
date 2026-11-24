@@ -1,5 +1,4 @@
 import {generatePuzzle} from './generator.mjs';
-import {ROUND_SAVE_URL} from './save-config.mjs';
 
 const $ = id => document.getElementById(id);
 const setup = $('setup'), flower = $('flower'), result = $('result');
@@ -30,7 +29,7 @@ function numberButton(number) {
 
 function begin(level, seed) {
   round = {level, seed, puzzle: generatePuzzle(level, seed), solved: [false,false,false,false],
-    wrongTaps: [], finished: false, runId: crypto.randomUUID()};
+    finished: false};
   const multiply = round.puzzle.operation === 'multiplication';
   $('instruction').textContent = multiply
     ? 'Tap the product of two other numbers in each petal.'
@@ -96,7 +95,6 @@ function tap(petal, number, button, section) {
   if (round.finished || (isCentre ? !round.solved.every(Boolean) : round.solved[petal])) return;
   const group = isCentre ? round.puzzle.centre : round.puzzle.petals[petal];
   if (number !== group.answer) {
-    round.wrongTaps.push({petal: isCentre ? 'centre' : petal + 1, numberTapped: number});
     button.classList.remove('wrong');
     void button.offsetWidth;
     button.classList.add('wrong');
@@ -148,30 +146,6 @@ function celebrate() {
   }
 }
 
-async function saveRound(completedRound) {
-  const status = $('saveStatus'), retry = $('retrySave');
-  retry.hidden = true;
-  let code = '';
-  try { code = localStorage.getItem('lategan_student_code') || ''; } catch {}
-  if (!ROUND_SAVE_URL || !code) {
-    status.textContent = !ROUND_SAVE_URL ? 'Class results aren’t connected yet.' : 'Sign in through Student Hub to save class results.';
-    return;
-  }
-  status.textContent = 'Saving result…';
-  const {level,seed,totalTimeMs,wrongTaps,runId} = completedRound;
-  try {
-    const response = await fetch(ROUND_SAVE_URL, {method:'POST',
-      headers:{'Content-Type':'application/json'}, signal:AbortSignal.timeout(10000),
-      body:JSON.stringify({studentCode:code, level, seed, totalTimeMs, wrongTaps, runId})});
-    if (!response.ok) throw Error('Save failed');
-    if (round === completedRound) status.textContent = 'Result saved.';
-  } catch {
-    if (round !== completedRound) return;
-    status.textContent = 'Couldn’t save the result.';
-    retry.hidden = false;
-  }
-}
-
 function finish() {
   round.finished = true;
   round.totalTimeMs = Math.round(performance.now() - round.started);
@@ -179,7 +153,6 @@ function finish() {
   $('time').textContent = $('resultTime').textContent = timeText(round.totalTimeMs);
   result.showModal();
   celebrate();
-  void saveRound(round);
 }
 
 $('daily').onclick = () => { $('seed').value = dailySeed(); };
@@ -193,7 +166,6 @@ setup.onsubmit = event => {
   event.preventDefault();
   begin(Number($('level').value), $('seed').value.trim() || crypto.randomUUID());
 };
-$('retrySave').onclick = () => { void saveRound(round); };
 $('again').onclick = () => {
   result.close();
   $('play').hidden = $('clock').hidden = true;
