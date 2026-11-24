@@ -223,40 +223,51 @@ function connectedWordTiles(words){
  return main;
 }
 function validate(){const words=wordsFound();if(roomClientReady&&room?.mode==='hard')return {words,bad:[],ids:new Set(),goodIds:new Set()};const bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const validWords=dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)):[];const goodIds=connectedWordTiles(validWords);return {words,bad,ids,goodIds}}
+function soloVocabularyClues(){
+ return [
+  ['similarPretty','Another word for pretty, as in “a pretty view”','beautiful appealing pleasing stunning'],
+  ['similarCold','Another word for cold, as in “a cold morning”','cool chilly frosty'],
+  ['similarFast','Another word for fast, as in “a fast runner”','speedy rapid swift fleet'],
+  ['similarSmall','Another word for small, as in “a small house”','little tiny petite'],
+  ['similarQuiet','Another word for quiet, as in “a quiet room”','silent still hushed'],
+  ['oppositeEarly','The opposite of early','late'],
+  ['oppositeRough','The opposite of rough, as in “a rough surface”','smooth'],
+  ['oppositeWest','The opposite of west','east']
+ ];
+}
 function soloChallengeDeck(){
+ const pair=(words,pairs)=>pairs.some(([first,second])=>words.has(first)&&words.has(second));
+ const length=n=>({words})=>[...words].some(word=>word.length===n);
+ const contains=pattern=>({words})=>[...words].some(word=>pattern.test(word));
  return [
   [
-   ['threeWords','Build 3 different words',({words})=>words.size>=3],
-   ['fourWords','Build 4 different words',({words})=>words.size>=4],
-   ['fiveWords','Build 5 different words',({words})=>words.size>=5]
+   ['letterBookends','Start and end a word with the same letter',contains(/^([a-z]).+\1$/)],
+   ['vowelBookends','Start and end a word with vowels',contains(/^[aeiou][a-z]+[aeiou]$/)],
+   ['insideDouble','Put a double letter inside a word',contains(/^[a-z]+([a-z])\1[a-z]+$/)]
   ],
   [
-   ['fiveLetters','Build a word with 5 or more letters',({words})=>[...words].some(word=>word.length>=5)],
-   ['sixLetters','Build a word with 6 or more letters',({words})=>[...words].some(word=>word.length>=6)],
-   ['twoFours','Build 2 different words with 4 or more letters',({words})=>[...words].filter(word=>word.length>=4).length>=2]
+   ['exactSeven','Build a word exactly 7 letters long',length(7)],
+   ['exactEight','Build a word exactly 8 letters long',length(8)],
+   ['threeVowels','Use 3 different vowels in one word',({words})=>[...words].some(word=>new Set(word.match(/[aeiou]/g)).size>=3)]
   ],
   [
-   ['twelveTiles','Connect 12 tiles in valid words',({tiles})=>tiles.size>=12],
-   ['fifteenTiles','Connect 15 tiles in valid words',({tiles})=>tiles.size>=15],
-   ['eighteenTiles','Connect 18 tiles in valid words',({tiles})=>tiles.size>=18]
+   ['vowelCross','Cross two words at a vowel',({crossings})=>crossings.some(letter=>'AEIOU'.includes(letter))],
+   ['crossAtR','Cross two words at an R',({crossings})=>crossings.includes('R')],
+   ['crossAtT','Cross two words at a T',({crossings})=>crossings.includes('T')]
   ],
   [
-   ['startsB','Start a word with B',({words})=>[...words].some(word=>word.startsWith('b'))],
-   ['startsP','Start a word with P',({words})=>[...words].some(word=>word.startsWith('p'))],
-   ['startsW','Start a word with W',({words})=>[...words].some(word=>word.startsWith('w'))],
-   ['startsH','Start a word with H',({words})=>[...words].some(word=>word.startsWith('h'))]
+   ['spellSh','Build a word with SH and another with CH',({words})=>[...words].some(a=>a.includes('sh')&&[...words].some(b=>b!==a&&b.includes('ch')))],
+   ['spellAi','Build a word with AI and another with EA',({words})=>[...words].some(a=>a.includes('ai')&&[...words].some(b=>b!==a&&b.includes('ea')))],
+   ['spellOo','Build a word with OO and another with EE',({words})=>[...words].some(a=>a.includes('oo')&&[...words].some(b=>b!==a&&b.includes('ee')))]
   ],
   [
-   ['endsS','End a word with S',({words})=>[...words].some(word=>word.endsWith('s'))],
-   ['endsY','End a word with Y',({words})=>[...words].some(word=>word.endsWith('y'))],
-   ['endsT','End a word with T',({words})=>[...words].some(word=>word.endsWith('t'))],
-   ['endsE','End a word with E',({words})=>[...words].some(word=>word.endsWith('e'))]
+   ['rhymingPair','Build a rhyming pair from the -at, -ain or -ight family',({words})=>pair(words,[['cat','hat'],['bat','mat'],['rain','train'],['pain','rain'],['light','night'],['fight','light']])],
+   ['oppositesPair','Build two opposites. Think size, speed or direction',({words})=>pair(words,[['big','small'],['fast','slow'],['up','down'],['in','out'],['left','right']])],
+   ['wordFamily','Build the present and past forms of the same verb',({words})=>pair(words,[['play','played'],['rain','rained'],['walk','walked'],['eat','ate'],['run','ran'],['sing','sang'],['grow','grew'],['sit','sat'],['ride','rode']])]
   ],
-  [
-   ['twoVowels','Use 2 different vowels in one word',({words})=>[...words].some(word=>new Set(word.match(/[aeiou]/g)).size>=2)],
-   ['sameLetter','Repeat a letter in one word',({words})=>[...words].some(word=>new Set(word).size<word.length)],
-   ['twoCrossings','Make 2 word crossings',({crossings})=>crossings>=2]
-  ]
+  soloVocabularyClues().map(([id,clue,answers])=>[
+   id,'Word detective · '+clue,({words})=>answers.split(' ').some(answer=>words.has(answer))
+  ])
  ];
 }
 function rollSoloChallenges(previous=[]){
@@ -272,9 +283,9 @@ function soloChallengeBoard(validation){
  for(const {word,tiles:letters} of validation.words){
   if(!letters.every(({id})=>tiles.has(id)&&!validation.ids.has(id)))continue;
   words.add(word);
-  for(const {id} of letters)uses.set(id,(uses.get(id)||0)+1);
+  for(const {id,letter} of letters)uses.set(id,{letter,count:(uses.get(id)?.count||0)+1});
  }
- return {words,tiles:new Set(uses.keys()),crossings:[...uses.values()].filter(count=>count>1).length};
+ return {words,tiles:new Set(uses.keys()),crossings:[...uses.values()].filter(tile=>tile.count>1).map(tile=>tile.letter)};
 }
 function drawSoloChallenges(validation){
  const panel=document.getElementById('soloChallenges');
