@@ -60,9 +60,21 @@ button.primary{background:#edb1ab;color:#452925}
 #roomCode{font-size:2.3rem;letter-spacing:.17em;color:#a3375e}
 #roomLogin{margin-top:14px}#roomLogin input{display:block}
 #roomStatus:empty{display:none}
+
+.soloChallenges{margin:0 0 10px;border:1px solid #d8e6d7;border-radius:14px;background:#fbfff7;padding:0 12px}
+.soloChallenges summary{cursor:pointer;padding:8px 2px;font-weight:800}
+.soloChallengeProgress{margin-left:8px;color:#286750;font-size:.9em}
+.soloChallenges ul{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:4px 16px;margin:0;padding:0 0 9px}
+.soloChallenges li{display:flex;gap:7px;font-size:.9em;line-height:1.35}
+.soloChallenges li.complete{color:#24654f;font-weight:700}
+html.expanded .soloChallenges{margin:0;flex:none}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="guavaPool" hidden></span><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
+<details class="soloChallenges" id="soloChallenges" open>
+<summary>Solo challenges <span class="soloChallengeProgress" id="soloChallengeProgress" role="status"></span></summary>
+<ul id="soloChallengeList" aria-label="Challenges for this game"></ul>
+</details>
 <div class="game"><div class="boardViewport" id="viewport"><div class="board" id="board" aria-label="Word building board"></div></div><div class="tray" id="tray" aria-label="Unused letter tiles"></div>
 <div class="gameControls"><button type="button" id="swap" class="swapZone"><span aria-hidden="true">⇄</span> Swap</button><div class="actions"><button id="guavaPick" hidden>Pick!</button><button class="primary" id="finish">Check my board</button><button id="undo">↶ Undo</button><button id="shuffle">Shuffle tray</button><button id="sortTray">Sort A–Z</button><button id="reset">New game</button><button id="pause">Pause</button></div></div>
 <div class="notice" id="notice" role="status">Drag tiles from the tray onto the board. Move any tile whenever you like.</div>
@@ -167,8 +179,8 @@ function makeStash(){
  }
  return stash;
 }
-function fresh(){state={tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null})),stash:makeStash(),seconds:0};history=[];selected=null;save();draw()}
-try{state=JSON.parse(localStorage.getItem(KEY));if(!state||!Array.isArray(state.tiles))fresh()}catch{fresh()}
+function fresh(){const challenges=rollSoloChallenges(state?.challenges);state={challenges,tiles:LETTERS.map((letter,id)=>({id,letter,x:null,y:null})),stash:makeStash(),seconds:0};history=[];selected=null;save();draw()}
+try{state=JSON.parse(localStorage.getItem(KEY));if(!state||!Array.isArray(state.tiles))fresh();else if(!Array.isArray(state.challenges)||!soloChallengeDeck().every(group=>group.some(([id])=>state.challenges.includes(id)))){state.challenges=rollSoloChallenges();save()}}catch{fresh()}
 function remember(){if(roomClientReady&&room)return;history.push(JSON.stringify({tiles:state.tiles,stash:state.stash}));if(history.length>80)history.shift()}
 function cellSize(){return Math.round(Math.min(54,Math.max(38,Math.floor((viewport.clientWidth-20)/13)))*boardZoom/100)}
 function gridPosition(x,y){const step=cellSize();return {x:Math.round(x/step),y:Math.round(y/step)}}
@@ -211,7 +223,84 @@ function connectedWordTiles(words){
  return main;
 }
 function validate(){const words=wordsFound();if(roomClientReady&&room?.mode==='hard')return {words,bad:[],ids:new Set(),goodIds:new Set()};const bad=dictionaryStatus==='ready'?words.filter(w=>!dictionary.has(w.word)):[];const ids=new Set(bad.flatMap(w=>w.tiles.map(t=>t.id)));const validWords=dictionaryStatus==='ready'?words.filter(w=>dictionary.has(w.word)):[];const goodIds=connectedWordTiles(validWords);return {words,bad,ids,goodIds}}
-function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
+function soloChallengeDeck(){
+ return [
+  [
+   ['threeWords','Build 3 different words',({words})=>words.size>=3],
+   ['fourWords','Build 4 different words',({words})=>words.size>=4],
+   ['fiveWords','Build 5 different words',({words})=>words.size>=5]
+  ],
+  [
+   ['fiveLetters','Build a word with 5 or more letters',({words})=>[...words].some(word=>word.length>=5)],
+   ['sixLetters','Build a word with 6 or more letters',({words})=>[...words].some(word=>word.length>=6)],
+   ['twoFours','Build 2 different words with 4 or more letters',({words})=>[...words].filter(word=>word.length>=4).length>=2]
+  ],
+  [
+   ['twelveTiles','Connect 12 tiles in valid words',({tiles})=>tiles.size>=12],
+   ['fifteenTiles','Connect 15 tiles in valid words',({tiles})=>tiles.size>=15],
+   ['eighteenTiles','Connect 18 tiles in valid words',({tiles})=>tiles.size>=18]
+  ],
+  [
+   ['startsB','Start a word with B',({words})=>[...words].some(word=>word.startsWith('b'))],
+   ['startsP','Start a word with P',({words})=>[...words].some(word=>word.startsWith('p'))],
+   ['startsW','Start a word with W',({words})=>[...words].some(word=>word.startsWith('w'))],
+   ['startsH','Start a word with H',({words})=>[...words].some(word=>word.startsWith('h'))]
+  ],
+  [
+   ['endsS','End a word with S',({words})=>[...words].some(word=>word.endsWith('s'))],
+   ['endsY','End a word with Y',({words})=>[...words].some(word=>word.endsWith('y'))],
+   ['endsT','End a word with T',({words})=>[...words].some(word=>word.endsWith('t'))],
+   ['endsE','End a word with E',({words})=>[...words].some(word=>word.endsWith('e'))]
+  ],
+  [
+   ['twoVowels','Use 2 different vowels in one word',({words})=>[...words].some(word=>new Set(word.match(/[aeiou]/g)).size>=2)],
+   ['sameLetter','Repeat a letter in one word',({words})=>[...words].some(word=>new Set(word).size<word.length)],
+   ['twoCrossings','Make 2 word crossings',({crossings})=>crossings>=2]
+  ]
+ ];
+}
+function rollSoloChallenges(previous=[]){
+ return soloChallengeDeck().map(group=>{
+  const choices=group.filter(([id])=>!previous.includes(id));
+  const available=choices.length?choices:group;
+  return available[Math.floor(Math.random()*available.length)][0];
+ });
+}
+function soloChallengeBoard(validation){
+ const tiles=validation.goodIds;
+ const words=new Set(), uses=new Map();
+ for(const {word,tiles:letters} of validation.words){
+  if(!letters.every(({id})=>tiles.has(id)&&!validation.ids.has(id)))continue;
+  words.add(word);
+  for(const {id} of letters)uses.set(id,(uses.get(id)||0)+1);
+ }
+ return {words,tiles:new Set(uses.keys()),crossings:[...uses.values()].filter(count=>count>1).length};
+}
+function drawSoloChallenges(validation){
+ const panel=document.getElementById('soloChallenges');
+ panel.hidden=roomClientReady&&!!room;
+ if(panel.hidden)return;
+ const selected=soloChallengeDeck().map(group=>group.find(([id])=>state.challenges.includes(id)));
+ const board=soloChallengeBoard(validation);
+ const goals=selected.map(([,label,check])=>({label,complete:dictionaryStatus==='ready'&&check(board)}));
+ const complete=goals.filter(goal=>goal.complete).length;
+ const progress=complete===6?'6/6 · All challenges complete!':complete+'/6 complete';
+ const counter=document.getElementById('soloChallengeProgress');
+ if(counter.textContent!==progress)counter.textContent=progress;
+ document.getElementById('soloChallengeList').replaceChildren(...goals.map(({label,complete})=>{
+  const item=document.createElement('li');
+  item.classList.toggle('complete',complete);
+  const icon=document.createElement('span');
+  icon.setAttribute('aria-hidden','true');
+  icon.textContent=complete?'✓':'○';
+  const text=document.createElement('span');
+  text.textContent=complete?label+' (complete)':label;
+  item.append(icon,text);
+  return item;
+ }));
+}
+
+function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.')}
 function beginDrag(e,t,element,fromTray){
  if(room&&room.phase!=='playing')return;
  if(e.button!==0)return;
