@@ -1,4 +1,4 @@
-import {generatePuzzle} from './generator.mjs';
+import {generatePuzzle} from './generator.mjs?v=levels';
 
 const $ = id => document.getElementById(id);
 const setup = $('setup'), flower = $('flower'), result = $('result');
@@ -9,14 +9,6 @@ const labels = ['Top petal', 'Right petal', 'Bottom petal', 'Left petal'];
 function timeText(milliseconds) {
   const seconds = Math.floor(milliseconds / 1000);
   return Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0');
-}
-
-function dailySeed() {
-  const fields = new Intl.DateTimeFormat('en-AU', {
-    timeZone: 'Australia/Perth', year: 'numeric', month: '2-digit', day: '2-digit'
-  }).formatToParts(new Date());
-  const date = Object.fromEntries(fields.map(({type, value}) => [type, value]));
-  return 'daily-' + date.year + '-' + date.month + '-' + date.day;
 }
 
 function numberButton(number) {
@@ -176,7 +168,6 @@ function finish() {
   celebrate();
 }
 
-$('daily').onclick = () => { $('seed').value = dailySeed(); };
 $('toggleTime').onclick = () => {
   timerVisible = !timerVisible;
   $('time').hidden = !timerVisible;
@@ -185,7 +176,7 @@ $('toggleTime').onclick = () => {
 };
 setup.onsubmit = event => {
   event.preventDefault();
-  begin(Number($('level').value), $('seed').value.trim() || crypto.randomUUID());
+  begin(Number($('level').value), crypto.randomUUID());
 };
 $('again').onclick = () => {
   result.close();
