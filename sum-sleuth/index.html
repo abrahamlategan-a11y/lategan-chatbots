@@ -1,127 +1,57 @@
 <!doctype html>
-<html lang="en-AU">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en-AU"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sum Sleuth · Learning Hub</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f4f2fb;color:#231e40;font:1rem system-ui,sans-serif}main{width:min(100% - 2rem,42rem);margin:2rem auto}a{color:#504384}h1{font-size:clamp(2.4rem,8vw,4rem);letter-spacing:-.055em;margin:.6rem 0;line-height:1}p{line-height:1.5}.setup{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;margin:1rem 0}button,select{font:inherit}button,select{border:1px solid #c9c2df;border-radius:.7rem;padding:.5rem .75rem;background:white;color:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #7a52d5;outline-offset:3px}.board{background:white;border:1px solid #ded8ed;border-radius:1.5rem;padding:clamp(1rem,4vw,2rem);box-shadow:0 12px 40px #31215213}.round{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap}.target{font-size:clamp(2rem,7vw,3rem);margin:0}.score{font-variant-numeric:tabular-nums}.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(.35rem,2vw,.85rem);margin:1rem 0}.tile{min-height:3.4rem;font-size:clamp(1.25rem,5vw,2rem);font-weight:800;background:#eee9fc}.tile[aria-pressed=true]{background:#5c38a8;border-color:#5c38a8;color:white}.tile.correct{background:#146744;border-color:#146744;color:white}.tile[aria-disabled=true]{cursor:default}.feedback{min-height:2.8rem;margin:.65rem 0}.controls{display:flex;gap:.5rem;flex-wrap:wrap}.next{background:#231e40;color:white}.controls button[hidden]{display:none}@media(max-width:360px){main{width:calc(100% - 1rem)}.tile{padding:.35rem}}
-
-.route{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem;margin:1rem 0;list-style:none;padding:0}.route li{background:#ece7f8;border-radius:.65rem;padding:.55rem .35rem;text-align:center}.route li[aria-current=step]{outline:2px solid #7652c0}.route strong{display:block;font-size:1.3rem}.route small{display:block}.tile{min-height:4rem}.tile.sum{background:#5c38a8;color:#fff}.tile.correct{background:#146744;color:#fff}.tile.proof{outline:2px solid #146744;outline-offset:2px}.equation{font-size:1.15rem;font-weight:800;color:#245b48;min-height:1.6em}
-</style>
-</head>
-<body><main>
-<a id="hubLink" href="../student/">← Student Hub</a>
-<h1>Sum Sleuth</h1>
-<p>Four cards, one hidden sum. Pick the sum first, then show which two cards add up to it. Collect four sums to unlock the final puzzle.</p>
-<div class="setup"><label for="level">Number range</label><select id="level"><option value="20">Up to 20</option><option value="50">Up to 50</option><option value="100">Up to 100</option></select></div>
-<ol class="route" id="route" aria-label="Collected sums"></ol>
-<section class="board" aria-label="Addition puzzle">
- <div class="round"><h2 class="target" id="stage" tabindex="-1"></h2></div>
- <div class="tiles" id="tiles" role="group" aria-label="Number cards"></div>
- <p class="feedback" id="feedback" role="status"></p>
- <p class="equation" id="equation" hidden></p>
- <div class="controls"><button type="button" id="clear">Clear selection</button><button type="button" id="next" class="next" hidden></button></div>
-</section>
-</main><script>
-const $=id=>document.getElementById(id);
-const level=$('level'),tiles=$('tiles'),feedback=$('feedback'),next=$('next'),clear=$('clear');
-let game,stage=0,selected=[],done=false;
-function randomItem(items){return items[Math.floor(Math.random()*items.length)]}
-function shuffle(numbers){
- for(let index=numbers.length-1;index>0;index--){
-  const other=Math.floor(Math.random()*(index+1));
-  [numbers[index],numbers[other]]=[numbers[other],numbers[index]];
- }
- return numbers;
+:root{font-family:"Trebuchet MS",ui-rounded,system-ui,sans-serif;color:#121d4b;background:#fffefa;--mint:#c5f3e3}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0}main{max-width:960px;margin:auto;padding:clamp(8px,3vw,24px)}
+a{color:#164f3e}button,input,select{font:inherit;color:inherit}button{cursor:pointer}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #23684f;outline-offset:3px}
+button:disabled{cursor:default}h1,h2,p{margin:.4em 0}
+header{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.clock{display:flex;align-items:center;gap:.5rem;font-variant-numeric:tabular-nums}
+.clock button,.action{min-height:56px;border:1px solid #bddbd0;border-radius:.85rem;padding:.5rem .9rem;background:#effaf5;font-weight:750}
+.action.primary{background:var(--mint)}.setup{margin:2rem auto;max-width:480px;padding:1.5rem;border:1px solid #ede9f3;border-radius:24px;background:#fff;box-shadow:0 8px 25px #2d316619}
+.setup fieldset{margin:1rem 0;padding:0;border:0}.setup label{display:block;margin:.6rem 0}
+.setup select,.setup input[type=text]{width:100%;min-height:56px;border:1px solid #bddbd0;border-radius:12px;padding:.5rem;background:#fff}
+.instruction{text-align:center;margin:.25rem 0 .65rem;min-height:1.4em}
+.flower{display:grid;justify-content:center;align-items:center;gap:8px;grid-template-columns:repeat(3,minmax(181px,222px));grid-template-areas:". north ." "west centre east" ". south ."}
+.petal,.centre{position:relative;min-width:0;display:grid;place-content:center;justify-items:center;gap:4px;padding:10px;border:1px solid var(--border);background:var(--petal);min-height:145px}
+.petal{border-radius:54% 47% 52% 44% / 48% 59% 44% 58%}
+.petal[data-position="0"]{grid-area:north;--petal:#e4f5ec;--border:#aadbc2}
+.petal[data-position="1"]{grid-area:east;--petal:#ffefcf;--border:#e9ca89}
+.petal[data-position="2"]{grid-area:south;--petal:#f3e8fa;--border:#d9bde8}
+.petal[data-position="3"]{grid-area:west;--petal:#e4f2ff;--border:#b5d7ee}
+.petal.done{background:color-mix(in srgb,var(--petal),white 68%);transition:background .3s}
+.centre{grid-area:centre;--petal:#f2f2f5;--border:#d8dbe3;aspect-ratio:1;border-radius:50%;width:min(100%,195px);justify-self:center}
+.centre.ready{--petal:#fff0de;--border:#edc48e}
+.petal h2,.centre h2{font-size:.9rem;margin:0}.numbers{display:flex;max-width:180px;flex-wrap:wrap;justify-content:center;gap:4px}
+.centre .numbers{display:grid;grid-template-columns:repeat(2,56px)}
+.number{display:grid;place-items:center;width:56px;height:56px;padding:0;border-radius:50%;border:1px solid var(--border);background:#fff;font-size:1.22rem;font-weight:850;box-shadow:0 2px 0 var(--border);touch-action:manipulation}
+.number[aria-disabled=true]{cursor:default}.number.empty{background:#eceef2;box-shadow:none}.number.correct{background:#d0f4de;color:#10462f;box-shadow:0 0 14px #59bc7c80}
+.petal.done .number:not(.correct){color:#5a6479;background:#ffffff90;box-shadow:none}
+.number.wrong{background:#ffd9d8;color:#8b242a;animation:shake .28s}
+@keyframes shake{25%,75%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
+dialog{width:min(390px,calc(100% - 28px));padding:1.5rem;border:1px solid #b9dacd;border-radius:24px;text-align:center;color:inherit}dialog::backdrop{background:#17255455}
+.resultTime{font-size:2rem;font-weight:900}.confetti{position:fixed;z-index:2;pointer-events:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:590px){
+ .flower{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"north east" "centre centre" "west south";gap:5px}
+ .petal,.centre{padding:7px}.centre{width:156px}.petal{border-radius:24px}
 }
-function sumRelationships(numbers){
- const matches=[];
- for(let a=0;a<numbers.length;a++){
-  for(let b=a+1;b<numbers.length;b++){
-   const sum=numbers[a]+numbers[b];
-   if(numbers.includes(sum))matches.push(sum);
-  }
- }
- return matches;
-}
-function makeGroup(sum,limit,min=1){
- const pairs=Array.from({length:Math.floor((sum-1)/2)-min+1},(_,index)=>index+min);
- for(const left of shuffle(pairs)){
-  const right=sum-left;
-  const extras=Array.from({length:limit-min+1},(_,index)=>index+min).filter(value=>{
-   const cards=[left,right,sum,value];
-   return new Set(cards).size===4&&sumRelationships(cards).length===1;
-  });
-  if(extras.length)return shuffle([left,right,sum,randomItem(extras)]);
- }
- throw Error('Could not deal a unique puzzle');
-}
-function makeGame(limit){
- const targets=Array.from({length:limit-Math.ceil(limit*.65)+1},(_,index)=>Math.ceil(limit*.65)+index);
- const finalCards=makeGroup(randomItem(targets),limit,3);
- return {finalCards,groups:finalCards.map(value=>makeGroup(value,limit))};
-}
-function paintRoute(){
- $('route').replaceChildren(...game.finalCards.map((sum,index)=>{
-  const item=document.createElement('li');
-  if(index===stage)item.setAttribute('aria-current','step');
-  const label=document.createElement('small');label.textContent='Puzzle '+(index+1);
-  const value=document.createElement('strong');value.textContent=index<stage||(index===stage&&done)?sum:'?';
-  item.append(label,value);return item;
- }));
-}
-function currentCards(){return stage===4?game.finalCards:game.groups[stage]}
-function paintSelection(){
- Array.from(tiles.children).forEach((button,index)=>{
-  const position=selected.indexOf(index);
-  button.setAttribute('aria-pressed',String(position>=0));
-  button.setAttribute('aria-disabled',String(done));
-  button.classList.toggle('sum',position===0);
-  button.classList.toggle('correct',done&&position===0);
-  button.classList.toggle('proof',done&&position>0);
- });
- clear.disabled=done||!selected.length;
-}
-function startStage(focus=false){
- selected=[];done=false;
- $('stage').textContent=stage===4?'Final puzzle':'Puzzle '+(stage+1)+' of 4';
- feedback.textContent='Pick the card you think is the sum.';
- next.hidden=true;$('equation').hidden=true;
- tiles.replaceChildren(...currentCards().map((number,index)=>{
-  const button=document.createElement('button');
-  button.className='tile';button.type='button';button.textContent=number;
-  button.onclick=()=>choose(index);return button;
- }));
- paintRoute();paintSelection();
- if(focus)$('stage').focus();
-}
-function choose(index){
- if(done)return;
- const previous=selected.indexOf(index);
- if(previous!==-1){selected.splice(previous);feedback.textContent=selected.length?'Pick the cards that add up to your sum.':'Pick the card you think is the sum.';paintSelection();return}
- selected.push(index);
- if(selected.length<3){
-  feedback.textContent=selected.length===1?'Now pick two cards that add up to it.':'Pick one more card to prove your sum.';
-  paintSelection();return;
- }
- const [sum,left,right]=selected.map(position=>currentCards()[position]);
- if(left+right!==sum){
-  selected=[];feedback.textContent=left+' + '+right+' = '+(left+right)+'. Try a new sum and pair.';
-  paintSelection();return;
- }
- done=true;
- feedback.textContent=stage===4?'Case solved!':sum+' collected for the final puzzle.';
- $('equation').textContent=left+' + '+right+' = '+sum;$('equation').hidden=false;
- next.textContent=stage===4?'Play again':stage===3?'Open final puzzle →':'Next puzzle →';
- next.hidden=false;paintRoute();paintSelection();next.focus();
-}
-function start(focus=false){game=makeGame(Number(level.value));stage=0;startStage(focus)}
-next.onclick=()=>{if(!done)return;if(stage===4)start(true);else{stage++;startStage(true)}};
-clear.onclick=()=>{selected=[];feedback.textContent='Pick the card you think is the sum.';paintSelection()};
-level.onchange=()=>start();
-if(new URLSearchParams(location.search).get('from')==='teacher'){
- $('hubLink').href='../teacher/';$('hubLink').textContent='← Teacher Hub';
-}
-start();
-</script></body></html>
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style></head><body><main>
+<header><a id="hubLink" href="../student/">← Student Hub</a><h1>Sum Sleuth</h1>
+<div class="clock" id="clock" hidden><span id="time">0:00</span><button id="toggleTime" type="button" aria-controls="time" aria-expanded="true">Hide timer</button></div></header>
+<form class="setup" id="setup">
+<h2>Choose a puzzle</h2>
+<label for="level">Level</label><select id="level"><option value="1">Level 1 · Addition to 20</option><option value="2">Level 2 · Addition to 100</option><option value="3">Level 3 · Multiplication</option></select>
+<label for="seed">Puzzle seed <small>(optional)</small></label><input id="seed" maxlength="80" type="text" autocomplete="off" placeholder="Leave blank for a random puzzle">
+<button class="action" type="button" id="daily">Use today’s seed</button>
+<button class="action primary" type="submit">Start puzzle</button>
+</form>
+<section id="play" hidden aria-label="Flower puzzle"><p class="instruction" id="instruction"></p><div class="flower" id="flower"></div><p class="sr" id="announce" role="status"></p></section>
+</main>
+<dialog id="result" aria-labelledby="resultTitle"><h2 id="resultTitle">Puzzle solved!</h2><p class="resultTime" id="resultTime"></p><p id="saveStatus" role="status"></p><button class="action" id="retrySave" type="button" hidden>Retry save</button> <button class="action primary" id="again" type="button">Play again</button></dialog>
+<script type="module" src="./game.mjs"></script></body></html>
