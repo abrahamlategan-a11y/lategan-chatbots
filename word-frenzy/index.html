@@ -81,6 +81,7 @@ html.expanded .soloChallenges{margin:0;flex:none}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
+<p id="timedInstructions" style="margin:0 0 8px;font-size:.88rem" hidden></p>
 <details class="soloChallenges" id="soloChallenges" open>
 <summary>Solo challenges <span class="soloChallengeProgress" id="soloChallengeProgress" role="status"></span></summary>
 <ul id="soloChallengeList" aria-label="Challenges for this game"></ul>
@@ -100,7 +101,12 @@ html.expanded .soloChallenges{margin:0;flex:none}
   </div>
   <div id="soloModes" class="lobbyChoices" hidden role="group" aria-label="Solo game modes">
    <button type="button" data-solo-mode="free">Free Play · Make any words</button>
-   <h3 style="margin:8px 0 0">Challenge Mode</h3>
+   <h3 style="margin:8px 0 0">Grid Sprint</h3>
+   <button type="button" data-solo-mode="sprint15">Easy · 15 tiles</button>
+   <button type="button" data-solo-mode="sprint21">Medium · 21 tiles</button>
+   <button type="button" data-solo-mode="sprint30">Hard · 30 tiles</button>
+   <button type="button" data-solo-mode="streak">Tile Streak · 5 minutes</button>
+   <h3 style="margin:8px 0 0">Word Challenges</h3>
    <button type="button" data-solo-mode="easy">Easy · 6 entry-level challenges</button>
    <button type="button" data-solo-mode="medium">Medium · Build a bigger grid</button>
    <button type="button" data-solo-mode="hard">Hard · Longer words and more crossings</button>
@@ -112,6 +118,11 @@ html.expanded .soloChallenges{margin:0;flex:none}
   <div><dt>Most different words on one board</dt><dd id="bestWordCount">—</dd></div>
   <div><dt>Most challenges in one round</dt><dd id="bestChallenges">—</dd></div>
  </dl>
+ <h4>Grid Sprint best times</h4>
+ <dl><div><dt>Easy</dt><dd id="sprint15Best">—</dd></div>
+ <div><dt>Medium</dt><dd id="sprint21Best">—</dd></div>
+ <div><dt>Hard</dt><dd id="sprint30Best">—</dd></div>
+ <div><dt>Tile Streak · Most tiles</dt><dd id="streakBest">—</dd></div></dl>
  <p id="bestStatus">Saved on this browser.</p>
 </section>
   <div id="hostSetup" class="lobbyDetail" hidden>
@@ -224,7 +235,7 @@ function makeStash(game){
 function fresh(mode=state?.mode||'free',previous=state?.challenges){
  const challenges=rollSoloChallenges(mode,previous);
  const stash=makeStash({tiles:[]});
- const tiles=stash.splice(0,35).map((letter,id)=>({id,letter,x:null,y:null}));
+ const tiles=stash.splice(0,sprintSize(mode)||(mode==='streak'?15:35)).map((letter,id)=>({id,letter,x:null,y:null}));
  state={mode,challenges,tiles,stash,seconds:0,fullPool:true};
  history=[];selected=null;paused=false;save();draw();
 }
@@ -337,7 +348,7 @@ function soloChallengeDeck(){
  ];
 }
 function soloModeGroups(mode){
- if(mode==='free')return [];
+ if(mode==='free'||sprintSize(mode)||mode==='streak')return [];
  if(mode==='easy')return soloChallengeDeck();
  const hard=mode==='hard';
  const wordCount=hard?16:10;
@@ -435,7 +446,7 @@ function studentCodeForBests(){
 function drawSoloChallenges(validation){
  const panel=document.getElementById('soloChallenges');
  const inRoom=roomClientReady&&!!room;
- panel.hidden=inRoom||state.mode==='free';
+ panel.hidden=inRoom||!state.challenges?.length;
  document.querySelector('.game').inert=!inRoom&&!!state.completed;
  if(inRoom)return;
  const board=soloChallengeBoard(validation);
@@ -450,6 +461,7 @@ function drawSoloChallenges(validation){
   save();
   document.querySelector('.game').inert=true;
   const title=state.mode[0].toUpperCase()+state.mode.slice(1);
+  document.getElementById('soloResultTitle').textContent='🎉 Challenge complete!';
   document.getElementById('soloResultMessage').textContent=title+' · '+total+' of '+total+' challenges complete.';
   if(roomClientReady){
    if(swapDialog.open)swapDialog.close();
@@ -630,8 +642,11 @@ document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.
  const letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
-document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
-setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!state.completed&&!document.getElementById('lobby').open){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
+document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});if(sprintSize(state.mode))return finishSprint();const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
+setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!state.completed&&!document.getElementById('lobby').open&&(!timedSolo()||dictionaryStatus==='ready')){
+ state.seconds++;if(state.seconds%5===0)save();
+ if(state.mode==='streak'&&state.seconds>=300)finishStreak();
+ }renderSoloClock()},1000);
 const zoomOut=document.getElementById('zoomOut'),zoomIn=document.getElementById('zoomIn'),zoomReset=document.getElementById('zoomReset');
 function setBoardZoom(value){
  const oldStep=cellSize();
@@ -692,7 +707,7 @@ function showLobbyPage(page){
  lobbyBack.hidden=page==='menu';
  if(page==='room')return;
  if(page==='solo'){$('soloModes').querySelector('button').focus();return}
- if(page==='records'){$('soloBestsTitle').focus();return}
+ if(page==='records'){renderTimedBests();$('soloBestsTitle').focus();return}
  const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
  target.focus();
 }
@@ -751,18 +766,76 @@ function connectedBoard(v){
 function roomBoard(){
  return state.tiles.filter(t=>t.x!==null).map(({id,x,y})=>({id,x,y}));
 }
+function sprintSize(mode){
+ return {sprint15:15,sprint21:21,sprint30:30}[mode]||0;
+}
+function timedSolo(){return !room&&(sprintSize(state.mode)||state.mode==='streak')}
+function clockText(seconds){
+ return String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+}
+function renderSoloClock(){
+ const streak=!room&&state.mode==='streak';
+ $('time').textContent=(streak?'Time left: ':'Time: ')+clockText(streak?Math.max(0,300-state.seconds):state.seconds);
+}
+function validTimedGrid(){
+ if(dictionaryStatus!=='ready'||state.pendingSwap)return false;
+ const validation=validate();
+ return !validation.bad.length&&connectedBoard(validation);
+}
+function timedBestKey(mode){return KEY+'-timed:'+mode+':'+(studentCodeForBests()||'guest')}
+function readTimedBest(mode){
+ try{return JSON.parse(localStorage.getItem(timedBestKey(mode)))}catch{return null}
+}
+function renderTimedBests(){
+ for(const mode of ['sprint15','sprint21','sprint30','streak']){
+  const best=readTimedBest(mode);
+  $(mode+'Best').textContent=best===null?'—':mode==='streak'?best+' tiles':clockText(best);
+ }
+}
+function completeTimedRound(title,description,score){
+ if(state.completed)return;
+ state.completed=true;
+ const mode=state.mode,best=readTimedBest(mode);
+ const improved=best===null||(mode==='streak'?score>best:score<best);
+ if(improved){
+  try{localStorage.setItem(timedBestKey(mode),JSON.stringify(score))}
+  catch{document.getElementById('bestStatus').textContent='This browser could not save personal bests.'}
+ }
+ save();
+ if(swapDialog.open)swapDialog.close();
+ $('soloResultTitle').textContent=title;
+ $('soloResultMessage').textContent=description+(improved?' · Personal best!':'');
+ draw();
+ $('soloResult').showModal();
+}
+function finishSprint(){
+ if(!validTimedGrid()||state.completed)return;
+ completeTimedRound('🎉 Sprint complete!',state.tiles.length+' connected tiles in '+clockText(state.seconds),state.seconds);
+}
+function finishStreak(){
+ const score=Math.max(state.checkpoint||0,validTimedGrid()?state.tiles.length:0);
+ completeTimedRound('Time’s up!',score+' tiles on your best complete grid',score);
+}
 function roomControls(){
  const playing=room?.phase==='playing', hard=room?.mode==='hard';
  $('guavaPick').hidden=!room;
- $('soloDraw').hidden=!!room;
- $('soloDraw').disabled=!state.stash?.length||!!state.pendingSwap;
+ const instructions=$('timedInstructions');
+ instructions.hidden=!timedSolo();
+ if(!instructions.hidden)instructions.textContent=state.mode==='streak'
+  ?'Connect every tile in one valid grid to draw 3 more. Best complete grid this round: '+Math.max(state.checkpoint||0,validTimedGrid()?state.tiles.length:0)+' tiles.'
+  :'Use every tile in one valid grid, then select Finish sprint.';
+ $('soloDraw').hidden=!!room||!!sprintSize(state.mode);
+ $('soloDraw').textContent=!room&&state.mode==='streak'?'Draw 3 tiles':'Draw a tile';
+ $('soloDraw').disabled=!state.stash?.length||!!state.pendingSwap||(!room&&state.mode==='streak'&&(state.stash.length<3||!validTimedGrid()));
+ renderSoloClock();
  const stashCount=room?room.pool:(state.stash||[]).filter(letter=>letter!==null).length;
  $('stashCount').textContent=stashCount+' in stash';
  $('swap').title='Drag a tile here or select a tile and click Swap. Trade one tile for three.';
  $('reset').hidden=$('pause').hidden=$('undo').hidden=!!room;
- $('finish').textContent=room?'Guava!':'Check my board';
+ $('finish').textContent=room?'Guava!':sprintSize(state.mode)?'Finish sprint':'Check my board';
+ $('finish').hidden=!room&&state.mode==='streak';
  $('words').hidden=!!hard;
- if(!room){ $('finish').disabled=$('swap').disabled=false; return }
+ if(!room){ $('finish').disabled=!!sprintSize(state.mode)&&!validTimedGrid();$('swap').disabled=false; return }
  const v=validate();
  const canCall=playing&&!roomBusy&&!room.swap&&!room.pending&&connectedBoard(v)&&
    (hard||(dictionaryStatus==='ready'&&!v.bad.length));
@@ -937,10 +1010,15 @@ $('joinCode').addEventListener('keydown',event=>{
 });
 $('roomStart').onclick=()=>roomAction('start');
 $('soloDraw').onclick=()=>{
- if(room||state.pendingSwap||!state.stash.length)return;
- remember();
- const id=state.tiles.reduce((max,tile)=>Math.max(max,tile.id),-1)+1;
- state.tiles.push({id,letter:state.stash.pop(),x:null,y:null});
+ if(room||state.completed||state.pendingSwap||!state.stash.length)return;
+ const streak=state.mode==='streak';
+ if(streak){
+  if(state.stash.length<3||!validTimedGrid())return;
+  state.checkpoint=Math.max(state.checkpoint||0,state.tiles.length);
+  history=[];
+ }else remember();
+ let id=state.tiles.reduce((max,tile)=>Math.max(max,tile.id),-1)+1;
+ for(let count=0;count<(streak?3:1);count++)state.tiles.push({id:id++,letter:state.stash.pop(),x:null,y:null});
  save();
  draw();
 };
