@@ -68,17 +68,28 @@ export function generatePuzzle(level, seed) {
     }
   }
 
-  function buildGroup(cards, pool, size) {
+  function buildGroup(cards, pool, size, dealOrder) {
     if (cards.length === size) return shuffled(cards, random);
-    for (const number of shuffled(pool, random)) {
+    for (const number of (dealOrder ? dealOrder(cards) : shuffled(pool, random))) {
       if (cards.includes(number)) continue;
       const candidate = [...cards, number];
       // The original relationship stays present, so any extra answer is a conflict.
       if (validAnswers(candidate, operation).length !== 1) continue;
-      const filled = buildGroup(candidate, pool, size);
+      const filled = buildGroup(candidate, pool, size, dealOrder);
       if (filled) return filled;
     }
     return null;
+  }
+
+  function closeDistractors(pool, answer) {
+    if (factTier !== 2) return undefined;
+    const nearby = Math.max(4, Math.ceil(answer * .18));
+    return cards => {
+      const preferAbove = !cards.some(number => number > answer);
+      const band = number => (Math.abs(number - answer) <= nearby ? 0 : 2) +
+        (preferAbove === (number > answer) ? 0 : 1);
+      return shuffled(pool, random).sort((a, b) => band(a) - band(b));
+    };
   }
 
   const solvable = [...pairsByTarget.keys()];
@@ -91,13 +102,13 @@ export function generatePuzzle(level, seed) {
   }
 
   for (const triple of shuffled(eligibleCentrePairs, random)) {
-    const numbers = buildGroup(triple, solvable, 4);
+    const numbers = buildGroup(triple, solvable, 4, closeDistractors(solvable, triple[2]));
     if (!numbers) continue;
     const petals = numbers.map(answer => {
       const candidates = shuffled(pairsByTarget.get(answer), random);
       if (multiply) candidates.sort((a, b) => multiplicationTier(...b) - multiplicationTier(...a));
       for (const pair of candidates) {
-        const cards = buildGroup([...pair, answer], values, 5);
+        const cards = buildGroup([...pair, answer], values, 5, closeDistractors(values, answer));
         if (cards) return {numbers: cards, answer};
       }
       return null;
