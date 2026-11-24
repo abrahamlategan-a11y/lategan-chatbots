@@ -247,6 +247,8 @@ async function loadDictionary(){
    return response.text();
   }));
   addAustralianWords(entries,affixes);
+  // IX is a Roman numeral, not a playable word.
+  dictionary.delete('ix');
   dictionaryStatus='ready';
  }catch{dictionaryStatus='unavailable'}
  draw();
