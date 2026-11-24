@@ -25,7 +25,7 @@ const level=$('level'),tiles=$('tiles'),feedback=$('feedback'),next=$('next'),hi
 let puzzle,selected=[],streak=0,solved=0,assisted=false,done=false;
 function random(min,max){return min+Math.floor(Math.random()*(max-min+1))}
 function makePuzzle(limit){
- const target=random(Math.max(14,Math.ceil(limit*.58)),limit);
+ const target=random(Math.max(16,Math.ceil(limit*.58)),limit);
  const lower=random(Math.ceil(target/4),Math.floor((target-1)/2));
  const answer=[lower,target-lower];
  const numbers=[...answer];
