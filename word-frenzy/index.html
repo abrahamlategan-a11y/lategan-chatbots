@@ -98,6 +98,13 @@ html.expanded .soloChallenges{margin:0;flex:none}
    <button type="button" id="joinGame">Join game →</button>
    <button type="button" id="openSoloBests">🏆 Personal bests →</button>
   </div>
+  <div id="soloModes" class="lobbyChoices" hidden role="group" aria-label="Solo game modes">
+   <button type="button" data-solo-mode="free">Free Play · Make any words</button>
+   <h3 style="margin:8px 0 0">Challenge Mode</h3>
+   <button type="button" data-solo-mode="easy">Easy · 3 challenges</button>
+   <button type="button" data-solo-mode="medium">Medium · 4 challenges</button>
+   <button type="button" data-solo-mode="hard">Hard · 6 challenges</button>
+  </div>
   <section class="soloBests" id="soloBests" aria-labelledby="soloBestsTitle" hidden>
  <h3 id="soloBestsTitle" tabindex="-1">🏆 Personal bests</h3>
  <dl>
@@ -136,6 +143,11 @@ html.expanded .soloChallenges{margin:0;flex:none}
  <h2 id="roomResultTitle">Game over</h2>
  <p id="roomResultMessage"></p>
  <button type="button" class="primary" id="roomResultDone">Back to play menu</button>
+</dialog>
+<dialog id="soloResult" aria-labelledby="soloResultTitle">
+ <h2 id="soloResultTitle">🎉 Challenge complete!</h2>
+ <p id="soloResultMessage"></p>
+ <button type="button" class="primary" id="soloResultDone">Back to play menu</button>
 </dialog>
 </main><script>
 const SIZE=52,KEY='word-frenzy-solo-prototype-v1';
@@ -209,12 +221,12 @@ function makeStash(game){
  if(game.pendingSwap)counts[game.pendingSwap.returned]--;
  return shuffleSoloTiles(Object.entries(counts).flatMap(([letter,count])=>Array(Math.max(0,count)).fill(letter)));
 }
-function fresh(){
- const challenges=rollSoloChallenges(state?.challenges);
+function fresh(mode=state?.mode||'free'){
+ const challenges=rollSoloChallenges(mode,state?.challenges);
  const stash=makeStash({tiles:[]});
  const tiles=stash.splice(0,35).map((letter,id)=>({id,letter,x:null,y:null}));
- state={challenges,tiles,stash,seconds:0,fullPool:true};
- history=[];selected=null;save();draw();
+ state={mode,challenges,tiles,stash,seconds:0,fullPool:true};
+ history=[];selected=null;paused=false;save();draw();
 }
 try{
  state=JSON.parse(localStorage.getItem(KEY));
@@ -226,8 +238,10 @@ try{
    state.fullPool=true;
    changed=true;
   }
-  if(!Array.isArray(state.challenges)||!soloChallengeDeck().every(group=>group.some(([id])=>state.challenges.includes(id)))){
-   state.challenges=rollSoloChallenges();changed=true;
+  if(!state.mode){state.mode='hard';changed=true}
+  const groups=soloModeGroups(state.mode);
+  if(!Array.isArray(state.challenges)||groups.length!==state.challenges.length||!groups.every(group=>group.some(([id])=>state.challenges.includes(id)))){
+   state.challenges=rollSoloChallenges(state.mode);changed=true;
   }
   if(changed)save();
  }
@@ -325,8 +339,15 @@ function soloChallengeDeck(){
   ])
  ];
 }
-function rollSoloChallenges(previous=[]){
- return soloChallengeDeck().map(group=>{
+function soloModeGroups(mode){
+ const groups=soloChallengeDeck();
+ if(mode==='free')return [];
+ if(mode==='easy')return [groups[0],groups[1].filter(([id])=>id==='threeVowels'),groups[2].slice(0,1)];
+ if(mode==='medium')return [groups[0],groups[1],groups[2],groups[3]];
+ return groups;
+}
+function rollSoloChallenges(mode,previous=[]){
+ return soloModeGroups(mode).map(group=>{
   const choices=group.filter(([id])=>!previous.includes(id));
   const available=choices.length?choices:group;
   return available[Math.floor(Math.random()*available.length)][0];
@@ -368,14 +389,30 @@ function studentCodeForBests(){
 }
 function drawSoloChallenges(validation){
  const panel=document.getElementById('soloChallenges');
- panel.hidden=roomClientReady&&!!room;
- if(panel.hidden)return;
- const selected=soloChallengeDeck().map(group=>group.find(([id])=>state.challenges.includes(id)));
+ const inRoom=roomClientReady&&!!room;
+ panel.hidden=inRoom||state.mode==='free';
+ document.querySelector('.game').inert=!inRoom&&!!state.completed;
+ if(inRoom)return;
  const board=soloChallengeBoard(validation);
+ const selected=soloModeGroups(state.mode).map(group=>group.find(([id])=>state.challenges.includes(id)));
  const goals=selected.map(([,label,check])=>({label,complete:dictionaryStatus==='ready'&&check(board)}));
  const complete=goals.filter(goal=>goal.complete).length;
  updateSoloBests(dictionaryStatus==='ready'?board.words:new Set(),complete);
- const progress=complete===6?'6/6 · All challenges complete!':complete+'/6 complete';
+ if(panel.hidden)return;
+ const total=goals.length;
+ if(complete===total&&!state.completed){
+  state.completed=true;
+  save();
+  document.querySelector('.game').inert=true;
+  const title=state.mode[0].toUpperCase()+state.mode.slice(1);
+  document.getElementById('soloResultMessage').textContent=title+' · '+total+' of '+total+' challenges complete.';
+  if(roomClientReady){
+   if(swapDialog.open)swapDialog.close();
+   if(lobby.open)lobby.close();
+   document.getElementById('soloResult').showModal();
+  }
+ }
+ const progress=complete+'/'+total+(state.completed?' · All challenges complete!':' complete');
  const counter=document.getElementById('soloChallengeProgress');
  if(counter.textContent!==progress)counter.textContent=progress;
  document.getElementById('soloChallengeList').replaceChildren(...goals.map(({label,complete})=>{
@@ -549,7 +586,7 @@ document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
 document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
 document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
-setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!document.getElementById('lobby').open){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
+setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!state.completed&&!document.getElementById('lobby').open){state.seconds++;if(state.seconds%5===0)save()}const m=Math.floor(state.seconds/60),sec=state.seconds%60;document.getElementById('time').textContent='Time: '+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0')},1000);
 const zoomOut=document.getElementById('zoomOut'),zoomIn=document.getElementById('zoomIn'),zoomReset=document.getElementById('zoomReset');
 function setBoardZoom(value){
  const oldStep=cellSize();
@@ -597,6 +634,7 @@ const lobbyChoices=document.getElementById('lobbyChoices');
 const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
 function showLobbyPage(page){
  lobbyChoices.hidden=page!=='menu';
+ $('soloModes').hidden=page!=='solo';
  $('soloBests').hidden=page!=='records';
  $('roomWaiting').hidden=page!=='room';
  $('roomLogin').hidden=page!=='join'&&page!=='host';
@@ -608,6 +646,7 @@ function showLobbyPage(page){
  joinSetup.hidden=page!=='join';
  lobbyBack.hidden=page==='menu';
  if(page==='room')return;
+ if(page==='solo'){$('soloModes').querySelector('button').focus();return}
  if(page==='records'){$('soloBestsTitle').focus();return}
  const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
  target.focus();
@@ -618,7 +657,37 @@ function openLobby(){
 }
 document.getElementById('openLobby').onclick=openLobby;
 document.getElementById('openSoloBests').onclick=()=>{if(!roomBusy)showLobbyPage('records')};
-document.getElementById('playSolo').onclick=()=>{if(roomBusy)return;leaveRoom();lobby.close()};
+document.getElementById('playSolo').onclick=()=>{if(!roomBusy)showLobbyPage('solo')};
+for(const button of document.querySelectorAll('[data-solo-mode]')){
+ button.onclick=()=>{
+  if(roomBusy||flipPreview)return;
+  leaveRoom();
+  const mode=button.dataset.soloMode;
+  lobby.close();
+  if(state.mode===mode&&!state.completed){draw();return}
+  if(state.mode!==mode){
+   let saved;
+   try{
+    localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify(state));
+    saved=JSON.parse(localStorage.getItem(KEY+'-board:'+mode));
+   }catch{}
+   if(saved?.mode===mode&&!saved.completed){
+    state=saved;history=[];selected=null;save();draw();
+    if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}
+    return;
+   }
+  }
+  fresh(mode);
+ };
+}
+function backFromSoloResult(){
+ document.getElementById('soloResult').close();
+ openLobby();
+}
+document.getElementById('soloResultDone').onclick=backFromSoloResult;
+document.getElementById('soloResult').addEventListener('cancel',event=>{
+ event.preventDefault();backFromSoloResult();
+});
 document.getElementById('hostGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('host')}};
 document.getElementById('joinGame').onclick=()=>{if(!roomBusy){leaveRoom();showLobbyPage('join')}};
 lobbyBack.onclick=()=>{if(roomBusy)return;if(room?.phase==='waiting')roomAction('leave');else showLobbyPage('menu')};
@@ -833,5 +902,5 @@ $('guavaPick').onclick=()=>roomAction('pick',{board:roomBoard()});
 setInterval(()=>{if(room&&room.phase!=='finished')roomAction('state')},3500);
 
 roomClientReady=true;
-window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
+window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
 </script></body></html>
