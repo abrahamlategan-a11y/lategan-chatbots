@@ -133,6 +133,10 @@ html.expanded .soloChallenges{margin:0;flex:none}
    <button type="button" id="joinGame"  class="modeCard lavender"><span class="modeIcon" aria-hidden="true">#</span><span><strong>Join game</strong><small>Enter a friend’s room code.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
    <button type="button" id="openSoloBests"  class="modeCard gold"><span class="modeIcon" aria-hidden="true">🏆</span><span><strong>Personal bests</strong><small>See your solo records.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
   </div>
+  <div id="soloSaveActions" class="setupNav" hidden>
+   <button type="button" id="saveSoloGame">Save current game</button>
+   <button type="button" id="resumeSoloGame">Resume saved game</button>
+  </div>
   <div id="soloModes" class="lobbyChoices" hidden role="group" aria-label="Solo game modes">
    <button type="button" data-solo-mode="free" class="modeCard mint"><span class="modeIcon" aria-hidden="true">Aa</span><span><strong>Free Play</strong><small>Make any words at your own pace.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
    <button type="button" id="openSprint"  class="modeCard gold"><span class="modeIcon" aria-hidden="true">⚡</span><span><strong>Grid Sprint</strong><small>Use every tile and race your best time.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
@@ -739,6 +743,9 @@ function showLobbyPage(page){
  $('sprintLevels').hidden=page!=='sprint';
  $('challengeLevels').hidden=page!=='challenges';
  lobbyChoices.hidden=page!=='menu';
+ $('soloSaveActions').hidden=page!=='menu';
+ $('saveSoloGame').disabled=!!room||!!state.completed;
+ $('resumeSoloGame').disabled=!readSoloSnapshot();
  $('soloModes').hidden=page!=='solo';
  $('soloBests').hidden=page!=='records';
  $('roomWaiting').hidden=page!=='room';
@@ -763,27 +770,48 @@ function openLobby(){
 document.getElementById('openLobby').onclick=openLobby;
 document.getElementById('openSoloBests').onclick=()=>{if(!roomBusy)showLobbyPage('records')};
 document.getElementById('playSolo').onclick=()=>{if(!roomBusy)showLobbyPage('solo')};
+function soloSnapshotKey(){
+ return KEY+'-manual:'+ (studentCodeForBests()||'guest');
+}
+function readSoloSnapshot(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(soloSnapshotKey()));
+  return saved?.mode&&Array.isArray(saved.tiles)&&Array.isArray(saved.stash)?saved:null;
+ }catch{return null}
+}
+$('saveSoloGame').onclick=()=>{
+ if(room||state.completed)return;
+ if(readSoloSnapshot()&&!confirm('Replace your previously saved solo game?'))return;
+ try{
+  localStorage.setItem(soloSnapshotKey(),JSON.stringify(state));
+  $('resumeSoloGame').disabled=false;
+  $('roomStatus').textContent='Solo game saved in this browser.';
+ }catch{$('roomStatus').textContent='This browser could not save your game.'}
+};
+$('resumeSoloGame').onclick=()=>{
+ if(roomBusy||flipPreview)return;
+ const saved=readSoloSnapshot();
+ if(!saved){$('resumeSoloGame').disabled=true;return}
+ leaveRoom();
+ refreshSoloGoals(saved);
+ state=saved;history=[];selected=null;paused=false;
+ originX=originY=0;
+ lobby.close();save();draw();
+ if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}
+};
 for(const button of document.querySelectorAll('[data-solo-mode]')){
  button.onclick=()=>{
   if(roomBusy||flipPreview)return;
   leaveRoom();
   const mode=button.dataset.soloMode;
+  let previous=state.challenges;
+  try{
+   if(state.mode!==mode)previous=JSON.parse(localStorage.getItem(KEY+'-board:'+mode))?.challenges;
+   localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify({challenges:state.challenges}));
+  }catch{}
+  originX=originY=0;
   lobby.close();
-  if(state.mode===mode&&!state.completed){draw();return}
-  let saved;
-  if(state.mode!==mode){
-   try{
-    localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify(state));
-    saved=JSON.parse(localStorage.getItem(KEY+'-board:'+mode));
-   }catch{}
-   if(saved?.mode===mode)refreshSoloGoals(saved);
-   if(saved?.mode===mode&&!saved.completed){
-    state=saved;history=[];selected=null;save();draw();
-    if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}
-    return;
-   }
-  }
-  fresh(mode,saved?.challenges??state.challenges);
+  fresh(mode,previous??[]);
  };
 }
 function backFromSoloResult(){
