@@ -122,9 +122,17 @@ html.expanded .soloChallenges{margin:0;flex:none}
 }
 body.soloPaused .game,body.soloPaused .gameToolbar,body.soloPaused #soloChallenges{visibility:hidden}
 body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18px);visibility:hidden}
+.recordStrip{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .85rem;font-size:.84rem;margin:0 0 .45rem;color:#30594d}
+.recordStrip strong{color:#183e34}
+.recordStrip button{font-size:inherit;padding:.3rem .6rem}
+.recordMenu>span{display:block;margin:.4rem 0}
+.recordMenu h4{margin:.6rem 0 .25rem}
+.recordMenu ol{margin:.25rem 0;padding-left:1.6rem}
+body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibility:hidden}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
+<div class="recordStrip gameRecordStrip"><span class="recordStrip" id="boardRecords" aria-label="Game records"></span><button type="button" id="boardRecordsButton">Best records</button></div>
 <p id="timedInstructions" style="margin:0 0 8px;font-size:.88rem" hidden></p>
 <details class="soloChallenges" id="soloChallenges" open>
 <summary>Solo challenges <span class="soloChallengeProgress" id="soloChallengeProgress" role="status"></span></summary>
@@ -146,7 +154,7 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
    <button type="button" id="playSolo"  class="modeCard mint"><span class="modeIcon" aria-hidden="true">✦</span><span><strong>Play solo</strong><small>Choose a mode and build your own grid.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
    <button type="button" id="hostGame"  class="modeCard peach"><span class="modeIcon" aria-hidden="true">⚑</span><span><strong>Host game</strong><small>Create a room and invite friends.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
    <button type="button" id="joinGame"  class="modeCard lavender"><span class="modeIcon" aria-hidden="true">#</span><span><strong>Join game</strong><small>Enter a friend’s room code.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
-   <button type="button" id="openSoloBests"  class="modeCard gold"><span class="modeIcon" aria-hidden="true">🏆</span><span><strong>Personal bests</strong><small>See your solo records.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
+   <button type="button" id="openSoloBests"  class="modeCard gold"><span class="modeIcon" aria-hidden="true">🏆</span><span><strong>Best records</strong><small>See your best and the Year 4 leaders.</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
   </div>
   <div id="soloSaveActions" class="setupNav" hidden>
    <button type="button" id="saveSoloGame">Save current game</button>
@@ -169,7 +177,10 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
    <button type="button" data-solo-mode="hard" class="modeCard level"><span class="modeIcon" aria-hidden="true">H</span><span><strong>Hard</strong><small>Longer words and more crossings</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
   </div>
   <section class="soloBests" id="soloBests" aria-labelledby="soloBestsTitle" hidden>
- <h3 id="soloBestsTitle" tabindex="-1">🏆 Personal bests</h3>
+ <h3 id="soloBestsTitle" tabindex="-1">🏆 Best records</h3>
+ <label for="recordMode">Game mode</label> <select id="recordMode"></select>
+ <div id="menuRecords" class="recordMenu"></div>
+ <details><summary>More stats on this browser</summary>
  <dl>
   <div><dt>Longest word</dt><dd id="bestWord">—</dd></div>
   <div><dt>Most different words on one board</dt><dd id="bestWordCount">—</dd></div>
@@ -180,7 +191,7 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
  <div><dt>Medium</dt><dd id="sprint21Best">—</dd></div>
  <div><dt>Hard</dt><dd id="sprint30Best">—</dd></div>
  <div><dt>Tile Streak · Most tiles</dt><dd id="streakBest">—</dd></div></dl>
- <p id="bestStatus">Saved on this browser.</p>
+ <p id="bestStatus">Saved on this browser.</p></details>
 </section>
   <div id="roomLogin" hidden><label for="roomStudentCode">Learning Hub student code</label>
    <input id="roomStudentCode" type="password" autocomplete="off" autocapitalize="characters" spellcheck="false"></div>
@@ -206,15 +217,17 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
  </div>
 </dialog>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
-<dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><button type="button" class="primary" id="freePlayAgain">Play again</button> <button type="button" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
+<dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><div class="recordStrip" id="freeResultRecords"></div><button type="button" class="primary" id="freePlayAgain">Play again</button> <button type="button" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
 <dialog id="roomResult" aria-labelledby="roomResultTitle">
  <h2 id="roomResultTitle">Game over</h2>
  <p id="roomResultMessage"></p>
+ <div class="recordStrip" id="roomResultRecords"></div>
  <button type="button" class="primary" id="roomResultDone">Back to play menu</button>
 </dialog>
 <dialog id="soloResult" aria-labelledby="soloResultTitle">
  <h2 id="soloResultTitle">🎉 Challenge complete!</h2>
  <p id="soloResultMessage"></p>
+ <div class="recordStrip" id="soloResultRecords"></div>
  <button type="button" class="primary" id="soloPlayAgain" autofocus>Play again</button>
  <button type="button" id="soloResultDone">Back to play menu</button>
 </dialog>
@@ -505,6 +518,11 @@ function updateSoloBests(words,complete){
  document.getElementById('bestWordCount').textContent=best.wordCount||'—';
  document.getElementById('bestChallenges').textContent=best.challenges+'/6';
 }
+function localRecordPlayer(){
+ const credentials=recordCredentials();
+ if(credentials.teacher_code)return 'teacher:'+credentials.teacher_code;
+ return credentials.student_code||'guest';
+}
 function studentCodeForBests(){
  try{return localStorage.getItem('lategan_student_code')?.trim().toUpperCase()}catch{return ''}
 }
@@ -530,6 +548,9 @@ function drawSoloChallenges(validation){
   document.getElementById('soloResultTitle').textContent='🎉 Challenge complete!';
   document.getElementById('soloResultMessage').textContent=title+' · '+total+' of '+total+' challenges complete.';
   if(roomClientReady){
+   const score=Math.max(1,state.seconds);
+   saveGameRecord(state.mode,score);
+   void showGameRecords('soloResultRecords',state.mode,score);
    if(swapDialog.open)swapDialog.close();
    if(lobby.open)lobby.close();
    document.getElementById('soloResult').showModal();
@@ -551,7 +572,7 @@ function drawSoloChallenges(validation){
  }));
 }
 
-function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(roomClientReady&&flipPreview?.tileId===t.id)b.classList.add('awaitingReveal');if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.');
+function draw(){if(roomClientReady){roomControls();refreshRecordStrip()}expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(roomClientReady&&flipPreview?.tileId===t.id)b.classList.add('awaitingReveal');if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.');
  if(roomClientReady&&!room&&!paused&&sprintSize(state.mode)&&!state.completed&&validTimedGrid(v))finishSprint(v);
 }
 let dragPointer=null;
@@ -742,7 +763,10 @@ pauseDialog.addEventListener('close',()=>{
  draw();
  if(!$('soloResult').open)$('pause').focus();
 });
-document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});if(sprintSize(state.mode))return finishSprint();const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
+document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});if(sprintSize(state.mode))return finishSprint();const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';const score=state.mode==='free'?soloChallengeBoard(v).words.size:0;
+ if(score)saveGameRecord('free',score);
+ void showGameRecords('freeResultRecords',state.mode,score||undefined);
+ document.getElementById('win').showModal()};
 setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!state.completed&&!document.getElementById('lobby').open&&(!timedSolo()||dictionaryStatus==='ready')){
  state.seconds++;if(state.seconds%5===0)save();
  if(state.mode==='streak'&&state.seconds>=300)finishStreak();
@@ -795,7 +819,7 @@ const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getEleme
 let setupPage='menu';
 function showLobbyPage(page){
  setupPage=page;
- const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Personal bests'};
+ const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Best records'};
  $('setupHeading').textContent=titles[page];
  $('setupHeading').hidden=page==='records';
  $('sprintLevels').hidden=page!=='sprint';
@@ -817,7 +841,12 @@ function showLobbyPage(page){
  lobbyBack.hidden=page==='menu';
  if(page==='room')return;
  if(page==='solo'||page==='sprint'||page==='challenges'){$('setupHeading').focus();return}
- if(page==='records'){renderTimedBests();$('soloBestsTitle').focus();return}
+ if(page==='records'){
+  renderTimedBests();
+  $('recordMode').value=activeRecordMode();
+  void showGameRecords('menuRecords',$('recordMode').value);
+  $('soloBestsTitle').focus();return
+ }
  const target=page==='join'?document.getElementById('joinCode'):page==='host'?hostSetup.querySelector('input:checked'):document.getElementById('playSolo');
  target.focus();
 }
@@ -933,9 +962,18 @@ function validTimedGrid(validation){
  validation??=validate();
  return !validation.bad.length&&connectedBoard(validation);
 }
-function timedBestKey(mode){return KEY+'-timed:'+mode+':'+(studentCodeForBests()||'guest')}
+function timedBestKey(mode){return KEY+'-timed:'+mode+':'+localRecordPlayer()}
 function readTimedBest(mode){
  try{return JSON.parse(localStorage.getItem(timedBestKey(mode)))}catch{return null}
+}
+function saveGameRecord(mode,score){
+ const best=readTimedBest(mode);
+ const improved=best===null||(mode==='free'||mode==='streak'?score>best:score<best);
+ if(improved){
+  try{localStorage.setItem(timedBestKey(mode),JSON.stringify(score))}
+  catch{document.getElementById('bestStatus').textContent='This browser could not save personal bests.'}
+ }
+ return improved;
 }
 function renderTimedBests(){
  for(const mode of ['sprint15','sprint21','sprint30','streak']){
@@ -946,12 +984,9 @@ function renderTimedBests(){
 function completeTimedRound(title,description,score){
  if(state.completed)return;
  state.completed=true;
- const mode=state.mode,best=readTimedBest(mode);
- const improved=best===null||(mode==='streak'?score>best:score<best);
- if(improved){
-  try{localStorage.setItem(timedBestKey(mode),JSON.stringify(score))}
-  catch{document.getElementById('bestStatus').textContent='This browser could not save personal bests.'}
- }
+ const mode=state.mode;
+ const improved=score>0&&saveGameRecord(mode,score);
+ void showGameRecords('soloResultRecords',mode,score||undefined);
  save();
  if(swapDialog.open)swapDialog.close();
  if(lobby.open)lobby.close();
@@ -1164,6 +1199,7 @@ function showRoomResult(winner){
  if(swapDialog.open)swapDialog.close();
  if(lobby.open)lobby.close();
  $('roomResultMessage').textContent=winner+' called Guava! and won.';
+ void showGameRecords('roomResultRecords',activeRecordMode());
  $('roomResult').showModal();
 }
 function leaveFinishedRoom(){
@@ -1228,6 +1264,138 @@ $('soloDraw').onclick=()=>{
 $('guavaPick').onclick=()=>roomAction('pick',{board:roomBoard()});
 setInterval(pollRoom,3500);
 
+const recordModes={
+ free:'Free Play', easy:'Word Challenges · Easy', medium:'Word Challenges · Medium',
+ hard:'Word Challenges · Hard', sprint15:'Grid Sprint · Easy', sprint21:'Grid Sprint · Medium',
+ sprint30:'Grid Sprint · Hard', streak:'Tile Streak',
+ roomEasy:'Multiplayer · Easy', roomHard:'Multiplayer · Hard'
+};
+const recordCache=new Map(), recordsPending=new Map();
+function activeRecordMode(){
+ return room ? (room.mode==='hard'?'roomHard':'roomEasy') : state.mode;
+}
+function recordCredentials(){
+ if(room)return studentCode ? {student_code:studentCode} : {};
+ try{
+  if(new URLSearchParams(location.search).get('from')==='teacher'){
+   const code=localStorage.getItem('lategan_teacher_code');
+   if(code)return {teacher_code:code};
+  }
+ }catch{}
+ const code=studentCodeForBests();
+ return code ? {student_code:code} : {};
+}
+function recordKey(mode,credentials){return JSON.stringify([mode,credentials])}
+function recordValue(mode,score){
+ if(score==null)return '—';
+ if(mode==='free')return score+' '+(score===1?'word':'words');
+ if(mode==='streak')return score+' tiles';
+ return clockText(score);
+}
+function renderRecordPanel(panel,mode,data,expanded=false){
+ const leader=data?.year4Best?.[0];
+ panel.replaceChildren();
+ for(const [label,value] of [
+  ['My Best',recordValue(mode,data?.myBest)],
+  ['Year 4 Best',leader ? recordValue(mode,leader.score)+' · '+leader.name+' ('+leader.className+')' : '—']
+ ]){
+  const item=document.createElement('span'), title=document.createElement('strong');
+  title.textContent=label;
+  item.append(title,' '+value);
+  panel.append(item);
+ }
+ if(!expanded)return;
+ for(const [label,rows] of [['Year 4 top five',data?.year4Best],['Teacher top five',data?.teacherBest]]){
+  if(!rows)continue;
+  const heading=document.createElement('h4'), list=document.createElement('ol');
+  heading.textContent=label;
+  for(const entry of rows){
+   const item=document.createElement('li');
+   item.textContent=entry.name+(entry.className?' ('+entry.className+')':'')+' · '+recordValue(mode,entry.score);
+   list.append(item);
+  }
+  panel.append(heading);
+  panel.append(rows.length?list:document.createTextNode('No results yet.'));
+ }
+ if(data?.status){
+  const status=document.createElement('p');
+  status.textContent=data.status;
+  panel.append(status);
+ }
+}
+function refreshRecordStrip(){
+ const mode=activeRecordMode();
+ const key=recordKey(mode,recordCredentials());
+ const panel=$('boardRecords');
+ const data=recordCache.get(key);
+ if(panel.recordMode===key&&panel.recordData===data)return;
+ panel.recordMode=key;
+ panel.recordData=data;
+ renderRecordPanel(panel,mode,data);
+ if(!data)void loadGameRecords(mode);
+}
+async function loadGameRecords(mode,score){
+ const credentials=recordCredentials();
+ const key=recordKey(mode,credentials);
+ const previous=recordsPending.get(key);
+ if(previous){
+  if(score===undefined)return previous;
+  await previous;
+ }
+ const request=(async()=>{
+  let data=recordCache.get(key);
+  try{
+   if(!Object.keys(credentials).length)throw Error('Sign in through Learning Hub to see shared records.');
+   const response=await fetch(roomApi,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'guavagrams_best',...credentials,record_mode:mode,score})
+   });
+   const result=await response.json();
+   if(!response.ok)throw Error(result.error==='Unknown action.'?'Shared records need the Cloudflare update.':result.error);
+   if(!Array.isArray(result.year4Best))throw Error('Shared records are unavailable right now.');
+   const local=readTimedBest(mode);
+   const scores=[local,result.myBest].filter(value=>Number.isSafeInteger(value)&&value>0);
+   const myBest=scores.length
+    ? (mode==='free'||mode==='streak'?Math.max(...scores):Math.min(...scores))
+    : null;
+   data={...result,myBest};
+  }catch(error){
+   const localScore=readTimedBest(mode);
+   const fallback=[localScore,score,data?.myBest].filter(value=>Number.isSafeInteger(value)&&value>0);
+   const myBest=fallback.length
+    ? (mode==='free'||mode==='streak'?Math.max(...fallback):Math.min(...fallback))
+    : null;
+   data={...data,myBest,status:error instanceof TypeError?'Couldn’t load shared records.':error.message};
+  }
+  recordCache.set(key,data);
+  refreshRecordStrip();
+  return data;
+ })();
+ recordsPending.set(key,request);
+ try{return await request}
+ finally{if(recordsPending.get(key)===request)recordsPending.delete(key)}
+}
+async function showGameRecords(id,mode,score){
+ const panel=$(id), request=Symbol();
+ panel.recordRequest=request;
+ const expanded=id==='menuRecords';
+ renderRecordPanel(panel,mode,recordCache.get(recordKey(mode,recordCredentials())),expanded);
+ const data=await loadGameRecords(mode,score);
+ if(panel.recordRequest===request)renderRecordPanel(panel,mode,data,expanded);
+}
+for(const [mode,label] of Object.entries(recordModes))$('recordMode').add(new Option(label,mode));
+$('recordMode').onchange=()=>void showGameRecords('menuRecords',$('recordMode').value);
+$('boardRecordsButton').onclick=()=>{
+ showLobbyPage('records');
+ if(!lobby.open)lobby.showModal();
+};
+
+if(new URLSearchParams(location.search).get('from')==='teacher'){
+ const link=document.querySelector('header a');
+ link.href='../teacher/';
+ link.textContent='← Teacher Hub';
+}
 roomClientReady=true;
 window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
 </script></body></html>
+
