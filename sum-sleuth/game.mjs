@@ -71,6 +71,7 @@ function begin(level, seed) {
   runningClock = setInterval(() => {
     $('time').textContent = timeText(performance.now() - round.started);
   }, 250);
+  void showBests('playBests',level);
   petals[0].querySelector('button').focus();
 }
 
@@ -178,6 +179,17 @@ async function showBests(id, level, timeMs) {
   panel.replaceChildren();
   const status = document.createElement('p');
   status.setAttribute('role','status');
+  const compact = id === 'playBests' || id === 'setupRecordStrip';
+  const records = compact ? ['My Best', 'Year 4 Best'].map(label => {
+    const item = document.createElement('span');
+    const title = document.createElement('strong');
+    title.textContent = label;
+    const value = document.createElement('span');
+    value.textContent = '—';
+    item.append(title,value);
+    panel.append(item);
+    return value;
+  }) : [];
   panel.append(status);
   const fromTeacher = new URLSearchParams(location.search).get('from') === 'teacher';
   const hub = fromTeacher ? 'Teacher Hub' : 'Student Hub';
@@ -202,6 +214,12 @@ async function showBests(id, level, timeMs) {
     }
     if (!Array.isArray(data.year4Best)) throw Error('Invalid leaderboard');
     status.textContent = '';
+    if (compact) {
+      records[0].textContent = data.myBest == null ? '—' : bestTimeText(data.myBest);
+      const leader = data.year4Best[0];
+      records[1].textContent = leader ? bestTimeText(leader.timeMs)+' · '+leader.name+' ('+leader.className+')' : '—';
+      return;
+    }
     const heading = document.createElement('h3');
     heading.textContent = 'My Best';
     const mine = document.createElement('p');
@@ -233,6 +251,7 @@ function bestTimeText(ms) {
 }
 $('showBests').onclick = () => { void showBests('setupBests',Number($('level').value)); };
 $('level').addEventListener('change', () => {
+  void showBests('setupRecordStrip',Number($('level').value));
   if (!$('setupBests').hidden) void showBests('setupBests',Number($('level').value));
 });
 
@@ -251,6 +270,7 @@ $('again').onclick = () => {
   $('play').hidden = $('clock').hidden = true;
   setup.hidden = false;
   if (!$('setupBests').hidden) void showBests('setupBests',Number($('level').value));
+  void showBests('setupRecordStrip',Number($('level').value));
   $('level').focus();
 };
 result.addEventListener('cancel', event => { event.preventDefault(); $('again').click(); });
@@ -258,3 +278,5 @@ if (new URLSearchParams(location.search).get('from') === 'teacher') {
   $('hubLink').href = '../teacher/';
   $('hubLink').textContent = '← Teacher Hub';
 }
+void showBests('setupRecordStrip',Number($('level').value));
+
