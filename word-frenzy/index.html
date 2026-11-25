@@ -114,6 +114,14 @@ html.expanded .soloChallenges{margin:0;flex:none}
  #soloResult.sprintCelebration[open]{animation:sprintPop .33s cubic-bezier(.2,.8,.3,1.3) both}
 }
 @keyframes sprintPop{from{opacity:0;transform:translateY(12px) scale(.93)}to{opacity:1;transform:none}}
+
+#pauseDialog{text-align:center}
+#pauseDialog::backdrop,#lobby::backdrop{background:#123329}
+@supports (backdrop-filter:blur(18px)){
+ #pauseDialog::backdrop,#lobby::backdrop{background:#123329ba;backdrop-filter:blur(18px)}
+}
+body.soloPaused .game,body.soloPaused .gameToolbar,body.soloPaused #soloChallenges{visibility:hidden}
+body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18px);visibility:hidden}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
@@ -208,6 +216,10 @@ html.expanded .soloChallenges{margin:0;flex:none}
  <h2 id="soloResultTitle">🎉 Challenge complete!</h2>
  <p id="soloResultMessage"></p>
  <button type="button" class="primary" id="soloResultDone">Back to play menu</button>
+</dialog>
+<dialog id="pauseDialog" aria-labelledby="pauseTitle">
+ <h2 id="pauseTitle">Game paused</h2>
+ <button type="button" class="primary" id="resumePlay">Resume play</button>
 </dialog>
 </main><script>
 const $=id=>document.getElementById(id);
@@ -539,7 +551,7 @@ function drawSoloChallenges(validation){
 }
 
 function draw(){if(roomClientReady)roomControls();expandBoard();board.replaceChildren();tray.replaceChildren();const step=cellSize(),v=validate();drawSoloChallenges(v);state.tiles.forEach(t=>{if(t.x===null){const b=document.createElement('div');b.className='trayTile';b.textContent=t.letter;b.dataset.id=t.id;if(roomClientReady&&flipPreview?.tileId===t.id)b.classList.add('awaitingReveal');if(selected===t.id)b.classList.add('selected');b.addEventListener('pointerdown',e=>beginDrag(e,t,b,true));b.onclick=()=>{if(room?.phase==='finished')return;selected=t.id;draw()};tray.append(b)}else{const b=document.createElement('div');b.className='tile'+(v.ids.has(t.id)?' bad':v.goodIds.has(t.id)?' good':'');b.textContent=t.letter;b.style.fontSize=Math.round(step*.49)+'px';b.style.width=step-3+'px';b.style.height=step-3+'px';b.style.left=(t.x+originX)*step+7+'px';b.style.top=(t.y+originY)*step+7+'px';b.dataset.id=t.id;b.addEventListener('pointerdown',e=>beginDrag(e,t,b,false));board.append(b)}});document.getElementById('used').textContent='On board: '+state.tiles.filter(t=>t.x!==null).length;document.getElementById('remaining').textContent='In tray: '+state.tiles.filter(t=>t.x===null).length;document.getElementById('words').textContent=dictionaryStatus==='ready'?'Valid words: '+(v.words.length-v.bad.length):'Words found: '+v.words.length;if(dictionaryStatus!=='ready')message(dictionaryStatus==='loading'?'Loading dictionary…':'Dictionary unavailable. Refresh to try again.');else if(v.bad.length)message('Not recognised: '+[...new Set(v.bad.map(w=>w.word.toUpperCase()))].join(', ')+'. Rearrange the red tiles.',true);else message('Looking good! Drag tiles freely. Your board saves automatically.');
- if(roomClientReady&&!room&&sprintSize(state.mode)&&!state.completed&&validTimedGrid(v))finishSprint(v);
+ if(roomClientReady&&!room&&!paused&&sprintSize(state.mode)&&!state.completed&&validTimedGrid(v))finishSprint(v);
 }
 let dragPointer=null;
 function beginDrag(e,t,element,fromTray){
@@ -714,7 +726,21 @@ document.getElementById('shuffle').onclick=()=>{remember();const on=state.tiles.
  }
  const letters=on.map(t=>t.letter);for(let i=letters.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[letters[i],letters[j]]=[letters[j],letters[i]]}on.forEach((t,i)=>t.letter=letters[i]);save();draw()};
 document.getElementById('reset').onclick=()=>{if(confirm('Start a new solo game? Your current board will be replaced.'))fresh()};
-document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'Resume':'Pause';message(paused?'Timer paused. Your board is saved.':'Back to the game!')};
+const pauseDialog=$('pauseDialog');
+$('pause').onclick=()=>{
+ if(room||state.completed||paused||dragPointer!==null||pan)return;
+ pauseDialog.showModal();
+ paused=true;
+ document.body.classList.add('soloPaused');
+ save();
+};
+$('resumePlay').onclick=()=>pauseDialog.close();
+pauseDialog.addEventListener('close',()=>{
+ document.body.classList.remove('soloPaused');
+ paused=false;
+ draw();
+ if(!$('soloResult').open)$('pause').focus();
+});
 document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});if(sprintSize(state.mode))return finishSprint();const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';document.getElementById('win').showModal()};
 setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!state.completed&&!document.getElementById('lobby').open&&(!timedSolo()||dictionaryStatus==='ready')){
  state.seconds++;if(state.seconds%5===0)save();
