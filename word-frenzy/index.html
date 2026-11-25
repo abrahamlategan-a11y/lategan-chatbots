@@ -206,7 +206,7 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
  </div>
 </dialog>
 <dialog id="swapDialog" aria-labelledby="swapTitle"><h2 id="swapTitle">Pick from the stash</h2><p id="swapProgress" aria-live="polite"></p><div id="stashTiles" class="stashTiles"></div></dialog>
-<dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><button class="primary" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
+<dialog id="win"><h2>🎉 Nice work!</h2><p id="winMessage"></p><button type="button" class="primary" id="freePlayAgain">Play again</button> <button type="button" onclick="document.getElementById('win').close()">Keep playing</button></dialog>
 <dialog id="roomResult" aria-labelledby="roomResultTitle">
  <h2 id="roomResultTitle">Game over</h2>
  <p id="roomResultMessage"></p>
@@ -215,7 +215,8 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
 <dialog id="soloResult" aria-labelledby="soloResultTitle">
  <h2 id="soloResultTitle">🎉 Challenge complete!</h2>
  <p id="soloResultMessage"></p>
- <button type="button" class="primary" id="soloResultDone">Back to play menu</button>
+ <button type="button" class="primary" id="soloPlayAgain" autofocus>Play again</button>
+ <button type="button" id="soloResultDone">Back to play menu</button>
 </dialog>
 <dialog id="pauseDialog" aria-labelledby="pauseTitle">
  <h2 id="pauseTitle">Game paused</h2>
@@ -871,6 +872,16 @@ for(const button of document.querySelectorAll('[data-solo-mode]')){
   fresh(mode,previous??[]);
  };
 }
+function replaySoloRound(dialog){
+ if(room||!dialog.open)return;
+ dialog.close();
+ originX=originY=0;
+ viewport.scrollLeft=viewport.scrollTop=0;
+ fresh(state.mode,state.challenges);
+ $('openLobby').focus();
+}
+$('soloPlayAgain').onclick=()=>replaySoloRound($('soloResult'));
+$('freePlayAgain').onclick=()=>replaySoloRound($('win'));
 function backFromSoloResult(){
  document.getElementById('soloResult').close();
  openLobby();
