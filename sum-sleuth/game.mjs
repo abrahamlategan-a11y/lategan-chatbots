@@ -179,17 +179,20 @@ async function showBests(id, level, timeMs) {
   const status = document.createElement('p');
   status.setAttribute('role','status');
   panel.append(status);
-  let studentCode = '';
-  try { studentCode = localStorage.getItem('lategan_student_code') || ''; } catch {}
-  if (!studentCode) {
-    status.textContent = 'Sign in through Student Hub to see Year 4 bests.';
+  const fromTeacher = new URLSearchParams(location.search).get('from') === 'teacher';
+  const hub = fromTeacher ? 'Teacher Hub' : 'Student Hub';
+  let code = '';
+  try { code = localStorage.getItem(fromTeacher ? 'lategan_teacher_code' : 'lategan_student_code') || ''; } catch {}
+  if (!code) {
+    status.textContent = 'Sign in through ' + hub + ' to see best times.';
     return;
   }
+  const credentials = fromTeacher ? {teacher_code:code} : {student_code:code};
   status.textContent = 'Loading best times…';
   try {
     const response = await fetch('https://lategan-chatbot.abrahamlategan.workers.dev', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'sumflowers_best',student_code:studentCode,level,time_ms:timeMs})
+      body:JSON.stringify({action:'sumflowers_best',...credentials,level,time_ms:timeMs})
     });
     const data = await response.json();
     if (bestRequests.get(id) !== request) return;
@@ -203,20 +206,27 @@ async function showBests(id, level, timeMs) {
     heading.textContent = 'My Best';
     const mine = document.createElement('p');
     mine.textContent = data.myBest == null ? 'Finish a round to set a time.' : bestTimeText(data.myBest);
-    const year = document.createElement('h3');
-    year.textContent = 'Year 4 Best';
-    const list = document.createElement('ol');
-    for (const row of data.year4Best) {
-      const item = document.createElement('li');
-      item.textContent = row.name + ' (' + row.className + ') · ' + bestTimeText(row.timeMs);
-      list.append(item);
-    }
-    const empty = document.createElement('p');
-    empty.textContent = 'No times yet for this level.';
-    panel.append(heading,mine,year,data.year4Best.length?list:empty);
+    panel.append(heading,mine);
+    appendBestList(panel,'Year 4 Best',data.year4Best);
+    if (Array.isArray(data.teacherBest)) appendBestList(panel,'Teacher Best',data.teacherBest);
+
   } catch {
     if (bestRequests.get(id) === request) status.textContent = 'Best times are unavailable right now.';
   }
+}
+function appendBestList(panel, title, rows) {
+  const heading = document.createElement('h3');
+  heading.textContent = title;
+  const list = document.createElement('ol');
+  for (const row of rows) {
+    const item = document.createElement('li');
+    const label = row.className ? row.name + ' (' + row.className + ')' : row.name;
+    item.textContent = label + ' · ' + bestTimeText(row.timeMs);
+    list.append(item);
+  }
+  const empty = document.createElement('p');
+  empty.textContent = 'No times yet for this level.';
+  panel.append(heading,rows.length?list:empty);
 }
 function bestTimeText(ms) {
   return timeText(ms) + '.' + String(Math.floor(ms / 100) % 10);
