@@ -166,7 +166,65 @@ function finish() {
   $('time').textContent = $('resultTime').textContent = timeText(round.totalTimeMs);
   result.showModal();
   celebrate();
+  void showBests('resultBests',round.level,round.totalTimeMs);
 }
+
+const bestRequests = new Map();
+async function showBests(id, level, timeMs) {
+  const panel = $(id);
+  const request = Symbol();
+  bestRequests.set(id, request);
+  panel.hidden = false;
+  panel.replaceChildren();
+  const status = document.createElement('p');
+  status.setAttribute('role','status');
+  panel.append(status);
+  let studentCode = '';
+  try { studentCode = localStorage.getItem('lategan_student_code') || ''; } catch {}
+  if (!studentCode) {
+    status.textContent = 'Sign in through Student Hub to see Year 4 bests.';
+    return;
+  }
+  status.textContent = 'Loading best times…';
+  try {
+    const response = await fetch('https://lategan-chatbot.abrahamlategan.workers.dev', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'sumflowers_best',student_code:studentCode,level,time_ms:timeMs})
+    });
+    const data = await response.json();
+    if (bestRequests.get(id) !== request) return;
+    if (!response.ok) {
+      status.textContent = data.error === 'Unknown action.' ? 'Year 4 bests are coming soon.' : (data.error || 'Best times are unavailable right now.');
+      return;
+    }
+    if (!Array.isArray(data.year4Best)) throw Error('Invalid leaderboard');
+    status.textContent = '';
+    const heading = document.createElement('h3');
+    heading.textContent = 'My Best';
+    const mine = document.createElement('p');
+    mine.textContent = data.myBest == null ? 'Finish a round to set a time.' : bestTimeText(data.myBest);
+    const year = document.createElement('h3');
+    year.textContent = 'Year 4 Best';
+    const list = document.createElement('ol');
+    for (const row of data.year4Best) {
+      const item = document.createElement('li');
+      item.textContent = row.name + ' (' + row.className + ') · ' + bestTimeText(row.timeMs);
+      list.append(item);
+    }
+    const empty = document.createElement('p');
+    empty.textContent = 'No times yet for this level.';
+    panel.append(heading,mine,year,data.year4Best.length?list:empty);
+  } catch {
+    if (bestRequests.get(id) === request) status.textContent = 'Best times are unavailable right now.';
+  }
+}
+function bestTimeText(ms) {
+  return timeText(ms) + '.' + String(Math.floor(ms / 100) % 10);
+}
+$('showBests').onclick = () => { void showBests('setupBests',Number($('level').value)); };
+$('level').addEventListener('change', () => {
+  if (!$('setupBests').hidden) void showBests('setupBests',Number($('level').value));
+});
 
 $('toggleTime').onclick = () => {
   timerVisible = !timerVisible;
@@ -182,6 +240,7 @@ $('again').onclick = () => {
   result.close();
   $('play').hidden = $('clock').hidden = true;
   setup.hidden = false;
+  if (!$('setupBests').hidden) void showBests('setupBests',Number($('level').value));
   $('level').focus();
 };
 result.addEventListener('cancel', event => { event.preventDefault(); $('again').click(); });
