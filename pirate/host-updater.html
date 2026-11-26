@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en-AU">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pirate host setup</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f2f6f5;color:#16352e;font:1rem/1.5 system-ui,sans-serif}
+main{max-width:790px;margin:2rem auto;padding:0 1rem}h1{margin-bottom:.4rem}
+section{margin:1rem 0;padding:1.1rem;background:#fff;border:1px solid #cde0d9;border-radius:14px}
+h2{font-size:1.2rem;margin:0 0 .7rem}label{display:block;font-weight:650}
+textarea,input{display:block;width:100%;margin:.35rem 0 .75rem;padding:.6rem;border:1px solid #a8beb7;border-radius:.4rem;font:1rem monospace}
+textarea{min-height:8rem}button{font:inherit;padding:.55rem .8rem;background:#155745;color:#fff;border:0;border-radius:.5rem;cursor:pointer}
+[hidden]{display:none!important}button:disabled{opacity:.5;cursor:default}a{color:#155745}
+</style>
+<main>
+<h1>Pirate host setup</h1>
+<section>
+<h2>1. Update the Worker</h2>
+<p>Open <strong>lategan-chatbot → Edit code</strong> in Cloudflare. Copy all of the current <code>worker.js</code> into this box.</p>
+<label for="source">Current Worker code</label>
+<textarea id="source" spellcheck="false" autocomplete="off"></textarea>
+<button type="button" id="patch">Add Pirate hosting</button>
+<button type="button" id="copy" disabled>Copy updated Worker</button>
+<p id="status" role="status"></p>
+<textarea id="output" aria-label="Updated Worker code" readonly hidden></textarea>
+<p>Paste the updated code into the Cloudflare editor and select <strong>Deploy</strong>.</p>
+</section>
+<section>
+<h2>2. Set your colleague’s host code</h2>
+<p>Generate a code. In the Worker’s <strong>Settings → Variables and Secrets</strong>, add a <strong>Secret</strong> named <code>PIRATE_HOST_CODE</code>. Paste your generated code as the value and deploy.</p>
+<button type="button" id="generate">Generate host code</button>
+<input id="hostCode" aria-label="Generated host code" readonly hidden>
+<p>Privately share the code and the <a href="./?role=host">Pirate host page</a> with your colleague. Students use the six-digit join code from the game lobby.</p>
+</section>
+</main>
+<script>
+const pirateHostHelper = "async function getPirateHost(env, body, {forCreation = false} = {}) {\n  if (!Object.hasOwn(body, \"pirate_host_code\")) return await getTeacher(env, body.teacher_code);\n  const code = typeof body.pirate_host_code === \"string\" ? body.pirate_host_code.trim() : \"\";\n  const secret = env.PIRATE_HOST_CODE;\n  if (typeof secret !== \"string\" || !/^[a-f0-9]{48}$/.test(secret) || !/^[a-f0-9]{48}$/.test(code)) return null;\n\n  let mismatch = 0;\n  for (let i = 0; i < secret.length; i++) mismatch |= code.charCodeAt(i) ^ secret.charCodeAt(i);\n  if (mismatch) return null;\n\n  // Keep a disabled identity for the games' existing owner relationship.\n  const id = -1;\n  const marker = \"PIRATE-HOST-INTERNAL-NONLOGIN\";\n  if (forCreation) {\n    await env.DB.prepare(`\n      INSERT INTO teachers(id,teacher_code,display_name,class_name,year_level,active,is_admin)\n      VALUES(?,?,'Pirate guest host','','',0,0)\n      ON CONFLICT DO NOTHING\n    `).bind(id,marker).run();\n  }\n  const owner = await env.DB.prepare(\"SELECT teacher_code FROM teachers WHERE id=?\").bind(id).first();\n  if (!owner && body.action === \"pirate_teacher_active\") return { id, unprovisioned: true };\n  if (owner?.teacher_code !== marker) return null;\n  return { id };\n}\n\n";
+const hostActions = [
+  "pirate_teacher_active", "pirate_create_game", "pirate_teacher_countdown",
+  "pirate_teacher_start", "pirate_teacher_skip_player", "pirate_teacher_remove_player",
+  "pirate_teacher_advance_action", "pirate_teacher_control"
+];
+function patchWorker(source) {
+  const newline = source.includes("\r\n") ? "\r\n" : "\n";
+  let code = source.replace(/\r\n/g, "\n");
+  if (code.includes("async function getPirateHost(")) {
+    if (!hostActions.every(action => code.includes(hostRoute(action)))) throw Error("The existing Pirate host update is incomplete.");
+    return source;
+  }
+  for (const action of hostActions) {
+    const original = hostRoute(action).replace(getHostCall(action), "getTeacher(env,body.teacher_code)");
+    if (code.split(original).length !== 2) throw Error("Could not find " + action + ". Use the full deployed worker.js.");
+    code = code.replace(original, () => hostRoute(action));
+  }
+  const login = "FROM teachers WHERE teacher_code=? AND active=1";
+  const list = "FROM teachers\n          ORDER BY active DESC,display_name COLLATE NOCASE";
+  const helperAnchor = "async function pirateTeacherTestBypass(";
+  const active = hostRoute("pirate_teacher_active") + '\n        if(!teacher)return json({error:"Teacher access denied."},401);';
+  if ([login,list,helperAnchor,active].some(fragment => code.split(fragment).length !== 2)) {
+    throw Error("Could not match the current Worker’s access rules.");
+  }
+  return code
+    .replace(login, () => login + " AND id<>-1")
+    .replace(list, () => list.replace("FROM teachers", "FROM teachers WHERE id<>-1"))
+    .replace(active, () => active + "\n        if(teacher.unprovisioned)return json({game:null,saved_games:[]});")
+    .replace(helperAnchor, () => pirateHostHelper + helperAnchor)
+    .replace(/\n/g, newline);
+}
+function getHostCall(action) {
+  return action === "pirate_create_game" ? "getPirateHost(env,body,{forCreation:true})" : "getPirateHost(env,body)";
+}
+function hostRoute(action) {
+  return 'if (action === "' + action + '") {\n        const teacher=await ' + getHostCall(action) + ";";
+}
+const $ = id => document.getElementById(id);
+$("patch").onclick = () => {
+  $("copy").disabled = $("output").hidden = true;
+  $("output").value = "";
+  try {
+    const code = patchWorker($("source").value);
+    $("output").value = code;
+    $("copy").disabled = $("output").hidden = false;
+    $("status").textContent = code === $("source").value ? "Pirate hosting is already in this Worker." : "Updated Worker ready to copy.";
+  } catch (error) {
+    $("status").textContent = error.message;
+  }
+};
+$("copy").onclick = async () => {
+  try {
+    await navigator.clipboard.writeText($("output").value);
+    $("status").textContent = "Updated Worker copied.";
+  } catch {
+    $("output").focus();
+    $("output").select();
+    $("status").textContent = "Press Ctrl+C or Command+C to copy.";
+  }
+};
+$("generate").onclick = () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  $("hostCode").value = Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
+  $("hostCode").hidden = false;
+  $("hostCode").focus();
+  $("hostCode").select();
+};
+</script>

@@ -630,12 +630,29 @@ body{background:linear-gradient(180deg,#e8f9f1,#fffefa 58%)}.top{background:tran
 .hub-brand-link .logo,.hub-brand-link .hub-mark{display:inline-grid!important;place-items:center!important;flex:0 0 52px!important;width:52px!important;height:54px!important;padding:12px 3px 0!important;box-sizing:border-box!important;background:#58d5bb!important;color:#142450!important;border:0!important;border-radius:0!important;clip-path:polygon(50% 0%,100% 37%,90% 37%,90% 100%,10% 100%,10% 37%,0% 37%)!important;transform:none!important;box-shadow:none!important;font-size:16px!important;font-weight:900!important;line-height:1!important}
 .hub-brand-link{display:inline-flex;align-items:center;gap:10px;text-decoration:none!important;cursor:pointer}
 .hub-brand-link:focus-visible{outline:3px solid #75ddc6;outline-offset:4px}
+
+#hostSignIn[hidden],#hostActions[hidden],.hub-brand-link[hidden]{display:none}
+#hostSignIn .field label{display:block}
+#hostSignIn button{width:100%;min-height:44px;margin-top:12px}
+#hostSignInError{color:var(--red);min-height:1.2em}
+#hostActions{margin-left:auto}
 </style>
 </head>
 <body>
 <div class="shell">
   <div class="top"><a class="brand hub-brand-link" href="../student/" aria-label="Student Hub home"><div class="logo">SH</div><div>Student Hub</div></a></div>
   <div class="hero"><div><h1>The Pirate Game</h1><p id="heroText">Hidden treasure. Public chaos. Do your own maths.</p></div><div class="gamebadge" id="gameBadge">Choose your game</div></div>
+
+  <div id="hostActions" hidden><button class="btn" id="hostSignOut" type="button">Sign out</button></div>
+  <form id="hostSignIn" hidden>
+    <div class="joincard">
+      <h2>Host a Pirate Game</h2>
+      <p>Enter the Pirate host code your colleague shared with you.</p>
+      <div class="field"><label for="hostCode">Pirate host code</label><input id="hostCode" type="password" maxlength="48" required pattern="[a-f0-9]{48}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+      <button class="btn primary" id="hostLoginButton" type="submit">Open host controls</button>
+      <p id="hostSignInError" role="status"></p>
+    </div>
+  </form>
 
   <div id="joinView" style="display:none">
     <div class="joincard">
@@ -826,9 +843,13 @@ body{background:linear-gradient(180deg,#e8f9f1,#fffefa 58%)}.top{background:tran
 <script>
 const API="https://lategan-chatbot.abrahamlategan.workers.dev";
 const params=new URLSearchParams(location.search);
-const teacherMode=params.get("role")==="teacher";
-const teacherCode=localStorage.getItem("lategan_teacher_code")||"";
-const studentCode=localStorage.getItem("lategan_student_code")||"";
+const guestHost=params.get("role")==="host";
+const teacherMode=guestHost||params.get("role")==="teacher";
+const teacherCode=guestHost?"":localStorage.getItem("lategan_teacher_code")||"";
+const studentCode=teacherMode?"":localStorage.getItem("lategan_student_code")||"";
+const hostSessionKey="pirate_host_code";
+let hostCode=guestHost?sessionStorage.getItem(hostSessionKey)||"":"";
+let hostLoading=false;
 let token=sessionStorage.getItem("pirate_join_token")||"";
 let state=null,selected=null,lastFeedback=null,qrMadeFor="",dragInfo=null,choosingNow=false,lastTeacherFeedAt=null,eventQueue=[],eventShowing=false,teacherFinishedShown=false,soundEnabled=true,mathTimerInt=null,lastMathKey="",advancingRound=false,advanceFromRound=0,coordSubmitting=false,studentStateVersion=0,studentBusy=false,studentPollBusy=false,studentPollSeq=0,studentLastAppliedPoll=0,lastActionMomentKey="",teacherLastPublicActionId=null,teacherLastPublicSnapshot=null,teacherPublicHistory=[],autoActionTimer=null,autoActionBusy=false,autoActionScheduledId=null,lastCarouselActionId=null,coordRevealActive=false,savedGames=[];
 const $=id=>document.getElementById(id),money=n=>"$"+Number(n||0).toLocaleString();
@@ -844,7 +865,12 @@ if(hubHome){
   const title=hubHome.querySelector(".logo + div");
   if(title)title.textContent=teacherMode?"Learning Hub":"Student Hub";
 }
-if(teacherMode)$("teacherView").style.display="block";
+if(guestHost){
+  hubHome?.setAttribute("hidden","");
+  $("hostSignIn").hidden=!!hostCode;
+  $("hostActions").hidden=!hostCode;
+  $("gameBadge").textContent="Host a game";
+}else if(teacherMode)$("teacherView").style.display="block";
 else if(token)$("playerView").style.display="block";
 else $("joinView").style.display="block";
 
@@ -858,9 +884,41 @@ if(!teacherMode&&studentCode){
 }
 
 async function post(p){
+  if(guestHost && Object.hasOwn(p,"teacher_code")){
+    const {teacher_code,...request}=p;
+    p={...request,pirate_host_code:hostCode};
+  }
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(p)});
-  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||"Something went wrong.");return d;
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw Object.assign(new Error(d.error||"Something went wrong."),{status:r.status});
+  return d;
 }
+
+function showHostSignIn(message=""){
+  hostCode="";
+  sessionStorage.removeItem(hostSessionKey);
+  state=null;
+  savedGames=[];
+  $("teacherView").style.display="none";
+  $("hostActions").hidden=true;
+  $("hostSignIn").hidden=false;
+  $("hostSignInError").textContent=message;
+}
+
+$("hostSignIn").onsubmit=async event=>{
+  event.preventDefault();
+  if(!guestHost||hostLoading)return;
+  $("hostLoginButton").disabled=true;
+  $("hostSignInError").textContent="";
+  hostCode=$("hostCode").value.trim();
+  $("hostCode").value="";
+  try{await load()}
+  finally{$("hostLoginButton").disabled=false}
+};
+$("hostSignOut").onclick=()=>{
+  sessionStorage.removeItem(hostSessionKey);
+  location.reload();
+};
 
 $("joinBtn").onclick=async()=>{
   $("joinError").textContent="";
@@ -1797,9 +1855,17 @@ function clearStudentGame(message=""){
 }
 
 async function load(){
+  if(guestHost && (!hostCode || hostLoading))return;
+  if(guestHost)hostLoading=true;
   try{
     if(teacherMode){
       const fresh=await post({action:"pirate_teacher_active",teacher_code:teacherCode});
+      if(guestHost){
+        sessionStorage.setItem(hostSessionKey,hostCode);
+        $("hostSignIn").hidden=true;
+        $("hostActions").hidden=false;
+        $("teacherView").style.display="block";
+      }
       savedGames=fresh?.saved_games||[];
 
       if(advancingRound && fresh?.game){
@@ -1836,13 +1902,26 @@ async function load(){
       }
     }
   }catch(e){
-    if(!teacherMode&&token&&/Player session not found|Game not found/i.test(String(e.message||""))){
+    if(guestHost && (e.status===401 || $("teacherView").style.display==="none")){
+      const message=e.message==="Unknown action."?"Pirate hosting needs the Worker update.":e.status===401?"That host code wasn’t recognised.":e.message;
+      showHostSignIn(message);
+    }else if(!teacherMode&&token&&/Player session not found|Game not found/i.test(String(e.message||""))){
       clearStudentGame("That Pirate Game has ended.");
     }else console.error(e)
+  }finally{
+    if(guestHost)hostLoading=false;
   }
 }
 
-$("createGame").onclick=async()=>{state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});teacherFinishedShown=false;lastTeacherFeedAt=null;teacherLastPublicActionId=null;teacherLastPublicSnapshot=null;teacherPublicHistory=[];lastCarouselActionId=null;cancelAutoActionAdvance();renderTeacher()};
+$("createGame").onclick=async()=>{
+  const button=$("createGame");
+  button.disabled=true;
+  try{
+    state=await post({action:"pirate_create_game",teacher_code:teacherCode,board_size:Number($("boardSize").value),difficulty:$("difficulty").value});
+    teacherFinishedShown=false;lastTeacherFeedAt=null;teacherLastPublicActionId=null;teacherLastPublicSnapshot=null;teacherPublicHistory=[];lastCarouselActionId=null;cancelAutoActionAdvance();renderTeacher();
+  }catch(error){alert(error.message)}
+  finally{button.disabled=false}
+};
 $("startGame").onclick=async()=>{
   if($("startGame").disabled||!state?.game)return;
   $("startGame").disabled=true;
@@ -2111,3 +2190,4 @@ load();setInterval(load,teacherMode?650:900);
 </script>
 </body>
 </html>
+
