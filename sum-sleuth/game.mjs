@@ -179,16 +179,20 @@ async function showBests(id, level, timeMs) {
   panel.replaceChildren();
   const status = document.createElement('p');
   status.setAttribute('role','status');
-  const compact = id === 'playBests' || id === 'setupRecordStrip';
-  const records = compact ? ['My Best', 'Year 4 Best'].map(label => {
+  const preview = id === 'setupRecordStrip';
+  const compact = id === 'playBests' || preview;
+  const labels = preview ? ['My Best', 'Year 4 Best', 'Teacher Best'] : ['My Best', 'Year 4 Best'];
+  const records = compact ? labels.map(label => {
     const item = document.createElement('span');
     const title = document.createElement('strong');
     title.textContent = label;
-    const value = document.createElement('span');
+    const value = document.createElement(preview ? 'b' : 'span');
+    const name = preview ? document.createElement('small') : null;
     value.textContent = '—';
     item.append(title,value);
+    if (name) item.append(name);
     panel.append(item);
-    return value;
+    return {value,name};
   }) : [];
   panel.append(status);
   const fromTeacher = new URLSearchParams(location.search).get('from') === 'teacher';
@@ -215,9 +219,15 @@ async function showBests(id, level, timeMs) {
     if (!Array.isArray(data.year4Best)) throw Error('Invalid leaderboard');
     status.textContent = '';
     if (compact) {
-      records[0].textContent = data.myBest == null ? '—' : bestTimeText(data.myBest);
-      const leader = data.year4Best[0];
-      records[1].textContent = leader ? bestTimeText(leader.timeMs)+' · '+leader.name+' ('+leader.className+')' : '—';
+      records[0].value.textContent = data.myBest == null ? '—' : bestTimeText(data.myBest);
+      const leaders = preview ? [data.year4Best[0],data.teacherBest?.[0]] : [data.year4Best[0]];
+      leaders.forEach((leader,index) => {
+        if (!leader) return;
+        const {value,name} = records[index+1];
+        const label = leader.name+(leader.className ? ' ('+leader.className+')' : '');
+        value.textContent = bestTimeText(leader.timeMs)+(preview ? '' : ' · '+label);
+        if (name) name.textContent = label;
+      });
       return;
     }
     const heading = document.createElement('h3');
@@ -279,4 +289,3 @@ if (new URLSearchParams(location.search).get('from') === 'teacher') {
   $('hubLink').textContent = '← Teacher Hub';
 }
 void showBests('setupRecordStrip',Number($('level').value));
-

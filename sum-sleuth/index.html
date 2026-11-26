@@ -44,12 +44,38 @@ dialog{width:min(390px,calc(100% - 28px));padding:1.5rem;border:1px solid #b9dac
 .number[aria-pressed=true]:not(.correct){background:#dce5fa;color:#172554;border-color:#586caa;box-shadow:inset 0 0 0 1px #586caa}
 .bests{text-align:left;background:#effaf5;border-radius:12px;margin:.75rem 0;padding:.55rem .85rem}.bests h3{margin:.35rem 0}.bests ol{padding-left:1.4rem;margin:.45rem 0}.bests li{padding:.18rem 0;font-variant-numeric:tabular-nums}.bests p:empty{display:none}
 .recordStrip{display:flex;flex-wrap:wrap;gap:.35rem 1rem;font-size:.86rem;margin:.45rem 0;color:#365550}.recordStrip strong{margin-right:.25rem}.recordStrip p{margin:0}
+
+body{background:radial-gradient(ellipse at top,#ebf6ee 0,#fffefa 65%)}
+.setup{max-width:640px;padding:0;overflow:hidden;border-color:#d3e4d9;box-shadow:0 15px 40px #234b3420}
+.setupBanner{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px clamp(16px,5vw,32px);background:#245340;color:#fff}
+.setupBanner h2{margin:0;font-size:clamp(1.45rem,5vw,2rem);letter-spacing:-.03em}
+.setupBanner span{font-size:clamp(1.55rem,6vw,2.5rem);color:#ffdd91}
+.setupContent{padding:clamp(14px,4vw,28px)}
+.setup label{margin:0 0 .4rem;font-weight:750}
+.setup select{padding:0 .7rem}
+.setup .recordStrip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:16px 0}
+.setup .recordStrip>span{display:grid;align-content:start;gap:4px;padding:12px;border-radius:14px;border:1px solid #d5e2cf;background:#eff6e8}
+.setup .recordStrip>span:nth-child(2){background:#fff1d8;border-color:#ecd6ac}
+.setup .recordStrip>span:nth-child(3){background:#f5ecf8;border-color:#e6d5eb}
+.setup .recordStrip strong{margin:0;color:#253b31}
+.setup .recordStrip b{font-size:clamp(1.1rem,4.8vw,1.65rem);font-variant-numeric:tabular-nums;line-height:1.15;color:#182c28}
+.setup .recordStrip small{font-size:.77rem;overflow-wrap:anywhere}
+.setup .recordStrip p{grid-column:1/-1;margin:0}
+.setupActions{display:flex;flex-wrap:wrap;gap:8px}
+.setupActions .primary{flex:1;background:#235741;color:#fff;min-width:150px}
+.setupActions .primary:hover{background:#194432}
+@media(max-width:420px){
+ .setup .recordStrip{grid-template-columns:1fr;gap:5px}
+ .setup .recordStrip>span{grid-template-columns:1fr auto;align-items:center;padding:8px 10px}
+ .setup .recordStrip small{grid-column:1/-1}
+}
 </style></head><body><main>
 <header><a id="hubLink" href="../student/">← Student Hub</a><h1>Sumflowers</h1>
 <div class="clock" id="clock" hidden><span id="time">0:00</span><button id="toggleTime" type="button" aria-controls="time" aria-expanded="true">Hide timer</button></div></header>
 <form class="setup" id="setup">
-<h2>Choose a puzzle</h2>
-<label for="level">Choose an operation and difficulty</label>
+<div class="setupBanner"><h2>Choose a puzzle</h2><span aria-hidden="true">✿</span></div>
+<div class="setupContent">
+<label for="level">Operation and difficulty</label>
 <select id="level">
  <optgroup label="Addition">
   <option value="1">Addition · Easy (up to 20)</option>
@@ -62,13 +88,15 @@ dialog{width:min(390px,calc(100% - 28px));padding:1.5rem;border:1px solid #b9dac
   <option value="6">Multiplication · Hard (trickier facts, including factors above 12)</option>
  </optgroup>
 </select>
-<button class="action primary" type="submit">Start puzzle</button>
-<button class="action" id="showBests" type="button">Best times</button>
 <div class="recordStrip" id="setupRecordStrip" aria-label="Records for the selected level"></div>
+<div class="setupActions">
+ <button class="action primary" type="submit">Start puzzle</button>
+ <button class="action" id="showBests" type="button">View leaderboard</button>
+</div>
 <section class="bests" id="setupBests" aria-label="Best times for this level" hidden></section>
+</div>
 </form>
 <section id="play" hidden aria-label="Flower puzzle"><p class="instruction" id="instruction"></p><div class="recordStrip" id="playBests" aria-label="Records for this level"></div><div class="flower" id="flower"></div><p class="sr" id="announce" role="status"></p></section>
 </main>
 <dialog id="result" aria-labelledby="resultTitle"><h2 id="resultTitle">Puzzle solved!</h2><p class="resultTime" id="resultTime"></p><section class="bests" id="resultBests" aria-label="Best times for this level" hidden></section><button class="action primary" id="again" type="button">Play again</button></dialog>
-<script type="module" src="./game.mjs?v=all-mode-records"></script></body></html>
-
+<script type="module" src="./game.mjs?v=game-preview"></script></body></html>

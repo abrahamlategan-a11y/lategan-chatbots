@@ -129,6 +129,31 @@ body:has(#lobby[open]) .game,body:has(#lobby[open]) .gameToolbar{filter:blur(18p
 .recordMenu h4{margin:.6rem 0 .25rem}
 .recordMenu ol{margin:.25rem 0;padding-left:1.6rem}
 body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibility:hidden}
+
+#lobby .lobbyHero{min-height:94px}
+#lobby .setupNav button{min-height:40px}
+#lobby .modeCard{transition:transform .15s,border-color .15s,box-shadow .15s}
+#lobby .modeCard:hover{transform:translateY(-2px);border-color:#8eac91;filter:none}
+#lobby .modeCard:active{transform:translateY(1px);box-shadow:none}
+#lobby .modeCard small{font-size:.86rem}
+.gamePreview{padding:0 0 4px}
+.previewDescription{margin:0 0 16px;line-height:1.5;color:#41574a}
+.previewRecords{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 16px}
+.previewStat{min-width:0;display:grid;align-content:start;gap:4px;border:1px solid #d5e2cf;border-radius:14px;background:#eff6e8;padding:12px}
+.previewStat:nth-child(2){background:#fff1d8;border-color:#ecd6ac}
+.previewStat:nth-child(3){background:#f5ecf8;border-color:#e6d5eb}
+.previewStat strong{font-size:.79rem;line-height:1.3}
+.previewStat b{font-size:clamp(1.1rem,4.8vw,1.6rem);font-variant-numeric:tabular-nums;line-height:1.15}
+.previewStat small{color:#4b554c;font-size:.77rem;overflow-wrap:anywhere}
+.previewRecords>p{grid-column:1/-1;margin:0;font-size:.84rem;color:#4b554c}
+#startPreview,#createRoom,#joinRoom,#roomStart{width:100%;min-height:48px;background:#235741;color:#fff;font-size:1rem}
+#startPreview:hover,#createRoom:hover,#joinRoom:hover,#roomStart:hover{background:#194432}
+#roomStart:disabled{opacity:.55}
+@media(max-width:420px){
+ .previewRecords{grid-template-columns:1fr;gap:5px}
+ .previewStat{grid-template-columns:1fr auto;align-items:center;padding:8px 10px}
+ .previewStat small{grid-column:1/-1}
+}
 </style></head><body><header><a href="../student/">← Student Hub</a><h1>Guavagrams</h1><span>Class word game</span></header><main>
 <div class="gameToolbar"><div class="viewTools" aria-label="Board view"><button type="button" id="openLobby">Play menu</button><button type="button" id="fullscreen" aria-pressed="false">⛶ Full screen</button><div class="zoomTools" role="group" aria-label="Board zoom"><button type="button" id="zoomOut" aria-label="Zoom out">−</button><button type="button" id="zoomReset" aria-label="Reset board zoom">100%</button><button type="button" id="zoomIn" aria-label="Zoom in">+</button></div></div>
 <div class="top"><span class="chip" id="used">On board: 0</span><span class="chip" id="remaining">In tray: 0</span><span class="chip" id="time">Time: 00:00</span><span class="chip" id="words">Valid words: 0</span></div></div>
@@ -176,6 +201,11 @@ body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibi
    <button type="button" data-solo-mode="medium" class="modeCard level"><span class="modeIcon" aria-hidden="true">M</span><span><strong>Medium</strong><small>Build a bigger grid</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
    <button type="button" data-solo-mode="hard" class="modeCard level"><span class="modeIcon" aria-hidden="true">H</span><span><strong>Hard</strong><small>Longer words and more crossings</small></span><span class="modeArrow" aria-hidden="true">→</span></button>
   </div>
+  <section id="gamePreview" class="gamePreview" aria-labelledby="setupHeading" hidden>
+   <p id="previewDescription" class="previewDescription"></p>
+   <div id="previewRecords" class="previewRecords" aria-label="Records for this mode" aria-live="polite"></div>
+   <button type="button" id="startPreview" class="primary">Start game</button>
+  </section>
   <section class="soloBests" id="soloBests" aria-labelledby="soloBestsTitle" hidden>
  <h3 id="soloBestsTitle" tabindex="-1">🏆 Best records</h3>
  <label for="recordMode">Game mode</label> <select id="recordMode"></select>
@@ -200,6 +230,7 @@ body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibi
     <label><input type="radio" name="difficulty" value="easy" checked> <strong>Easy</strong> · Check words as you build</label>
     <label><input type="radio" name="difficulty" value="hard"> <strong>Hard</strong> · Check words when you call Guava!</label>
    </fieldset>
+   <div id="hostRecords" class="previewRecords" aria-label="Multiplayer records" aria-live="polite"></div>
    <button type="button" id="createRoom" class="primary" aria-describedby="roomStatus">Create game</button>
   </div>
   <div id="joinSetup" class="lobbyDetail" hidden>
@@ -211,6 +242,7 @@ body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibi
   <div id="roomWaiting" hidden>
    <p>Share this game code with friends</p><strong id="roomCode"></strong>
    <p id="roomMode"></p><p id="roomPlayers" aria-live="polite"></p>
+   <div id="roomRecords" class="previewRecords" aria-label="Room records" aria-live="polite"></div>
    <button class="primary" type="button" id="roomStart">Begin game</button>
   </div>
   <p id="roomStatus" role="status"></p>
@@ -816,10 +848,11 @@ document.addEventListener('keydown',event=>{
 const lobby=document.getElementById('lobby');
 const lobbyChoices=document.getElementById('lobbyChoices');
 const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
-let setupPage='menu';
+let setupPage='menu', previewMode, previewParent, previewTrigger;
 function showLobbyPage(page){
+ const previousPage=setupPage;
  setupPage=page;
- const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Best records'};
+ const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Best records',preview:recordModes[previewMode]};
  $('setupHeading').textContent=titles[page];
  $('setupHeading').hidden=page==='records';
  $('sprintLevels').hidden=page!=='sprint';
@@ -830,6 +863,7 @@ function showLobbyPage(page){
  $('resumeSoloGame').disabled=!readSoloSnapshot();
  $('soloModes').hidden=page!=='solo';
  $('soloBests').hidden=page!=='records';
+ $('gamePreview').hidden=page!=='preview';
  $('roomWaiting').hidden=page!=='room';
  $('roomLogin').hidden=page!=='join'&&page!=='host';
  if(!$('roomLogin').hidden&&!$('roomStudentCode').value){
@@ -839,7 +873,17 @@ function showLobbyPage(page){
  hostSetup.hidden=page!=='host';
  joinSetup.hidden=page!=='join';
  lobbyBack.hidden=page==='menu';
- if(page==='room')return;
+ if(page==='room'){
+  if(previousPage!=='room')void showGameRecords('roomRecords',activeRecordMode());
+  return;
+ }
+ if(page==='host')showHostRecords();
+ if(page==='preview'){
+  $('previewDescription').textContent=previewTrigger.querySelector('small').textContent;
+  void showGameRecords('previewRecords',previewMode);
+  $('setupHeading').focus();
+  return;
+ }
  if(page==='solo'||page==='sprint'||page==='challenges'){$('setupHeading').focus();return}
  if(page==='records'){
   renderTimedBests();
@@ -889,18 +933,26 @@ $('resumeSoloGame').onclick=()=>{
 for(const button of document.querySelectorAll('[data-solo-mode]')){
  button.onclick=()=>{
   if(roomBusy||flipPreview)return;
-  leaveRoom();
-  const mode=button.dataset.soloMode;
-  let previous=state.challenges;
-  try{
-   if(state.mode!==mode)previous=JSON.parse(localStorage.getItem(KEY+'-board:'+mode))?.challenges;
-   localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify({challenges:state.challenges}));
-  }catch{}
-  originX=originY=0;
-  lobby.close();
-  fresh(mode,previous??[]);
+  previewMode=button.dataset.soloMode;
+  previewParent=setupPage;
+  previewTrigger=button;
+  showLobbyPage('preview');
  };
 }
+$('startPreview').onclick=()=>{
+ if(setupPage!=='preview'||roomBusy||flipPreview)return;
+ leaveRoom();
+ const mode=previewMode;
+ let previous=state.challenges;
+ try{
+  if(state.mode!==mode)previous=JSON.parse(localStorage.getItem(KEY+'-board:'+mode))?.challenges;
+  localStorage.setItem(KEY+'-board:'+state.mode,JSON.stringify({challenges:state.challenges}));
+ }catch{}
+ originX=originY=0;
+ lobby.close();
+ fresh(mode,previous??[]);
+ $('openLobby').focus();
+};
 function replaySoloRound(dialog){
  if(room||!dialog.open)return;
  dialog.close();
@@ -927,6 +979,11 @@ document.getElementById('lobbyClose').onclick=()=>{if(!roomBusy){if(room?.phase=
 lobbyBack.onclick=()=>{
  if(roomBusy)return;
  if(room?.phase==='waiting')return roomAction('leave');
+ if(setupPage==='preview'){
+  showLobbyPage(previewParent);
+  previewTrigger.focus();
+  return;
+ }
  const parent=setupPage==='sprint'||setupPage==='challenges'?'solo':'menu';
  const child=setupPage;
  showLobbyPage(parent);
@@ -1292,6 +1349,31 @@ function recordValue(mode,score){
  if(mode==='streak')return score+' tiles';
  return clockText(score);
 }
+function renderPreviewRecords(panel,mode,data){
+ panel.replaceChildren();
+ for(const [label,score,leader] of [
+  ['My Best',data?.myBest],
+  ['Year 4 Best',data?.year4Best?.[0]?.score,data?.year4Best?.[0]],
+  ['Teacher Best',data?.teacherBest?.[0]?.score,data?.teacherBest?.[0]]
+ ]){
+  const card=document.createElement('div'), title=document.createElement('strong'), value=document.createElement('b');
+  card.className='previewStat';
+  title.textContent=label;
+  value.textContent=recordValue(mode,score);
+  card.append(title,value);
+  if(leader?.name){
+   const name=document.createElement('small');
+   name.textContent=leader.name+(leader.className?' ('+leader.className+')':'');
+   card.append(name);
+  }
+  panel.append(card);
+ }
+ if(!data||data.status){
+  const status=document.createElement('p');
+  status.textContent=data?.status||'Loading records…';
+  panel.append(status);
+ }
+}
 function renderRecordPanel(panel,mode,data,expanded=false){
  const leader=data?.year4Best?.[0];
  panel.replaceChildren();
@@ -1378,11 +1460,16 @@ async function loadGameRecords(mode,score){
 async function showGameRecords(id,mode,score){
  const panel=$(id), request=Symbol();
  panel.recordRequest=request;
- const expanded=id==='menuRecords';
- renderRecordPanel(panel,mode,recordCache.get(recordKey(mode,recordCredentials())),expanded);
+ const render=panel.classList.contains('previewRecords')?renderPreviewRecords:renderRecordPanel;
+ render(panel,mode,recordCache.get(recordKey(mode,recordCredentials())),id==='menuRecords');
  const data=await loadGameRecords(mode,score);
- if(panel.recordRequest===request)renderRecordPanel(panel,mode,data,expanded);
+ if(panel.recordRequest===request)render(panel,mode,data,id==='menuRecords');
 }
+function showHostRecords(){
+ const mode=hostSetup.querySelector('input:checked')?.value==='hard'?'roomHard':'roomEasy';
+ void showGameRecords('hostRecords',mode);
+}
+hostSetup.addEventListener('change',showHostRecords);
 for(const [mode,label] of Object.entries(recordModes))$('recordMode').add(new Option(label,mode));
 $('recordMode').onchange=()=>void showGameRecords('menuRecords',$('recordMode').value);
 $('boardRecordsButton').onclick=()=>{
@@ -1398,4 +1485,3 @@ if(new URLSearchParams(location.search).get('from')==='teacher'){
 roomClientReady=true;
 window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
 </script></body></html>
-
