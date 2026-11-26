@@ -137,6 +137,10 @@ body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibi
 #lobby .modeCard:active{transform:translateY(1px);box-shadow:none}
 #lobby .modeCard small{font-size:.86rem}
 .gamePreview{padding:0 0 4px}
+#lobby #freePlayDeck label{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+#freePlayDeck input{margin-top:.25em;accent-color:#235741}
+#freePlayDeck small{display:block;color:#41574a}
+.previewRecords>p.unlimitedNote{font-size:.9rem}
 .previewDescription{margin:0 0 16px;line-height:1.5;color:#41574a}
 .previewRecords{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 16px}
 .previewStat{min-width:0;display:grid;align-content:start;gap:4px;border:1px solid #d5e2cf;border-radius:14px;background:#eff6e8;padding:12px}
@@ -203,6 +207,11 @@ body.soloPaused .gameRecordStrip, body:has(#lobby[open]) .gameRecordStrip{visibi
   </div>
   <section id="gamePreview" class="gamePreview" aria-labelledby="setupHeading" hidden>
    <p id="previewDescription" class="previewDescription"></p>
+   <fieldset id="freePlayDeck" hidden>
+    <legend>Tile supply</legend>
+    <label><input type="radio" name="free-deck" value="standard" checked><span><strong>Standard deck</strong><small>Play with the usual 144 tiles.</small></span></label>
+    <label><input type="radio" name="free-deck" value="unlimited"><span><strong>Unlimited tiles</strong><small>Keep drawing as long as you like.</small></span></label>
+   </fieldset>
    <div id="previewRecords" class="previewRecords" aria-label="Records for this mode" aria-live="polite"></div>
    <button type="button" id="startPreview" class="primary">Start game</button>
   </section>
@@ -335,18 +344,23 @@ function shuffleSoloTiles(tiles){
  }
  return tiles;
 }
+const tileCounts={A:13,B:3,C:3,D:6,E:18,F:3,G:4,H:3,I:12,J:2,K:2,L:5,M:3,N:8,O:11,P:3,Q:2,R:9,S:6,T:9,U:6,V:3,W:3,X:2,Y:3,Z:2};
+const tileLetters=Object.entries(tileCounts).map(([letter,count])=>letter.repeat(count)).join('');
+function drawUnlimitedTile(){return tileLetters[Math.floor(Math.random()*tileLetters.length)]}
+function hasUnlimitedTiles(game){return game?.mode==='free'&&game.unlimitedTiles===true}
 function makeStash(game){
- const counts={A:13,B:3,C:3,D:6,E:18,F:3,G:4,H:3,I:12,J:2,K:2,L:5,M:3,N:8,O:11,P:3,Q:2,R:9,S:6,T:9,U:6,V:3,W:3,X:2,Y:3,Z:2};
+ const counts={...tileCounts};
  for(const {letter} of game.tiles)counts[letter]--;
  for(const letter of game.stash||[])if(letter)counts[letter]--;
  if(game.pendingSwap)counts[game.pendingSwap.returned]--;
  return shuffleSoloTiles(Object.entries(counts).flatMap(([letter,count])=>Array(Math.max(0,count)).fill(letter)));
 }
-function fresh(mode=state?.mode||'free',previous=state?.challenges){
+function fresh(mode=state?.mode||'free',previous=state?.challenges,unlimited=hasUnlimitedTiles(state)){
  const challenges=rollSoloChallenges(mode,previous);
  const stash=makeStash({tiles:[]});
  const tiles=stash.splice(0,sprintSize(mode)||(mode==='streak'?15:35)).map((letter,id)=>({id,letter,x:null,y:null}));
- state={mode,challenges,tiles,stash,seconds:0,fullPool:true};
+ const unlimitedTiles=mode==='free'&&unlimited;
+ state={mode,challenges,tiles,stash:unlimitedTiles?[]:stash,seconds:0,fullPool:true,unlimitedTiles};
  history=[];selected=null;paused=false;save();draw();
 }
 try{
@@ -709,7 +723,7 @@ function overSwapZone(event){
 function renderStash(){
  const swap=state.pendingSwap;
  swap.picked??={};
- document.getElementById('swapProgress').textContent='Pick '+swap.remaining+' more · '+state.stash.filter(letter=>letter!==null).length+' face-down';
+ document.getElementById('swapProgress').textContent='Pick '+swap.remaining+' more · '+(hasUnlimitedTiles(state)?'Unlimited stash':state.stash.filter(letter=>letter!==null).length+' face-down');
  stashTiles.replaceChildren();
  state.stash.forEach((letter,index)=>{
   const tile=document.createElement('button'),flipped=letter===null;
@@ -738,7 +752,8 @@ function flipStashTile(index){
  const finished=swap.remaining===0;
  if(finished){
   state.stash=state.stash.filter(letter=>letter!==null);
-  state.stash.splice(Math.floor(Math.random()*(state.stash.length+1)),0,swap.returned);
+  if(hasUnlimitedTiles(state))state.stash=[];
+  else state.stash.splice(Math.floor(Math.random()*(state.stash.length+1)),0,swap.returned);
   delete state.pendingSwap;
   setTimeout(()=>{
    swapDialog.close();
@@ -753,8 +768,10 @@ function beginSwap(id){
  const index=state.tiles.findIndex(tile=>tile.id===id);
  if(index<0)return message('Drag a board or tray tile onto Swap, or select it and tap Swap.',true);
  state.stash??=makeStash(state);
- if(state.stash.length<3)return message('You need three tiles in the stash to swap.',true);
+ const unlimited=hasUnlimitedTiles(state);
+ if(!unlimited&&state.stash.length<3)return message('You need three tiles in the stash to swap.',true);
  remember();
+ if(unlimited)state.stash=Array.from({length:9},drawUnlimitedTile);
  const nextId=Math.max(...state.tiles.map(tile=>tile.id))+1;
  const [returned]=state.tiles.splice(index,1);
  state.pendingSwap={returned:returned.letter,nextId,drawn:[],picked:{},remaining:3};
@@ -796,8 +813,9 @@ pauseDialog.addEventListener('close',()=>{
  if(!$('soloResult').open)$('pause').focus();
 });
 document.getElementById('finish').onclick=()=>{if(room)return roomAction('claim',{board:roomBoard()});if(sprintSize(state.mode))return finishSprint();const v=validate(),used=state.tiles.filter(t=>t.x!==null);if(dictionaryStatus!=='ready')return message('Word checking needs the dictionary. Refresh if it does not load.');if(!used.length)return message('Place some tiles first!',true);if(v.bad.length)return message('Fix the red words first: '+v.bad.map(w=>w.word.toUpperCase()).join(', '),true);if(!v.words.length)return message('Build at least one word to finish.',true);document.getElementById('winMessage').textContent='You built '+v.words.length+' valid words with '+used.length+' tiles! Keep experimenting or start again.';const score=state.mode==='free'?soloChallengeBoard(v).words.size:0;
- if(score)saveGameRecord('free',score);
- void showGameRecords('freeResultRecords',state.mode,score||undefined);
+ const mode=activeRecordMode();
+ if(score)saveGameRecord(mode,score);
+ void showGameRecords('freeResultRecords',mode,score||undefined);
  document.getElementById('win').showModal()};
 setInterval(()=>{if(room?.started){state.seconds=Math.max(0,Math.floor((Date.now()-room.started)/1000))}else if(!paused&&!state.completed&&!document.getElementById('lobby').open&&(!timedSolo()||dictionaryStatus==='ready')){
  state.seconds++;if(state.seconds%5===0)save();
@@ -849,10 +867,16 @@ const lobby=document.getElementById('lobby');
 const lobbyChoices=document.getElementById('lobbyChoices');
 const hostSetup=document.getElementById('hostSetup'),joinSetup=document.getElementById('joinSetup'),lobbyBack=document.getElementById('lobbyBack');
 let setupPage='menu', previewMode, previewParent, previewTrigger;
+function unlimitedDeckSelected(){return $('freePlayDeck').querySelector('input:checked').value==='unlimited'}
+function showPreviewRecords(){
+ const mode=previewMode==='free'&&unlimitedDeckSelected()?'freeUnlimited':previewMode;
+ void showGameRecords('previewRecords',mode);
+}
+$('freePlayDeck').addEventListener('change',showPreviewRecords);
 function showLobbyPage(page){
  const previousPage=setupPage;
  setupPage=page;
- const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Best records',preview:recordModes[previewMode]};
+ const titles={menu:'Choose how to play',solo:'Play solo',sprint:'Grid Sprint',challenges:'Word Challenges',host:'Host a game',join:'Join a game',room:'Game lobby',records:'Best records',preview:previewMode==='free'?'Free Play':recordModes[previewMode]};
  $('setupHeading').textContent=titles[page];
  $('setupHeading').hidden=page==='records';
  $('sprintLevels').hidden=page!=='sprint';
@@ -880,7 +904,10 @@ function showLobbyPage(page){
  if(page==='host')showHostRecords();
  if(page==='preview'){
   $('previewDescription').textContent=previewTrigger.querySelector('small').textContent;
-  void showGameRecords('previewRecords',previewMode);
+  $('freePlayDeck').hidden=previewMode!=='free';
+  $('freePlayDeck').querySelector('[value="unlimited"]').checked=hasUnlimitedTiles(state);
+  $('freePlayDeck').querySelector('[value="standard"]').checked=!hasUnlimitedTiles(state);
+  showPreviewRecords();
   $('setupHeading').focus();
   return;
  }
@@ -950,7 +977,7 @@ $('startPreview').onclick=()=>{
  }catch{}
  originX=originY=0;
  lobby.close();
- fresh(mode,previous??[]);
+ fresh(mode,previous??[],mode==='free'&&unlimitedDeckSelected());
  $('openLobby').focus();
 };
 function replaySoloRound(dialog){
@@ -1025,7 +1052,8 @@ function readTimedBest(mode){
 }
 function saveGameRecord(mode,score){
  const best=readTimedBest(mode);
- const improved=best===null||(mode==='free'||mode==='streak'?score>best:score<best);
+ const higherIsBetter=mode==='free'||mode==='freeUnlimited'||mode==='streak';
+ const improved=best===null||(higherIsBetter?score>best:score<best);
  if(improved){
   try{localStorage.setItem(timedBestKey(mode),JSON.stringify(score))}
   catch{document.getElementById('bestStatus').textContent='This browser could not save personal bests.'}
@@ -1080,10 +1108,10 @@ function roomControls(){
   :'Use every tile in one valid grid to finish automatically.';
  $('soloDraw').hidden=!!room||!!sprintSize(state.mode);
  $('soloDraw').textContent=!room&&state.mode==='streak'?'Draw 3 tiles':'Draw a tile';
- $('soloDraw').disabled=!state.stash?.length||!!state.pendingSwap||(!room&&state.mode==='streak'&&(state.stash.length<3||!validTimedGrid()));
+ $('soloDraw').disabled=!!room||!!state.pendingSwap||(!hasUnlimitedTiles(state)&&!state.stash?.length)||(state.mode==='streak'&&(state.stash.length<3||!validTimedGrid()));
  renderSoloClock();
  const stashCount=room?room.pool:(state.stash||[]).filter(letter=>letter!==null).length;
- $('stashCount').textContent=stashCount+' in stash';
+ $('stashCount').textContent=!room&&hasUnlimitedTiles(state)?'Unlimited':stashCount+' in stash';
  $('swap').title='Drag a tile here or select a tile and click Swap. Trade one tile for three.';
  $('reset').hidden=$('pause').hidden=$('undo').hidden=!!room;
  $('finish').textContent=room?'Guava!':sprintSize(state.mode)?'Finish sprint':'Check my board';
@@ -1306,7 +1334,7 @@ $('joinCode').addEventListener('keydown',event=>{
 });
 $('roomStart').onclick=()=>roomAction('start');
 $('soloDraw').onclick=()=>{
- if(room||state.completed||state.pendingSwap||!state.stash.length)return;
+ if(room||state.completed||state.pendingSwap||(!hasUnlimitedTiles(state)&&!state.stash.length))return;
  const streak=state.mode==='streak';
  if(streak){
   if(state.stash.length<3||!validTimedGrid())return;
@@ -1314,7 +1342,7 @@ $('soloDraw').onclick=()=>{
   history=[];
  }else remember();
  let id=state.tiles.reduce((max,tile)=>Math.max(max,tile.id),-1)+1;
- for(let count=0;count<(streak?3:1);count++)state.tiles.push({id:id++,letter:state.stash.pop(),x:null,y:null});
+ for(let count=0;count<(streak?3:1);count++)state.tiles.push({id:id++,letter:hasUnlimitedTiles(state)?drawUnlimitedTile():state.stash.pop(),x:null,y:null});
  save();
  draw();
 };
@@ -1322,14 +1350,15 @@ $('guavaPick').onclick=()=>roomAction('pick',{board:roomBoard()});
 setInterval(pollRoom,3500);
 
 const recordModes={
- free:'Free Play', easy:'Word Challenges · Easy', medium:'Word Challenges · Medium',
+ free:'Free Play · Standard deck', freeUnlimited:'Free Play · Unlimited tiles', easy:'Word Challenges · Easy', medium:'Word Challenges · Medium',
  hard:'Word Challenges · Hard', sprint15:'Grid Sprint · Easy', sprint21:'Grid Sprint · Medium',
  sprint30:'Grid Sprint · Hard', streak:'Tile Streak',
  roomEasy:'Multiplayer · Easy', roomHard:'Multiplayer · Hard'
 };
 const recordCache=new Map(), recordsPending=new Map();
 function activeRecordMode(){
- return room ? (room.mode==='hard'?'roomHard':'roomEasy') : state.mode;
+ if(room)return room.mode==='hard'?'roomHard':'roomEasy';
+ return hasUnlimitedTiles(state)?'freeUnlimited':state.mode;
 }
 function recordCredentials(){
  if(room)return studentCode ? {student_code:studentCode} : {};
@@ -1345,7 +1374,7 @@ function recordCredentials(){
 function recordKey(mode,credentials){return JSON.stringify([mode,credentials])}
 function recordValue(mode,score){
  if(score==null)return '—';
- if(mode==='free')return score+' '+(score===1?'word':'words');
+ if(mode==='free'||mode==='freeUnlimited')return score+' '+(score===1?'word':'words');
  if(mode==='streak')return score+' tiles';
  return clockText(score);
 }
@@ -1356,6 +1385,7 @@ function renderPreviewRecords(panel,mode,data){
   ['Year 4 Best',data?.year4Best?.[0]?.score,data?.year4Best?.[0]],
   ['Teacher Best',data?.teacherBest?.[0]?.score,data?.teacherBest?.[0]]
  ]){
+  if(mode==='freeUnlimited'&&label!=='My Best')continue;
   const card=document.createElement('div'), title=document.createElement('strong'), value=document.createElement('b');
   card.className='previewStat';
   title.textContent=label;
@@ -1368,7 +1398,12 @@ function renderPreviewRecords(panel,mode,data){
   }
   panel.append(card);
  }
- if(!data||data.status){
+ if(mode==='freeUnlimited'){
+  const note=document.createElement('p');
+  note.className='unlimitedNote';
+  note.textContent='Unlimited scores are saved on this browser.';
+  panel.append(note);
+ }else if(!data||data.status){
   const status=document.createElement('p');
   status.textContent=data?.status||'Loading records…';
   panel.append(status);
@@ -1381,6 +1416,7 @@ function renderRecordPanel(panel,mode,data,expanded=false){
   ['My Best',recordValue(mode,data?.myBest)],
   ['Year 4 Best',leader ? recordValue(mode,leader.score)+' · '+leader.name+' ('+leader.className+')' : '—']
  ]){
+  if(mode==='freeUnlimited'&&label!=='My Best')continue;
   const item=document.createElement('span'), title=document.createElement('strong');
   title.textContent=label;
   item.append(title,' '+value);
@@ -1419,6 +1455,12 @@ function refreshRecordStrip(){
 async function loadGameRecords(mode,score){
  const credentials=recordCredentials();
  const key=recordKey(mode,credentials);
+ if(mode==='freeUnlimited'){
+  const data={myBest:readTimedBest(mode),status:'Unlimited scores are saved on this browser.'};
+  recordCache.set(key,data);
+  refreshRecordStrip();
+  return data;
+ }
  const previous=recordsPending.get(key);
  if(previous){
   if(score===undefined)return previous;
@@ -1485,3 +1527,4 @@ if(new URLSearchParams(location.search).get('from')==='teacher'){
 roomClientReady=true;
 window.addEventListener('resize',draw);window.addEventListener('pagehide',save);draw();if(state.pendingSwap&&!state.completed){swapDialog.showModal();renderStash()}else{openLobby()}void loadDictionary();
 </script></body></html>
+
